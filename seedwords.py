@@ -40,9 +40,8 @@ def seed(wordcount, number, binary):
     # grab the first two hex chars; BIP39 never needs more than 8 bits
     str_checksum_hex = str_entropy_hash[:2]
     int_checksum_bits = int(str_checksum_hex, 16)
-    n_shift = 8 - n_checksum_bits
     # drop down to CS-many bits
-    int_checksum_bits >>= n_shift
+    int_checksum_bits >>= 8 - n_checksum_bits
     # make room for CS bits and add them
     int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum_bits
     if binary:
