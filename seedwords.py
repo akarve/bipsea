@@ -18,8 +18,7 @@ N_WORD_BITS = 11
 @click.option(
     "--wordcount",
     default=12,
-    type=click.IntRange(12, 24),
-    help="128 to 256, divisible by 32",
+    type=click.IntRange(12, 24)
 )
 @click.option(
     "--number/--no-number", help="Print numbers before seed words", default=False
