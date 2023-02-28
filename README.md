@@ -36,7 +36,7 @@ use to **generate your own seedwords offline**.
 
 ## Usage
 
-```python
+```sh
 # see commands
 python seedwords.py --help
 # generate 15 seed words at random (with checksum in final word)
