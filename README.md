@@ -5,7 +5,10 @@
 This is **BETA SOFTWARE**. Use it at your own risk.
 
 Please carefully test and ensure that generated seeds work as
-desired before securing large quantities of coin to it.
+desired before trusting large quantities of coin to its output.
+
+Or, better yet, read the code and see if you think it's correct
+(*pull requests welcome*).
 
 ## Why another mnemonic generator?
 
