@@ -12,11 +12,20 @@ Or, better yet, read the code and see if you think it's correct
 
 ## Why another mnemonic generator?
 
-I created this repo because all of the prior code I found for it was:
-old (e.g. Python 2), poorly commented, incomplete, ran on the web, or
-didn't use a cryptographically strong source of entropy.
+I created this repo for myself because all prior code I found for
+generating seed words was incomplete, opaque, and difficult to trust.
 
-This repo is designed to be "trustless" and run offline.
+This repo is designed to be a correct, transparent, and trustowrthy
+implementation of BIP-39"trustless" that you can use to **generate your
+own seedwords offline**.
+
+### What was wrong with prior attempts?
+* Outdated (e.g. Python 2)
+* Poorly commented (or not commented at all)
+* Incomplete
+* Runs in a browser :(
+* Didn't use a cryptographically strong source of entropy
+
 
 ## Pre-requisites
 * Python 3.x
