@@ -20,12 +20,12 @@ implementation of BIP-39 that you can verify for yourself and then
 use to **generate your own seedwords offline**.
 
 ### What was wrong with prior seed generators?
+
 * Outdated (e.g. Python 2)
 * Poorly commented (or not commented at all)
-* Incomplete
-* Runs in a browser :(
+* Incomplete (e.g. didn't include checksum calculation)
+* Ran in a browser :(
 * Didn't use a cryptographically strong source of entropy
-
 
 ## Pre-requisites
 * Python 3.x
