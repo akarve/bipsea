@@ -16,8 +16,8 @@ I created this repo for myself because all prior code I found for
 generating seed words was incomplete, opaque, and difficult to trust.
 
 This repo is designed to be a correct, transparent, and trustowrthy
-implementation of BIP-39"trustless" that you can use to **generate your
-own seedwords offline**.
+implementation of BIP-39 that you can verify for yourself and then
+use to **generate your own seedwords offline**.
 
 ### What was wrong with prior attempts?
 * Outdated (e.g. Python 2)
