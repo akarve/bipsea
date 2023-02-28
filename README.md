@@ -14,4 +14,5 @@ With ample commenting and the following:
 * [ ] Unit tests
 
 ## Sources
+* Implemented according to [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki).
 * BIP39 word list from [bips/bip-0039](https://github.com/bitcoin/bips/tree/master/bip-0039).
