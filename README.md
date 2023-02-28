@@ -1,6 +1,14 @@
 # BIP-39 Mnemonic Seed Generator in Python
 
+## Pre-requisites
+* Python 3.x
+
+### Installation
+* Clone this repo
+* `pip install -r requirements.txt`
+
 ## Usage
+
 ```python
 # see commands
 python seedwords.py --help
