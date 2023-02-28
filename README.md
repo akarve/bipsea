@@ -1,5 +1,10 @@
 # BIP-39 Mnemonic Seed Generator in Python
 
+This is **BETA SOFTWARE**. Use it at your own risk.
+
+Please carefully test and ensure that generated seeds work as
+desired before trusting large quantities to it.
+
 ## Pre-requisites
 * Python 3.x
 
