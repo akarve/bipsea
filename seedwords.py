@@ -15,11 +15,7 @@ N_WORD_BITS = 11
 
 
 @click.command()
-@click.option(
-    "--wordcount",
-    default=12,
-    type=click.IntRange(12, 24)
-)
+@click.option("--wordcount", default=12, type=click.IntRange(12, 24))
 @click.option(
     "--number/--no-number", help="Print numbers before seed words", default=False
 )
@@ -63,7 +59,7 @@ def seed(wordcount, number, binary):
         index = int_entropy_cs & mask11
         mnemonic.append(words[index])
         int_entropy_cs >>= N_WORD_BITS
-    # read backwords since we started masking from the checksum end
+    # read backwards since we started masking from the checksum end
     mnemonic.reverse()
     for i, m in enumerate(mnemonic):
         str_number = f"{i + 1}) " if number else ""
