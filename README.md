@@ -5,7 +5,7 @@
 This is **BETA SOFTWARE**. Use it at your own risk.
 
 Please carefully test and ensure that generated seeds work as
-desired before trusting large quantities of coin to its output.
+desired before trusting large quantities of coin to its mnemonics.
 
 Or, better yet, read the code and see if you think it's correct
 (*pull requests welcome*).
@@ -15,6 +15,8 @@ Or, better yet, read the code and see if you think it's correct
 I created this repo because all of the prior code I found for it was:
 old (e.g. Python 2), poorly commented, incomplete, ran on the web, or
 didn't use a cryptographically strong source of entropy.
+
+This repo is designed to be "trustless" and run offline.
 
 ## Pre-requisites
 * Python 3.x
