@@ -49,7 +49,7 @@ def seed(wordcount, number, binary):
         print(bin(int_entropy_cs))
     # get mnemonics into memory
     # TODO check hash of this file for integrity
-    with open("bip39-english.txt", "r") as source:
+    with open("english.txt", "r") as source:
         words = source.read().split("\n")
     assert len(words) == N_MNEMONICS, f"expected {N_MNEMONICS} words"
     mnemonic = []
@@ -59,6 +59,7 @@ def seed(wordcount, number, binary):
         index = int_entropy_cs & mask11
         mnemonic.append(words[index])
         int_entropy_cs >>= N_WORD_BITS
+    assert int_entropy_cs == 0, "Unexpected unused entropy"
     # read backwards since we started masking from the checksum end
     mnemonic.reverse()
     for i, m in enumerate(mnemonic):
