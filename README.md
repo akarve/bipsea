@@ -15,7 +15,7 @@ Or, better yet, read the code and see if you think it's correct
 I created this repo for myself because all prior code I found for
 generating seed words was incomplete, opaque, and difficult to trust.
 
-This repo is designed to be a correct, transparent, and trustowrthy
+This repo is designed to be a correct, transparent, and trustworthy
 implementation of BIP-39 that you can verify for yourself and then
 use to **generate your own seedwords offline**.
 
