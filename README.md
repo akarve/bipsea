@@ -48,6 +48,7 @@ python seedwords.py --wordcount 15
 * [x] Click CLI utility
 * [x] Use Python `secrets` for strong random behavior where possible
 * [ ] Add Unit tests
+* [ ] Investigate [embit](https://github.com/diybitcoinhardware/embit/blob/master/src/embit/bip39.py)
 
 ## Sources
 * Implemented according to [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki).
