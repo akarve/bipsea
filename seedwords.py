@@ -10,6 +10,10 @@ import secrets
 
 import click
 
+# https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
+FILE_NAME = "english.txt"
+FILE_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
+
 N_MNEMONICS = 2048
 N_WORD_BITS = 11
 
@@ -20,9 +24,14 @@ N_WORD_BITS = 11
     "--number/--no-number", help="Print numbers before seed words", default=False
 )
 @click.option(
+    "--index/--no-index",
+    help="Display 1-indexed position in list instead of the word itself",
+    default=False,
+)
+@click.option(
     "--binary/--no-binary", help="Display entropy + checksum in binary", default=False
 )
-def seed(wordcount, number, binary):
+def seed(wordcount, number, index, binary):
     assert (wordcount % 3) == 0, "--wordcount must be divisible by 3"
     n_checksum_bits = wordcount // 3  # CS in BIP39
     n_total_bits = wordcount * N_WORD_BITS  # ENT+CS in BIP39
@@ -48,15 +57,19 @@ def seed(wordcount, number, binary):
         print(bin(int_entropy_cs))
     # get mnemonics into memory
     # TODO check hash of this file for integrity
-    with open("english.txt", "r") as source:
-        words = source.read().split("\n")
+    with open(FILE_NAME, "rb") as source:
+        raw = source.read()
+    file_hash = hashlib.sha256()
+    file_hash.update(raw)
+    assert FILE_HASH == file_hash.hexdigest(), f"unexpected contents: {FILE_NAME}"
+    words = raw.decode().split("\n")[:-1]  # chop trailing newline
     assert len(words) == N_MNEMONICS, f"expected {N_MNEMONICS} words"
     mnemonic = []
     # mask for lowest 11 bits
     mask11 = N_MNEMONICS - 1
     for _ in range(wordcount):
-        index = int_entropy_cs & mask11
-        mnemonic.append(words[index])
+        idx = int_entropy_cs & mask11
+        mnemonic.append(str(idx + 1) if index else words[idx])
         int_entropy_cs >>= N_WORD_BITS
     assert int_entropy_cs == 0, "Unexpected unused entropy"
     # read backwards since we started masking from the checksum end

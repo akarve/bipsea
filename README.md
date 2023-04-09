@@ -43,6 +43,15 @@ python seedwords.py --help
 python seedwords.py --wordcount 15
 ```
 
+### Verifying the word list
+
+```sh
+curl -o english_source.txt https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
+
+shasum -a 256 english_source.txt
+shasum -a 256 english.txt
+```
+
 ## Project goals
 
 * [x] Click CLI utility
