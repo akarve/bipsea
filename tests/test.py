@@ -14,9 +14,10 @@ WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
 def test_entropy_flag():
+    """the entropy we report is also what mnemo computes"""
     runner = CliRunner()
     for w in WORD_COUNTS:
-        for _ in range(31):
+        for _ in range(1024):
             result = runner.invoke(seed, ["--entropy", "--wordcount", w])
             lines = result.output.splitlines()
             entropy = int(lines[0].split()[-1])
@@ -27,6 +28,7 @@ def test_entropy_flag():
 
 
 def test_no_args():
+    """no args produces 12 seed words and checksums out"""
     for _ in range(31):
         runner = CliRunner()
         result = runner.invoke(seed)
@@ -36,7 +38,30 @@ def test_no_args():
         assert mnemo.check(result.output.splitlines()[-1])
 
 
+def test_seed():
+    """seed we put in is also what mnemonic gets out"""
+    runner = CliRunner()
+    for w in WORD_COUNTS:
+        for _ in range(1024):
+            ebits = 128 + (((w - 12) // 3) * 32)
+            entropy = secrets.randbits(ebits)
+            result = runner.invoke(
+                seed,
+                [
+                    "--wordcount",
+                    w,
+                    "--seed",
+                    entropy,
+                ],
+            )
+            phrase = result.output.splitlines()[-1]
+            mnemo = Mnemonic("english")
+            assert mnemo.check(phrase)
+            assert int.from_bytes(mnemo.to_entropy(phrase), "big") == entropy
+
+
 def test_word_counts():
+    """test differing word counts; incl erroneous ones"""
     runner = CliRunner()
     for c in range(31):
         result = runner.invoke(seed, ["--wordcount", str(c)])
@@ -54,7 +79,7 @@ def test_word_counts():
 
 @pytest.mark.network
 def test_words_in_bip39_wordlist():
-    # Fetch the BIP39 wordlist
+    """make sure we match github"""
     url = "https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt"
     response = requests.get(url)
     wordlist = response.text.split()
