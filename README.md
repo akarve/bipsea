@@ -56,7 +56,7 @@ shasum -a 256 english.txt
 
 * [x] Click CLI utility
 * [x] Use Python `secrets` for strong random behavior where possible
-* [ ] Add Unit tests
+* [x] Add Unit tests
 * [ ] Investigate [embit](https://github.com/diybitcoinhardware/embit/blob/master/src/embit/bip39.py)
 
 ## Sources
