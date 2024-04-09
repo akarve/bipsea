@@ -57,7 +57,7 @@ def seed(nwords, number, meta, user_entropy, passphrase):
     dictionary = dictionary_as_array()
 
     swords = []
-    mask11 = N_MNEMONICS - 1  # mask for lowest 11 bits
+    mask11 = N_MNEMONICS - 1  # mask lowest 11 bits
     for _ in range(nwords):
         idx = int_entropy_cs & mask11
         swords.append(dictionary[idx])
