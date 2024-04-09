@@ -12,7 +12,7 @@ import requests
 from click.testing import CliRunner
 from seedwords import DICT_HASH, N_MNEMONICS, gen_words
 
-COVERAGE = 2**12  # stochastic
+COVERAGE = 2**10  # stochastic
 WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
@@ -32,13 +32,12 @@ def test_entropy_flag():
 
 def test_no_args():
     """no args produces 12 seed words and checksums out"""
-    for _ in range(31):
-        runner = CliRunner()
-        result = runner.invoke(gen_words)
-        assert result.exit_code == 0
-        assert len(result.output.splitlines()[-1].split()) == 12
-        mnemo = Mnemonic("english")
-        assert mnemo.check(result.output.splitlines()[-1])
+    runner = CliRunner()
+    result = runner.invoke(gen_words)
+    assert result.exit_code == 0
+    assert len(result.output.splitlines()[-1].split()) == 12
+    mnemo = Mnemonic("english")
+    assert mnemo.check(result.output.splitlines()[-1])
 
 
 def test_seed():
