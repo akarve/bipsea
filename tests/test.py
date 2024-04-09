@@ -10,9 +10,9 @@ from mnemonic import Mnemonic
 import pytest
 import requests
 from click.testing import CliRunner
-from seedwords import DICT_HASH, N_MNEMONICS, seed
+from seedwords import DICT_HASH, N_MNEMONICS, gen_words
 
-COVERAGE = 2**10  # stochastic
+COVERAGE = 2**12  # stochastic
 WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
@@ -21,7 +21,7 @@ def test_entropy_flag():
     runner = CliRunner()
     for w in WORD_COUNTS:
         for _ in range(COVERAGE):
-            result = runner.invoke(seed, ["--meta", "--nwords", w])
+            result = runner.invoke(gen_words, ["--meta", "--nwords", w])
             lines = result.output.splitlines()
             entropy = int(lines[0].split()[-1])
             phrase = lines[-1]
@@ -34,7 +34,7 @@ def test_no_args():
     """no args produces 12 seed words and checksums out"""
     for _ in range(31):
         runner = CliRunner()
-        result = runner.invoke(seed)
+        result = runner.invoke(gen_words)
         assert result.exit_code == 0
         assert len(result.output.splitlines()[-1].split()) == 12
         mnemo = Mnemonic("english")
@@ -50,7 +50,7 @@ def test_seed():
             entropy = secrets.randbits(ebits)
             passphrase = _random_passphrase()
             result = runner.invoke(
-                seed,
+                gen_words,
                 [
                     "--nwords",
                     w,
@@ -66,15 +66,15 @@ def test_seed():
             mnemo = Mnemonic("english")
             assert mnemo.check(words)
             assert int.from_bytes(mnemo.to_entropy(words), "big") == entropy
-            seed_hex = lines[-2].split()[-1]
-            assert seed_hex == mnemo.to_seed(words, passphrase).hex()
+            seed = lines[-2].split()[-1]
+            assert seed == mnemo.to_seed(words, passphrase).hex()
 
 
 def test_word_counts():
     """test differing word counts; incl erroneous ones"""
     runner = CliRunner()
     for c in range(31):
-        result = runner.invoke(seed, ["--nwords", str(c)])
+        result = runner.invoke(gen_words, ["--nwords", str(c)])
         if c in WORD_COUNTS:
             assert result.exit_code == 0
             assert len(result.output.split()) == c

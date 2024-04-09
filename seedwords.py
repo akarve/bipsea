@@ -32,7 +32,7 @@ N_WORD_BITS = 11
     help="Provide your own entropy as an int",
 )
 @click.option("--passphrase", type=str, default="", help="Optional BIP39 passphrase")
-def seed(nwords, number, meta, user_entropy, passphrase):
+def gen_words(nwords, number, meta, user_entropy, passphrase):
     assert (nwords % 3) == 0, "--nwords must be divisible by 3"
     n_checksum_bits = nwords // 3  # CS in BIP39
     n_total_bits = nwords * N_WORD_BITS  # ENT+CS in BIP39
@@ -103,4 +103,4 @@ def to_seed(mnemonic, passphrase="", iterations=2048):
 
 
 if __name__ == "__main__":
-    seed()
+    gen_words()
