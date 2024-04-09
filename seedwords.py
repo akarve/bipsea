@@ -64,11 +64,11 @@ def gen_words(nwords, number, meta, user_entropy, passphrase):
         int_entropy_cs >>= N_WORD_BITS
     assert int_entropy_cs == 0, "Unexpected unused entropy"
     swords.reverse()  # backwards is forwards because we started masking from the checksum end
-    user_entropy = to_seed(swords, passphrase)
+
     if meta:
         print(f"ENT (int, {n_entropy_bits} bits) {int_entropy}")
         print(f"CS  (int, {n_checksum_bits}) {int_checksum}")
-        print("SEED (hex)", user_entropy.hex())
+        print("SEED (hex)", to_seed(swords, passphrase).hex())
 
     if number:
         for i, m in enumerate(swords):
