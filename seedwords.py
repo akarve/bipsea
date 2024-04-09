@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""give you some ideas, man
+"""Implement BIP-39 in a Python CLI
 https://en.bitcoin.it/wiki/BIP_0039
 """
 
