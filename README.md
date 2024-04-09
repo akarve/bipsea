@@ -17,7 +17,7 @@ generating seed words was incomplete, opaque, and difficult to trust.
 
 This repo is designed to be a correct, transparent, and trustworthy
 implementation of BIP-39 that you can verify for yourself and then
-use to **generate your own seedwords offline**.
+use it to **generate or checksum your own seedwords offline**.
 
 ### What was wrong with prior seed generators?
 
@@ -26,6 +26,10 @@ use to **generate your own seedwords offline**.
 * Incomplete (e.g. didn't include checksum calculation)
 * Ran in a browser :(
 * Didn't use a cryptographically strong source of entropy
+
+> I later found Trezor's [mnemonic](https://github.com/trezor/python-mnemonic/tree/master)
+> which is close to what I wanted but I still find this repo code easier to read
+> (and use on the CLI). We now use mnemonic as an oracle for testing.
 
 ## Pre-requisites
 * Python 3.x
@@ -40,10 +44,10 @@ use to **generate your own seedwords offline**.
 # see commands
 python seedwords.py --help
 # generate 15 seed words at random (with checksum in final word)
-python seedwords.py --wordcount 15
+python seedwords.py --nwords 15
 ```
 
-### Verifying the word list
+### Verifying the word list for yourself
 
 ```sh
 curl -o english_source.txt https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
@@ -57,9 +61,9 @@ shasum -a 256 english.txt
 * [x] Click CLI utility
 * [x] Use Python `secrets` for strong random behavior where possible
 * [x] Add Unit tests
-* [ ] Investigate [embit](https://github.com/diybitcoinhardware/embit/blob/master/src/embit/bip39.py)
+* [x] Investigate [embit](https://github.com/diybitcoinhardware/embit/blob/master/src/embit/bip39.py)
 
 ## Sources
+
 * Implemented according to [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki).
 * BIP39 word list from [bips/bip-0039](https://github.com/bitcoin/bips/tree/master/bip-0039).
-
