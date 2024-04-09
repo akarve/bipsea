@@ -41,21 +41,20 @@ def gen_words(nwords, number, meta, user_entropy, passphrase):
     assert (
         n_checksum_bits == n_entropy_bits // 32
     ), "Unexpected mismatch between checksum and entropy sizes"
+
     if user_entropy:
         strength = math.ceil(math.log(user_entropy, 2)) + 1
         implied = math.ceil(strength / N_WORD_BITS)
         print(f"Seed @ {strength} bits of entropy ({implied} words)")
+
     int_entropy = user_entropy if user_entropy else secrets.randbits(n_entropy_bits)
     entropy_hash = hashlib.sha256(int_entropy.to_bytes(n_entropy_bits // 8, "big"))
-    # drop hash down to CS-many bits
     int_checksum = int.from_bytes(entropy_hash.digest(), "big") >> (
-        8 * entropy_hash.digest_size - n_checksum_bits
+        8 * entropy_hash.digest_size - n_checksum_bits  # cut hash down to CS-many bits
     )
-    # shift CS bits in
-    int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum
-    # get bip39 words from disk
-    dictionary = dictionary_as_array()
+    int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum  # shift CS bits in
 
+    dictionary = dictionary_as_array()  # get bip39 words from disk
     swords = []
     mask11 = N_MNEMONICS - 1  # mask lowest 11 bits
     for _ in range(nwords):
@@ -69,7 +68,6 @@ def gen_words(nwords, number, meta, user_entropy, passphrase):
         print(f"ENT (int, {n_entropy_bits} bits) {int_entropy}")
         print(f"CS  (int, {n_checksum_bits}) {int_checksum}")
         print("SEED (hex)", to_seed(swords, passphrase).hex())
-
     if number:
         for i, m in enumerate(swords):
             print(f"{i + 1}) {m}")
