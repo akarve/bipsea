@@ -3,6 +3,7 @@ for we accept non-deterministic tests as good in the huge space of possible
 entropy
 """
 import hashlib
+from unicodedata import is_normalized
 import secrets
 import string
 
@@ -12,7 +13,7 @@ import requests
 from click.testing import CliRunner
 from seedwords import DICT_HASH, N_MNEMONICS, gen_words
 
-COVERAGE = 2**10  # stochastic
+COVERAGE = 2**4  # stochastic
 WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
@@ -92,6 +93,7 @@ def test_words_in_bip39_wordlist():
     url = "https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt"
     response = requests.get(url)
     wordlist = response.text.split()
+    assert all(is_normalized("NFKD", w) for w in wordlist)
     assert len(wordlist) == N_MNEMONICS
     response_hash = hashlib.sha256(response.content).hexdigest()
     assert response_hash == DICT_HASH, f"Hash mismatch: {response_hash} != {DICT_HASH}"

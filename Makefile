@@ -1,5 +1,5 @@
 test:
-	python -m pytest tests/test.py -m "not network" -sx
+	python -m pytest tests -m "not network" -svx
 
 test-on:
-	python -m pytest tests/test.py
+	python -m pytest tests
