@@ -1,7 +1,8 @@
 import hashlib
 import hmac
-import os
 from collections import namedtuple
+import re
+from typing import Dict
 
 import base58
 from ecdsa import SigningKey, SECP256k1
@@ -9,7 +10,6 @@ from ecdsa import SigningKey, SECP256k1
 """
 https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 """
-
 
 class ExtendedKey(
     namedtuple(
@@ -49,39 +49,68 @@ VERSIONS = {
 }
 
 
-def gen_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
-    master = hmac.new(
-        key=b"Bitcoin seed",
-        msg=seed,
-        digestmod="sha512",
-    ).digest()
+def to_extended_keys(seed: bytes, mainnet=True) -> Dict[str, ExtendedKey]:
+    master = hmac.new(key=b"Bitcoin seed", msg=seed, digestmod="sha512").digest()
     assert len(master) == 64
-    left = master[:32]
-    right = master[32:]
-
-    left_int = int.from_bytes(left, "big")
-
-    if (left_int == 0) or (left_int >= SECP256k1.order):
+    secret_key = master[:32]
+    chain_code = master[32:]
+    secret_int = int.from_bytes(secret_key, "big")
+    if (secret_int == 0) or (secret_int >= SECP256k1.order):
         raise ValueError("Invalid master key")
 
-    private_key = SigningKey.from_secret_exponent(left_int, curve=SECP256k1)
+    ecdsa_keys = to_ecdsa_keys(secret_key)
+    net = "mainnet" if mainnet else "testnet"
+
+    return {
+        "private": ExtendedKey(
+            version=VERSIONS[net]["private"],
+            depth=bytes(1),
+            finger=bytes(4),
+            child_number=bytes(4),
+            chain_code=chain_code,
+            key_data=ecdsa_keys["ser_256"],
+        ),
+        "public": ExtendedKey(
+            version=VERSIONS[net]["public"],
+            depth=bytes(1),
+            finger=bytes(4),
+            child_number=bytes(4),
+            chain_code=chain_code,
+            key_data=ecdsa_keys["ser_p"],
+        ),
+    }
+
+
+def to_ecdsa_keys(secret_key: bytes):
+    private_key = SigningKey.from_secret_exponent(
+        int.from_bytes(secret_key, "big"), curve=SECP256k1
+    )
+ 
     public_key = private_key.get_verifying_key()
     ser_p = public_key.to_string("compressed")
-    ser_256 = bytes(1) + left
-
+    ser_256 = bytes(1) + secret_key
     assert len(ser_p) == len(ser_256) == 33
 
-    net = "mainnet" if mainnet else "testnet"
-    vis = "private" if private else "public"
+    return {
+        "ser_p": ser_p,
+        "ser_256": ser_256
+    }
 
-    return ExtendedKey(
-        version=VERSIONS[net][vis],
-        depth=bytes(1),
-        finger=bytes(4),
-        child_number=bytes(4),
-        chain_code=right,
-        key_data=ser_256 if private else ser_p,
-    )
+def derive_key(seed: bytes, chain: str, mainnet=True, private=False):
+    extended_keys = to_extended_keys(seed, mainnet=mainnet)
+    segments = chain.split("/")
+    assert segments[0] == "m"
+    pattern = re.compile(r"^(m|\d+'?)$")
+    assert all(pattern.match(s) for s in segments[1:]), f"invalid chain: {chain}"
+
+    if len(segments) == 1:
+        if private:
+            return extended_keys["private"]
+        else:
+            return extended_keys["public"]
+    else:
+        raise NotImplementedError("Not yet")
+
 
 
 def parse_ext_key(key: str):
@@ -97,7 +126,7 @@ def parse_ext_key(key: str):
     # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
     key = ExtendedKey(
         version=master_dec[:4],
-        depth=master_dec[4:5],  # slice to preserve bytes and not get an int
+        depth=master_dec[4:5],  # slice so we get bytes, not an int
         finger=master_dec[5:9],
         child_number=master_dec[9:13],
         chain_code=master_dec[13:45],
@@ -112,10 +141,6 @@ def parse_ext_key(key: str):
     assert len(key.key_data) - 1 == 32 == len(key.chain_code)
 
     return key
-
-
-def write_ext_key(key: str):
-    pass
 
 
 def CKDpriv(parent_key: ExtendedKey, path: str) -> ExtendedKey:
