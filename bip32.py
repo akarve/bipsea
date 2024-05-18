@@ -1,3 +1,4 @@
+import binascii
 import hashlib
 import hmac
 from collections import namedtuple
@@ -58,7 +59,8 @@ VERSIONS = {
 
 def to_extended_master(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     master = hmac.new(key=b"Bitcoin seed", msg=seed, digestmod="sha512").digest()
-    validate_derived_key(master)
+    if not validate_derived_key(master):
+        raise ValueError("Invalid master key")
     secret_key = master[:32]
     chain_code = master[32:]
 
@@ -74,12 +76,12 @@ def to_extended_master(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     )
 
 
-def validate_derived_key(key: bytes):
+def validate_derived_key(key: bytes) -> bool:
     assert len(key) == 64
     secret_key = key[:32]
     secret_int = int.from_bytes(secret_key, "big")
     if (secret_int == 0) or (secret_int >= SECP256k1.order):
-        raise ValueError("Invalid master key")
+        return False
 
 
 def to_ecdsa_pair(secret_key: bytes):
@@ -176,16 +178,32 @@ def parse_ext_key(key: str):
 
 
 def CKDpriv(
-    key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool, private: bool
+    secret_key: bytes,
+    chain_code: bytes,
+    index: int,
+    depth: int,
+    mainnet: bool,
+    private: bool,
 ) -> ExtendedKey:
     hardened = index >= NORMAL_CHILD_KEY_COUNT
-    parent_ecdsa_pair = to_ecdsa_pair(parent.data)
+    parent_ecdsa_pair = to_ecdsa_pair(secret_key)
     data = parent_ecdsa_pair["ser_256"] if hardened else parent_ecdsa_pair["ser_p"]
-    index_bytes = int.to_bytes(4, "big")  # 4 bytes = 32 bits
-    data += index_bytes
-    derived = hmac.new(key=parent.chain_code, msg=data, digestmod=hashlib.sha512)
-    # todo, try/catch and go to next index if exception
-    validate_derived_key(derived)
+
+    while True:
+        derived = hmac.new(
+            key=chain_code,
+            msg=data + index.to_bytes(4, "big"),
+            digestmod=hashlib.sha512,
+        )
+        if validate_derived_key(derived):
+            break
+        else:
+            index += 1
+            if hardened:
+                assert index < 2**32
+            else:
+                assert index < NORMAL_CHILD_KEY_COUNT
+
     secret_key = derived[:32]
     chain_code = derived[32:]
 
@@ -195,7 +213,7 @@ def CKDpriv(
         version=VERSIONS[net]["private" if private else "public"],
         depth=depth.to_bytes(1, "big"),
         finger=bytes(4),  # TODO RIPEMD
-        child_number=index_bytes,
+        child_number=index.to_bytes(4, "big"),
         chain_code=chain_code,
         data=ecdsa_pair["ser_256"] if private else ecdsa_pair["ser_p"],
     )
@@ -212,3 +230,14 @@ def N(
 ) -> ExtendedKey:
     """neuter"""
     raise NotImplementedError("not yet")
+
+
+def fingerprint(secret_key: bytes) -> bytes:
+    ecdsa_pair = to_ecdsa_pair(secret_key)
+    pub_key = ecdsa_pair["ser_p"]
+    sha2 = hashlib.sha256(pub_key).digest()
+    ripemd = hashlib.new("ripemd160")
+    ripemd.update(sha2)
+    finger = ripemd160_hash.digest()[:4]
+
+    return binascii.hexlify(finger)
