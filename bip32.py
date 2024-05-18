@@ -83,6 +83,8 @@ def validate_derived_key(key: bytes) -> bool:
     if (secret_int == 0) or (secret_int >= SECP256k1.order):
         return False
 
+    return True
+
 
 def to_ecdsa_pair(secret_key: bytes):
     private_key = SigningKey.from_secret_exponent(
