@@ -214,7 +214,7 @@ def CKDpriv(
     return ExtendedKey(
         version=VERSIONS[net]["private" if private else "public"],
         depth=depth.to_bytes(1, "big"),
-        finger=bytes(4),  # TODO RIPEMD
+        finger=fingerprint(secret_key),
         child_number=index.to_bytes(4, "big"),
         chain_code=chain_code,
         data=ecdsa_pair["ser_256"] if private else ecdsa_pair["ser_p"],
