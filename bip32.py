@@ -237,9 +237,9 @@ def N(
 def fingerprint(secret_key: bytes) -> bytes:
     ecdsa_pair = to_ecdsa_pair(secret_key)
     pub_key = ecdsa_pair["ser_p"]
-    sha2 = hashlib.sha256(pub_key).digest()
+    sha256 = hashlib.sha256(pub_key).digest()
     ripemd = hashlib.new("ripemd160")
     ripemd.update(sha2)
-    finger = ripemd160_hash.digest()[:4]
+    finger = ripemd.digest()[:4]
 
     return binascii.hexlify(finger)
