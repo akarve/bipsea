@@ -98,6 +98,7 @@ def validate_derived_key(key: bytes) -> bool:
 
 
 def to_ecdsa_pair(secret_key: bytes):
+    print(">>>>>>>>", int.from_bytes(secret_key, "big"))
     private_key = SigningKey.from_secret_exponent(
         int.from_bytes(secret_key, "big"), curve=SECP256k1
     )
@@ -267,7 +268,8 @@ def N(
     key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
 ) -> ExtendedKey:
     """neuter a private key into the public one (no derivation per se)"""
-    ecdsa_pair = ecdsa_pair(key)
+    ecdsa_pair = to_ecdsa_pair(key)
+
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
