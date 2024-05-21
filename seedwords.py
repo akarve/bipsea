@@ -1,6 +1,9 @@
 #!/usr/bin/python
 """Implement BIP-39 in a Python CLI
 https://en.bitcoin.it/wiki/BIP_0039
+
+TODO: CLI design:
+(xprv or seed or entropy) | derivation path > output?
 """
 
 import binascii

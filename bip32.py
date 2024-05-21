@@ -64,15 +64,16 @@ VERSIONS = {
 }
 
 
-def to_extended_master(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
-    master = hmac.new(key=b"Bitcoin seed", msg=seed, digestmod="sha512").digest()
-    if not validate_derived_key(master):
-        raise ValueError("Invalid master key")
+def hmac_(key: bytes, data: bytes) -> bytes:
+    return hmac.new(key=key, msg=data, digestmod="sha512").digest()
 
+
+def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
+    master = hmac_(key=b"Bitcoin seed", data=seed)
     secret_key = master[:32]
     chain_code = master[32:]
-
     ecdsa_keys = to_ecdsa_pair(secret_key)
+
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"][
             "private" if private else "public"
@@ -81,9 +82,7 @@ def to_extended_master(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
         finger=bytes(4),
         child_number=bytes(4),
         chain_code=chain_code,
-        data=ecdsa_keys["ser_256"]
-        if private
-        else ecdsa_keys["ser_p"].to_string("compressed"),
+        data=ecdsa_keys["ser_256"] if private else ecdsa_keys["ser_p"],
     )
 
 
@@ -98,57 +97,74 @@ def validate_derived_key(key: bytes) -> bool:
 
 
 def to_ecdsa_pair(secret_key: bytes):
-    print(">>>>>>>>", int.from_bytes(secret_key, "big"))
-    private_key = SigningKey.from_secret_exponent(
-        int.from_bytes(secret_key, "big"), curve=SECP256k1
-    )
-
+    """ecdsa from_/to_string are actually from_/to_bytes b/c of some kind of
+    Python 2 hangover"""
+    private_key = SigningKey.from_string(secret_key, curve=SECP256k1)
     public_key = private_key.get_verifying_key()
-    ser_p = public_key
+    ser_p = public_key.to_string("compressed")
     ser_256 = bytes(1) + secret_key
-    assert len(ser_p.to_string("compressed")) == len(ser_256) == 33
+    assert len(ser_p) == len(ser_256) == 33
 
     return {"ser_p": ser_p, "ser_256": ser_256}
 
 
-def derive_key(seed: bytes, path: str, mainnet=True, private=False):
+def derive_key(master_seed: bytes, path: str, mainnet=True, private=False):
     segments = path.split("/")
-    for depth, segment in enumerate(segments):
-        if depth == 0:
-            key = to_extended_master(seed, mainnet=mainnet, private=private)
-        else:
-            index, hardened = segment_to_index(segment)
-            if private:
-                key = CKDpriv(
-                    key.data,
-                    key.chain_code,
+    assert segments[0] == "m", "expected 'm' (private) at derivation path root"
+    indexes = [segment_to_index(s) for s in segments[1:]]
+    max_depth = len(indexes)
+    if indexes:
+        # if we're doing any derivation keep the private key
+        parent_key = to_master_key(master_seed, mainnet=mainnet, private=True)
+    else:
+        return to_master_key(master_seed, mainnet=mainnet, private=private)
+    for depth, (index, hardened) in enumerate(indexes, 1):
+        # we implement the simplest algorithm: only use N() or CKDpub() at the
+        # highest depth (final segment).
+        # otherwise we would need to look ahead for the last hardened child
+        # and use CKDpriv() up to that point (because hardened public children require
+        # a private parent key) and such code would be hard to read
+        last = depth == max_depth
+        if last and not private:
+            if hardened:
+                parent_key = N(
+                    parent_key.data,
+                    parent_key.chain_code,
                     index,
                     depth,
                     mainnet=mainnet,
                 )
             else:
-                # TODO unit test proving the two are equivalent when they should be
-                if hardened:
-                    key = N(
-                        key.data,
-                        key.chain_code,
-                        index,
-                        depth,
-                        mainnet=mainnet,
-                    )
-                else:
-                    key = CKDpub(
-                        key.data,
-                        key.chain_code,
-                        index,
-                        depth,
-                        mainnet=mainnet,
-                    )
+                parent_key = CKDpub(
+                    parent_key.data,
+                    parent_key.chain_code,
+                    index,
+                    depth,
+                    mainnet=mainnet,
+                )
+                assert parent_key == N(
+                    parent_key.data,
+                    parent_key.chain_code,
+                    index,
+                    depth,
+                    mainnet=mainnet,
+                ), "CKDpub() and N() should produce identical results for non-hardened public children"
 
-    return key
+        else:
+            parent_key = CKDpriv(
+                parent_key.data,
+                parent_key.chain_code,
+                index,
+                depth,
+                mainnet=mainnet,
+            )
+
+    return parent_key
 
 
 def segment_to_index(segment: str) -> (bytes, bool):
+    """for internal (non-m) derivation path segments which should all be integers
+    once the optional hardened symbol is dropped"""
     hardened = segment[-1] in {"h", "H", "'"}
     if hardened:
         segment = segment[:-1]
@@ -162,15 +178,11 @@ def segment_to_index(segment: str) -> (bytes, bool):
 
 def parse_ext_key(key: str):
     """
-    master - master bip32 root (extended) key, base 58
+    master - bip32 extended key, base 58
     """
-    master_dec = base58.b58decode_check(
-        key,
-        alphabet=base58.BITCOIN_ALPHABET,
-    )
+    master_dec = base58.b58decode_check(key, alphabet=base58.BITCOIN_ALPHABET)
     assert len(master_dec) == 78, "expected 78 bytes"
-    # serialization order
-    # https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format
+
     key = ExtendedKey(
         version=master_dec[:4],
         depth=master_dec[4:5],  # slice so we get bytes, not an int
@@ -199,18 +211,10 @@ def CKDpriv(
 ) -> ExtendedKey:
     hardened = index >= NORMAL_CHILD_KEY_COUNT
     parent_ecdsa_pair = to_ecdsa_pair(secret_key)
-    data = (
-        parent_ecdsa_pair["ser_256"]
-        if hardened
-        else parent_ecdsa_pair["ser_p"].to_string("compressed")
-    )
+    data = parent_ecdsa_pair["ser_256"] if hardened else parent_ecdsa_pair["ser_p"]
 
     while True:
-        derived = hmac.new(
-            key=chain_code,
-            msg=data + index.to_bytes(4, "big"),
-            digestmod=hashlib.sha512,
-        )
+        derived = hmac_(key=chain_code, msg=data + index.to_bytes(4, "big"))
         if validate_derived_key(derived):
             break
         else:
@@ -237,52 +241,47 @@ def CKDpriv(
 
 
 def CKDpub(
-    key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
+    private_key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
 ) -> ExtendedKey:
     if index >= NORMAL_CHILD_KEY_COUNT:
         return ValueError("Must not invoke CKDpub() for hardened child")
-    ecdsa_pair = to_ecdsa_pair(key)
-    derived = hmac.new(
-        key=chain_code,
-        msg=ecdsa_pair["ser_p"].to_string("compressed") + index.to_bytes(4, "big"),
-        digestmod=hashlib.sha512,
-    )
-
+    ecdsa_pair = to_ecdsa_pair(private_key)
+    derived = hmac_(key=chain_code, msg=ecdsa_pair["ser_p"] + index.to_bytes(4, "big"))
     derived_left_int = int.from_bytes(derived[:32], "big")
     derived_chain_code = derived[32:]
     child_key = VerifyingKey.from_public_point(
-        derived_left_int * SECP256k1.generator + ecdsa_pair["ser_p"]
+        derived_left_int * SECP256k1.generator
+        + VerifyingKey.from_string(ecdsa_pair["ser_p"], curve=SECP256k1).pubkey.point
     )
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
         depth=depth.to_bytes(1, "big"),
-        finger=fingerprint(child_key),
+        finger=fingerprint(derived[:32]),
         child_number=index.to_bytes(4, "big"),
         chain_code=derived_chain_code,
-        data=child_key,
+        data=child_key.to_string("compressed"),
     )
 
 
 def N(
-    key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
+    private_key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
 ) -> ExtendedKey:
     """neuter a private key into the public one (no derivation per se)"""
-    ecdsa_pair = to_ecdsa_pair(key)
-
+    ecdsa_pair = to_ecdsa_pair(private_key)
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
         depth=depth.to_bytes(1, "big"),
-        finger=fingerprint(key),
+        finger=fingerprint(private_key),
         child_number=index.to_bytes(4, "big"),
         chain_code=chain_code,
         data=ecdsa_pair["ser_p"],
     )
 
 
-def fingerprint(secret_key: bytes) -> bytes:
-    ecdsa_pair = to_ecdsa_pair(secret_key)
+def fingerprint(private_key: bytes) -> bytes:
+    ecdsa_pair = to_ecdsa_pair(private_key)
     pub_key = ecdsa_pair["ser_p"]
     sha256 = hashlib.sha256(pub_key).digest()
     ripemd = hashlib.new("ripemd160")
