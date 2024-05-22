@@ -30,7 +30,7 @@ TYPED_CHILD_KEY_COUNT = 2**31
 
 
 def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
-    master = hmac_(key=b"Bitcoin seed", data=seed)
+    master = hmac_sha512(key=b"Bitcoin seed", data=seed)
     secret_key = master[:32]
     chain_code = master[32:]
     pub_key = to_public_key(bytes(1) + secret_key)
@@ -120,7 +120,9 @@ def CKDpriv(
         ).to_string("compressed")
     )
     while True:
-        derived = hmac_(key=chain_code, data=data + child_number.to_bytes(4, "big"))
+        derived = hmac_sha512(
+            key=chain_code, data=data + child_number.to_bytes(4, "big")
+        )
         if validate_derived_key(derived):
             break
         else:
@@ -180,7 +182,7 @@ def CKDpub(
 
     parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
     while True:
-        derived = hmac_(key=chain_code, data=public_key + child_number)
+        derived = hmac_sha512(key=chain_code, data=public_key + child_number)
         derived_key = int.from_bytes(derived[:32], "big")
         derived_chain_code = derived[32:]
         if derived_key >= SECP256k1.order:
@@ -201,9 +203,6 @@ def CKDpub(
             child_number += 1
             continue
         break
-    # TODO:
-    # In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting key is invalid,
-    # and one should proceed with the next value for i.
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
@@ -253,7 +252,7 @@ def fingerprint(private_key: bytes) -> bytes:
     return fingerprint
 
 
-def hmac_(key: bytes, data: bytes) -> bytes:
+def hmac_sha512(key: bytes, data: bytes) -> bytes:
     return hmac.new(key=key, msg=data, digestmod="sha512").digest()
 
 
