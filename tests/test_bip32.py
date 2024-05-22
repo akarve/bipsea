@@ -13,7 +13,10 @@ logger = logging.getLogger("btcseed")
 @pytest.mark.parametrize(
     "vector",
     TEST_VECTORS,
-    ids=[f"Vector-{i + 1}-{'chain'}" for i, e in enumerate(TEST_VECTORS)],
+    ids=[
+        f"Vector-{i + 1}-{', '.join(e['chain'].keys())}"
+        for i, e in enumerate(TEST_VECTORS)
+    ],
 )
 def test_vectors(vector):
     seed = bytes.fromhex(vector["seed_hex"])
@@ -33,9 +36,8 @@ def test_vectors(vector):
 @pytest.mark.parametrize(
     "key, reason",
     INVALID_KEYS,
-    ids=[f"Vector-5-{reason}-{key}" for key, reason in INVALID_KEYS],
+    ids=[f"Vector-5-{reason[:32]}-{key[:8]}" for key, reason in INVALID_KEYS],
 )
-@pytest.mark.xfail(strict=True, reason="Key must be invalid")
 def test_invalid_keys(key, reason):
-    logger.info(f"BIP32 test vector 5")
-    parse_ext_key(key)
+    with pytest.raises((AssertionError, ValueError)):
+        parse_ext_key(key)
