@@ -60,11 +60,11 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
         )
     ]
     for depth, (index, _) in enumerate(indexes, 1):
-        parent_key = key_chain[-1]
+        parent = key_chain[-1]
         key_chain.append(
             CKDpriv(
-                parent_key.data,
-                parent_key.chain_code,
+                parent.data,
+                parent.chain_code,
                 index,
                 depth,
                 mainnet=mainnet,
@@ -76,28 +76,27 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     if private or not indexes:
         return key_chain[-1]
     else:
-        last_hardened = indexes[-1][1]
-        depth = len(indexes) + 1
-        if last_hardened:
+        last_is_hardened = indexes[-1][1]
+        parent = key_chain[-1]
+        if last_is_hardened:
             # N() is not a true derivation so just neuter the very last private key
-            parent_key = key_chain[-1]
             return N(
-                parent_key.data,
-                parent_key.chain_code,
-                parent_key.child_number,
-                parent_key.depth,
-                finger=parent_key.finger,
+                parent.data,
+                parent.chain_code,
+                parent.child_number,
+                parent.depth,
+                finger=parent.finger,
                 mainnet=mainnet,
             )
         else:
-            # CKDpub() is a true derivation so go to grandparent as its parent
+            # CKDpub() is a true derivation so go to grandparent as parent
             grand_parent = key_chain[-2]
             return CKDpub(
                 to_public_key(grand_parent.data),
                 grand_parent.chain_code,
-                key_chain[-1].child_number,
-                key_chain[-1].depth,
-                finger=key_chain[-1].finger,
+                parent.child_number,
+                parent.depth,
+                finger=parent.finger,
                 mainnet=mainnet,
             )
 
