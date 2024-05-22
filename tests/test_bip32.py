@@ -8,10 +8,6 @@ from bip32_ext_key import parse_ext_key
 
 logger = logging.getLogger("btcseed")
 
-# TODO: prove this:
-# N(CKDpriv((kpar, cpar), i)) (works always).
-# CKDpub(N(kpar, cpar), i) (works only for non-hardened child keys).
-
 TEST_VECTORS = [
     {
         "seed_hex": "000102030405060708090a0b0c0d0e0f",
