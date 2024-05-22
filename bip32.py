@@ -66,7 +66,7 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
                 parent.data,
                 parent.chain_code,
                 index,
-                depth,
+                depth.to_bytes(1, "big"),
                 mainnet=mainnet,
             )
         )
@@ -105,7 +105,7 @@ def CKDpriv(
     secret_key: bytes,
     chain_code: bytes,
     child_number: int,
-    depth: int,
+    depth: bytes,
     mainnet: bool,
 ) -> ExtendedKey:
     hardened = child_number >= TYPED_CHILD_KEY_COUNT
@@ -138,7 +138,7 @@ def CKDpriv(
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["private"],
-        depth=depth.to_bytes(1, "big"),
+        depth=depth,
         finger=fingerprint(secret_key),
         child_number=child_number.to_bytes(4, "big"),
         chain_code=derived[32:],
