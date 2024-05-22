@@ -68,7 +68,7 @@ def parse_ext_key(key: str):
     master_dec = base58.b58decode_check(key, alphabet=base58.BITCOIN_ALPHABET)
     assert len(master_dec) == 78, "expected 78 bytes"
 
-    key = ExtendedKey(
+    ext_key = ExtendedKey(
         version=master_dec[:4],
         depth=master_dec[4:5],  # slice so we get bytes, not an int
         finger=master_dec[5:9],
@@ -77,11 +77,31 @@ def parse_ext_key(key: str):
         data=master_dec[45:],
     )
 
-    assert key.version in (
-        set(VERSIONS["mainnet"].values()) | set(VERSIONS["testnet"].values())
-    )
-    assert len(key.version) == 4
-    assert len(key.finger) == len(key.child_number) == 4
-    assert len(key.data) - 1 == 32 == len(key.chain_code)
+    matched = False
+    for net in VERSIONS:
+        for vis in VERSIONS[net]:
+            if ext_key.version == VERSIONS[net][vis]:
+                matched = True
+                if net == "mainnet":
+                    assert key.startswith("x")
+                else:
+                    assert key.startswith("t")
+                if vis == "public":
+                    assert key[1:4] == "pub"
+                    assert ext_key.data[0] == bytes(1)
+                else:
+                    assert key[1:4] == "prv"
+                    assert ext_key.data[0] in {bytes.fromhex("02"), bytes.fromhex("03")}
+    assert matched, f"unrecognized version: {ext_key.version}"
 
-    return key
+    depth = int.from_bytes(ext_key.depth, "big")
+    if depth == 0:
+        assert ext_key.finger == bytes(4)
+    else:
+        assert ext_key.finger != bytes(4)
+
+    assert len(ext_key.version) == 4
+    assert len(ext_key.finger) == len(ext_key.child_number) == 4
+    assert len(ext_key.data) - 1 == 32 == len(ext_key.chain_code)
+
+    return ext_key
