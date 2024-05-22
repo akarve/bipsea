@@ -16,6 +16,7 @@ https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki Entropy
 import hashlib, hmac
 import logging
 
+from ecdsa.keys import MalformedPointError
 from ecdsa import SigningKey, SECP256k1, VerifyingKey
 
 from bip32_ext_key import ExtendedKey, VERSIONS
@@ -104,11 +105,11 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
 def CKDpriv(
     secret_key: bytes,
     chain_code: bytes,
-    index: int,
+    child_number: int,
     depth: int,
     mainnet: bool,
 ) -> ExtendedKey:
-    hardened = index >= TYPED_CHILD_KEY_COUNT
+    hardened = child_number >= TYPED_CHILD_KEY_COUNT
     secret_int = int.from_bytes(secret_key[1:], "big")
     data = (
         secret_key
@@ -119,15 +120,15 @@ def CKDpriv(
         ).to_string("compressed")
     )
     while True:
-        derived = hmac_(key=chain_code, data=data + index.to_bytes(4, "big"))
+        derived = hmac_(key=chain_code, data=data + child_number.to_bytes(4, "big"))
         if validate_derived_key(derived):
             break
         else:
-            index += 1
+            child_number += 1
             if hardened:
-                assert index < 2**32
+                assert child_number < 2**32
             else:
-                assert index < TYPED_CHILD_KEY_COUNT
+                assert child_number < TYPED_CHILD_KEY_COUNT
 
     child_key_int = (
         int.from_bytes(derived[:32], "big") + int.from_bytes(secret_key, "big")
@@ -138,7 +139,7 @@ def CKDpriv(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["private"],
         depth=depth.to_bytes(1, "big"),
         finger=fingerprint(secret_key),
-        child_number=index.to_bytes(4, "big"),
+        child_number=child_number.to_bytes(4, "big"),
         chain_code=derived[32:],
         data=child_key,
     )
@@ -176,16 +177,30 @@ def CKDpub(
     child_number_int = int.from_bytes(child_number, "big")
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
         raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
-    derived = hmac_(key=chain_code, data=public_key + child_number)
-    derived_key = int.from_bytes(derived[:32], "big")
-    derived_chain_code = derived[32:]
 
     parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
-    child_point = SECP256k1.generator * derived_key + parent_key
-    child_key = VerifyingKey.from_public_point(
-        child_point,
-        curve=SECP256k1,
-    ).to_string("compressed")
+    while True:
+        derived = hmac_(key=chain_code, data=public_key + child_number)
+        derived_key = int.from_bytes(derived[:32], "big")
+        derived_chain_code = derived[32:]
+        if derived_key >= SECP256k1.order:
+            child_number += 1
+            assert child_number < TYPED_CHILD_KEY_COUNT, "exhausted available children"
+            continue
+        child_point = SECP256k1.generator * derived_key + parent_key
+        try:
+            child_key = VerifyingKey.from_public_point(
+                child_point,
+                curve=SECP256k1,
+            ).to_string("compressed")
+        except MalformedPointError as m:
+            # Is this in fact how we detect the point at infinity?
+            logger.warn(
+                "Point at infinity? Retrying with higher child_number in CKDPub()", m
+            )
+            child_number += 1
+            continue
+        break
     # TODO:
     # In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting key is invalid,
     # and one should proceed with the next value for i.
