@@ -50,48 +50,55 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     segments = path.split("/")
     assert segments[0] == "m", "expected 'm' (private) at derivation path root"
     indexes = [segment_to_index(s) for s in segments[1:]]
-    max_depth = len(indexes)
-    parent_key = to_master_key(
-        master_seed,
-        mainnet=mainnet,
-        # if we're doing any derivation we must start with the master private key
-        private=True if indexes else private,
-    )
-    for depth, (index, hardened) in enumerate(indexes, 1):
-        next = CKDpriv(
-            parent_key.data,
-            parent_key.chain_code,
-            index,
-            depth,
+    key_chain = [
+        to_master_key(
+            master_seed,
             mainnet=mainnet,
+            # if we're doing any derivation we must start with the master private key
+            private=True if indexes else private,
         )
-        # only use N() or CKDpub() at the  highest depth (final segment)
-        # so as to avoid complex, hard-to-read flow control with look-ahead
-        last_derivation = depth == max_depth
-        if last_derivation and not private:
-            neutered_key = N(
-                next.data,
-                next.chain_code,
+    ]
+    for depth, (index, _) in enumerate(indexes, 1):
+        parent_key = key_chain[-1]
+        key_chain.append(
+            CKDpriv(
+                parent_key.data,
+                parent_key.chain_code,
                 index,
                 depth,
-                finger=next.finger,
                 mainnet=mainnet,
             )
-            if hardened:
-                parent_key = neutered_key
-            else:
-                parent_key = CKDpub(
-                    to_public_key(parent_key.data),
-                    parent_key.chain_code,
-                    index,
-                    depth,
-                    finger=parent_key.finger,
-                    mainnet=mainnet,
-                )
+        )
+    # only use N() or CKDpub() if public at the highest depth (final segment)
+    # so as to avoid complex, hard-to-read flow control with look-ahead since once
+    # we harden a child anywhere in the chain we can't recover the private key
+    if private or not indexes:
+        return key_chain[-1]
+    else:
+        (last_segment, last_hardened) = indexes[-1]
+        depth = len(indexes) + 1
+        if last_hardened:
+            # N() is not a true derivation so just neuter the very last private key
+            parent_key = key_chain[-1]
+            return N(
+                parent_key.data,
+                parent_key.chain_code,
+                parent_key.child_number,
+                parent_key.depth,
+                finger=parent_key.finger,
+                mainnet=mainnet,
+            )
         else:
-            parent_key = next
-
-    return parent_key
+            # CKDpub() is a true derivation so go to its parent
+            parent_key = key_chain[-2]
+            return CKDpub(
+                to_public_key(parent_key.data),
+                parent_key.chain_code,
+                key_chain[-1].child_number,
+                key_chain[-1].depth,
+                finger=parent_key.finger,
+                mainnet=mainnet,
+            )
 
 
 def CKDpriv(
@@ -140,19 +147,19 @@ def CKDpriv(
 def N(
     private_key: bytes,
     chain_code: bytes,
-    index: int,
-    depth: int,
-    mainnet: bool,
+    child_number: bytes,
+    depth: bytes,
     finger: bytes,
+    mainnet: bool,
 ) -> ExtendedKey:
     """neuter a private key into the public one (no derivation per se)
     pass in the fingerprint since it is from the parent (which we don't have)
     """
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
-        depth=depth.to_bytes(1, "big"),
+        depth=depth,
         finger=finger,
-        child_number=index.to_bytes(4, "big"),
+        child_number=child_number,
         chain_code=chain_code,
         data=to_public_key(private_key),
     )
@@ -161,14 +168,15 @@ def N(
 def CKDpub(
     public_key: bytes,
     chain_code: bytes,
-    index: int,
-    depth: int,
+    child_number: bytes,
+    depth: bytes,
     finger: bytes,
     mainnet: bool,
 ) -> ExtendedKey:
-    if index >= TYPED_CHILD_KEY_COUNT:
+    child_number_int = int.from_bytes(child_number, 4)
+    if child_number_int >= TYPED_CHILD_KEY_COUNT:
         raise ValueError("Must not invoke CKDpub() for hardened child")
-    derived = hmac_(key=chain_code, data=public_key + index.to_bytes(4, "big"))
+    derived = hmac_(key=chain_code, data=public_key + child_number_bytes)
     derived_key = int.from_bytes(derived[:32], "big")
     derived_chain_code = derived[32:]
     child_key = VerifyingKey.from_public_point(
@@ -182,11 +190,11 @@ def CKDpub(
 
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
-        depth=depth.to_bytes(1, "big"),
+        depth=depth,
         finger=finger,
-        child_number=index.to_bytes(4, "big"),
+        child_number=child_number,
         chain_code=derived_chain_code,
-        data=child_key.to_bytes(),
+        data=child_key,
     )
 
 
