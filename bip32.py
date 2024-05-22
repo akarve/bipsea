@@ -1,14 +1,9 @@
 """
-# in readme summarize each
-# put it all together
-# cards and entropy
-# CLI for 85 :yay:
-# clean out seed etc over-printing in seedwords
-# say name cli commands by bip?
+Complete implementation of BIP-32 hierarchical deterministic wallets.
 
 https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
-https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki Seed words
-https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki Derivation paths
+
+TODO: clean module for BIP-85
 https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki Entropy
 """
 
@@ -229,6 +224,8 @@ def to_public_key(secret_key: bytes, as_point=False):
 def segment_to_index(segment: str) -> (bytes, bool):
     """for internal (non-m) derivation path segments which should all be integers
     once the optional hardened symbol is dropped"""
+    # As of BIP-44 we can use ' for hardened paths
+    # https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki Derivation paths
     hardened = segment[-1] in {"h", "H", "'"}
     if hardened:
         segment = segment[:-1]
@@ -241,7 +238,6 @@ def segment_to_index(segment: str) -> (bytes, bool):
 
 
 def fingerprint(private_key: bytes) -> bytes:
-    logger.debug(f"fingerprint input: {private_key}")
 
     pub_key = to_public_key(private_key)
     ripemd = hashlib.new("ripemd160")

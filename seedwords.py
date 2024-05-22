@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Implement BIP-39 in a Python CLI
+"""Complete implementation of BIP-39 in Python with CLI
 https://en.bitcoin.it/wiki/BIP_0039
 
 TODO: CLI design:
