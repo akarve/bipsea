@@ -111,10 +111,12 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     assert segments[0] == "m", "expected 'm' (private) at derivation path root"
     indexes = [segment_to_index(s) for s in segments[1:]]
     max_depth = len(indexes)
-    if not indexes:
-        return to_master_key(master_seed, mainnet=mainnet, private=private)
-    # if we're doing any derivation start with the master private key
-    parent_key = to_master_key(master_seed, mainnet=mainnet, private=True)
+    parent_key = to_master_key(
+        master_seed,
+        mainnet=mainnet,
+        # if we're doing any derivation, start with the master private key
+        private=True if indexes else private,
+    )
     for depth, (index, hardened) in enumerate(indexes, 1):
         logger.debug(f"derive {index} {hardened}")
         # we implement the simplest algorithm: only use N() or CKDpub() at the
@@ -130,10 +132,9 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
             depth,
             mainnet=mainnet,
         )
-        last = depth == max_depth
-        if last and not private:
+        if (depth == max_depth) and not private:
             logger.info("N()")
-            parent_key = N(
+            neutered_key = N(
                 next.data,
                 next.chain_code,
                 index,
@@ -142,7 +143,7 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
                 mainnet=mainnet,
             )
             if hardened:
-                continue
+                parent_key = neutered_key
             else:
                 logger.info("CKDpub()")
                 parent_key = CKDpub(
