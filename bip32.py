@@ -173,10 +173,10 @@ def CKDpub(
     finger: bytes,
     mainnet: bool,
 ) -> ExtendedKey:
-    child_number_int = int.from_bytes(child_number, 4)
+    child_number_int = int.from_bytes(child_number, "big")
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
         raise ValueError("Must not invoke CKDpub() for hardened child")
-    derived = hmac_(key=chain_code, data=public_key + child_number_bytes)
+    derived = hmac_(key=chain_code, data=public_key + child_number)
     derived_key = int.from_bytes(derived[:32], "big")
     derived_chain_code = derived[32:]
     child_key = VerifyingKey.from_public_point(
