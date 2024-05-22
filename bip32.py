@@ -25,7 +25,7 @@ from bip32_ext_key import ExtendedKey, VERSIONS
 logger = logging.getLogger("btcseed")
 
 
-# same count for hardened and unhardened children, both from 32 bits
+# same count for hardened and unhardened children
 TYPED_CHILD_KEY_COUNT = 2**31
 
 
