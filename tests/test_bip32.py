@@ -2,7 +2,8 @@ import logging
 
 import pytest
 
-from bip32 import derive_key, parse_ext_key
+from bip32 import derive_key
+from bip32_ext_key import parse_ext_key
 
 
 logger = logging.getLogger("btcseed")

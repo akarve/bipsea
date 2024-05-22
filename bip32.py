@@ -13,79 +13,19 @@ https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki Entropy
 """
 
 
-import binascii
-import hashlib
-import hmac
+import hashlib, hmac
 import logging
-from collections import namedtuple
-import re
-from typing import Dict
 
-import base58
 from ecdsa import SigningKey, SECP256k1, VerifyingKey
+
+from bip32_ext_key import ExtendedKey, VERSIONS
 
 
 logger = logging.getLogger("btcseed")
 
 
-class ExtendedKey(
-    namedtuple(
-        "ExtendedKey",
-        [
-            "version",
-            "depth",
-            "finger",
-            "child_number",
-            "chain_code",
-            "data",
-        ],
-    )
-):
-    def __str__(self):
-        # return super().__str__()
-        key_ = (
-            self.version
-            + self.depth
-            + self.finger
-            + self.child_number
-            + self.chain_code
-            + self.data
-        )
-        return base58.b58encode_check(key_, alphabet=base58.BITCOIN_ALPHABET).decode()
-
-    def __new__(
-        cls,
-        version: bytes,
-        depth: bytes,
-        finger: bytes,
-        child_number: bytes,
-        chain_code: bytes,
-        data: bytes,
-    ):
-        assert len(version) == 4
-        assert len(depth) == 1
-        assert len(finger) == 4
-        assert len(child_number) == 4
-        assert len(chain_code) == 32
-        assert len(data) == 33
-        return super().__new__(
-            cls, version, depth, finger, child_number, chain_code, data
-        )
-
-
 # HARDENED_CHILD_KEY_COUNT = 2**31 (as comment for clarity)
 NORMAL_CHILD_KEY_COUNT = 2**31
-
-VERSIONS = {
-    "mainnet": {
-        "public": bytes.fromhex("0488B21E"),
-        "private": bytes.fromhex("0488ADE4"),
-    },
-    "testnet": {
-        "public": bytes.fromhex("043587CF"),
-        "private": bytes.fromhex("04358394"),
-    },
-}
 
 
 def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
@@ -114,16 +54,13 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     parent_key = to_master_key(
         master_seed,
         mainnet=mainnet,
-        # if we're doing any derivation, start with the master private key
+        # if we're doing any derivation we must start with the master private key
         private=True if indexes else private,
     )
     for depth, (index, hardened) in enumerate(indexes, 1):
         logger.debug(f"derive {index} {hardened}")
-        # we implement the simplest algorithm: only use N() or CKDpub() at the
-        # highest depth (final segment).
-        # otherwise we would need to look ahead for the last hardened child
-        # and use CKDpriv() up to that point (because hardened public children require
-        # a private parent key) and such code would be hard to read
+        # only use N() or CKDpub() at the  highest depth (final segment)
+        # so as to avoid complex look ahead and hard-to-read flow control
         logger.debug("CKDpriv()")
         next = CKDpriv(
             parent_key.data,
@@ -158,32 +95,6 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
             parent_key = next
 
     return parent_key
-
-
-def parse_ext_key(key: str):
-    """
-    master - bip32 extended key, base 58
-    """
-    master_dec = base58.b58decode_check(key, alphabet=base58.BITCOIN_ALPHABET)
-    assert len(master_dec) == 78, "expected 78 bytes"
-
-    key = ExtendedKey(
-        version=master_dec[:4],
-        depth=master_dec[4:5],  # slice so we get bytes, not an int
-        finger=master_dec[5:9],
-        child_number=master_dec[9:13],
-        chain_code=master_dec[13:45],
-        data=master_dec[45:],
-    )
-
-    assert key.version in (
-        set(VERSIONS["mainnet"].values()) | set(VERSIONS["testnet"].values())
-    )
-    assert len(key.version) == 4
-    assert len(key.finger) == len(key.child_number) == 4
-    assert len(key.data) - 1 == 32 == len(key.chain_code)
-
-    return key
 
 
 def CKDpriv(
@@ -296,18 +207,6 @@ def to_public_key(secret_key: bytes, as_point=False):
     return compressed
 
 
-def fingerprint(private_key: bytes) -> bytes:
-    logger.debug(f"fingerprint input: {private_key}")
-    pub_key = to_public_key(private_key)
-    logger.debug(f"fingerprint pubkey: {pub_key}")
-    ripemd = hashlib.new("ripemd160")
-    ripemd.update(hashlib.sha256(pub_key).digest())
-    fingerprint = ripemd.digest()[:4]
-    logger.debug(f"+ fingerprint: {fingerprint}")
-
-    return fingerprint
-
-
 def segment_to_index(segment: str) -> (bytes, bool):
     """for internal (non-m) derivation path segments which should all be integers
     once the optional hardened symbol is dropped"""
@@ -320,6 +219,18 @@ def segment_to_index(segment: str) -> (bytes, bool):
         index += NORMAL_CHILD_KEY_COUNT
 
     return (index, hardened)
+
+
+def fingerprint(private_key: bytes) -> bytes:
+    logger.debug(f"fingerprint input: {private_key}")
+    pub_key = to_public_key(private_key)
+    logger.debug(f"fingerprint pubkey: {pub_key}")
+    ripemd = hashlib.new("ripemd160")
+    ripemd.update(hashlib.sha256(pub_key).digest())
+    fingerprint = ripemd.digest()[:4]
+    logger.debug(f"+ fingerprint: {fingerprint}")
+
+    return fingerprint
 
 
 def hmac_(key: bytes, data: bytes) -> bytes:
