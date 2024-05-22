@@ -24,8 +24,8 @@ from bip32_ext_key import ExtendedKey, VERSIONS
 logger = logging.getLogger("btcseed")
 
 
-# HARDENED_CHILD_KEY_COUNT = 2**31 (as comment for clarity)
-NORMAL_CHILD_KEY_COUNT = 2**31
+# same count for hardened and unhardened children, both from 32 bits
+TYPED_CHILD_KEY_COUNT = 2**31
 
 
 def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
@@ -58,10 +58,6 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
         private=True if indexes else private,
     )
     for depth, (index, hardened) in enumerate(indexes, 1):
-        logger.debug(f"derive {index} {hardened}")
-        # only use N() or CKDpub() at the  highest depth (final segment)
-        # so as to avoid complex look ahead and hard-to-read flow control
-        logger.debug("CKDpriv()")
         next = CKDpriv(
             parent_key.data,
             parent_key.chain_code,
@@ -69,8 +65,10 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
             depth,
             mainnet=mainnet,
         )
-        if (depth == max_depth) and not private:
-            logger.info("N()")
+        # only use N() or CKDpub() at the  highest depth (final segment)
+        # so as to avoid complex, hard-to-read flow control with look-ahead
+        last_derivation = depth == max_depth
+        if last_derivation and not private:
             neutered_key = N(
                 next.data,
                 next.chain_code,
@@ -82,9 +80,8 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
             if hardened:
                 parent_key = neutered_key
             else:
-                logger.info("CKDpub()")
                 parent_key = CKDpub(
-                    parent_key.data,
+                    to_public_key(parent_key.data),
                     parent_key.chain_code,
                     index,
                     depth,
@@ -104,7 +101,7 @@ def CKDpriv(
     depth: int,
     mainnet: bool,
 ) -> ExtendedKey:
-    hardened = index >= NORMAL_CHILD_KEY_COUNT
+    hardened = index >= TYPED_CHILD_KEY_COUNT
     secret_int = int.from_bytes(secret_key[1:], "big")
     data = (
         secret_key
@@ -123,7 +120,7 @@ def CKDpriv(
             if hardened:
                 assert index < 2**32
             else:
-                assert index < NORMAL_CHILD_KEY_COUNT
+                assert index < TYPED_CHILD_KEY_COUNT
 
     child_key_int = (
         int.from_bytes(derived[:32], "big") + int.from_bytes(secret_key, "big")
@@ -169,7 +166,7 @@ def CKDpub(
     finger: bytes,
     mainnet: bool,
 ) -> ExtendedKey:
-    if index >= NORMAL_CHILD_KEY_COUNT:
+    if index >= TYPED_CHILD_KEY_COUNT:
         raise ValueError("Must not invoke CKDpub() for hardened child")
     derived = hmac_(key=chain_code, data=public_key + index.to_bytes(4, "big"))
     derived_key = int.from_bytes(derived[:32], "big")
@@ -214,9 +211,9 @@ def segment_to_index(segment: str) -> (bytes, bool):
     if hardened:
         segment = segment[:-1]
     index = int(segment)
-    assert index <= (NORMAL_CHILD_KEY_COUNT - 1)
+    assert index <= (TYPED_CHILD_KEY_COUNT - 1)
     if hardened:
-        index += NORMAL_CHILD_KEY_COUNT
+        index += TYPED_CHILD_KEY_COUNT
 
     return (index, hardened)
 
