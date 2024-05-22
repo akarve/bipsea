@@ -48,7 +48,7 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
 
 def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     segments = path.split("/")
-    assert segments[0] == "m", "expected 'm' (private) at derivation path root"
+    assert segments[0] == "m", "expected 'm' (private) at root of derivation path"
     indexes = [segment_to_index(s) for s in segments[1:]]
     key_chain = [
         to_master_key(
@@ -75,7 +75,7 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     if private or not indexes:
         return key_chain[-1]
     else:
-        (last_segment, last_hardened) = indexes[-1]
+        last_hardened = indexes[-1][1]
         depth = len(indexes) + 1
         if last_hardened:
             # N() is not a true derivation so just neuter the very last private key
@@ -89,14 +89,14 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
                 mainnet=mainnet,
             )
         else:
-            # CKDpub() is a true derivation so go to its parent
-            parent_key = key_chain[-2]
+            # CKDpub() is a true derivation so go to grandparent as its parent
+            grand_parent = key_chain[-2]
             return CKDpub(
-                to_public_key(parent_key.data),
-                parent_key.chain_code,
+                to_public_key(grand_parent.data),
+                grand_parent.chain_code,
                 key_chain[-1].child_number,
                 key_chain[-1].depth,
-                finger=parent_key.finger,
+                finger=key_chain[-1].finger,
                 mainnet=mainnet,
             )
 
@@ -175,15 +175,17 @@ def CKDpub(
 ) -> ExtendedKey:
     child_number_int = int.from_bytes(child_number, "big")
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
-        raise ValueError("Must not invoke CKDpub() for hardened child")
+        raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
     derived = hmac_(key=chain_code, data=public_key + child_number)
     derived_key = int.from_bytes(derived[:32], "big")
     derived_chain_code = derived[32:]
-    child_key = VerifyingKey.from_public_point(
-        derived_key * SECP256k1.generator
-        + VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
-    ).to_string("compressed")
 
+    parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
+    child_point = SECP256k1.generator * derived_key + parent_key
+    child_key = VerifyingKey.from_public_point(
+        child_point,
+        curve=SECP256k1,
+    ).to_string("compressed")
     # TODO:
     # In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting key is invalid,
     # and one should proceed with the next value for i.
@@ -192,7 +194,7 @@ def CKDpub(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
         depth=depth,
         finger=finger,
-        child_number=child_number,
+        child_number=child_number_int.to_bytes(4, "big"),
         chain_code=derived_chain_code,
         data=child_key,
     )
@@ -207,7 +209,6 @@ def to_public_key(secret_key: bytes, as_point=False):
     private_key = SigningKey.from_string(secret_key[1:], curve=SECP256k1)
     public_key = private_key.get_verifying_key()
     compressed = public_key.to_string("compressed")
-    assert len(compressed) == 33, "compressed public key should be 32 bytes"
 
     return compressed
 
@@ -228,12 +229,11 @@ def segment_to_index(segment: str) -> (bytes, bool):
 
 def fingerprint(private_key: bytes) -> bytes:
     logger.debug(f"fingerprint input: {private_key}")
+
     pub_key = to_public_key(private_key)
-    logger.debug(f"fingerprint pubkey: {pub_key}")
     ripemd = hashlib.new("ripemd160")
     ripemd.update(hashlib.sha256(pub_key).digest())
     fingerprint = ripemd.digest()[:4]
-    logger.debug(f"+ fingerprint: {fingerprint}")
 
     return fingerprint
 

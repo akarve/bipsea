@@ -33,11 +33,11 @@ TEST_VECTORS = [
                 "ext prv": "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
             },
             "m/0'/1/2'/2": {
-                #     "ext pub": "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV",
+                "ext pub": "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV",
                 "ext prv": "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
             },
             "m/0'/1/2'/2/1000000000": {
-                #     "ext pub": "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy",
+                "ext pub": "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy",
                 "ext prv": "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
             },
         },
@@ -51,13 +51,11 @@ def test_vector(number, vector):
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
             assert type_ in {"ext pub", "ext prv"}
-            logger.info(f"\nderive {ch} @ {type_}")
+            logger.info(f"\nderive {ch} {type_}")
             derived = derive_key(seed, ch, mainnet=True, private=type_ == "ext prv")
-            assert str(derived) == expected
             if not str(derived) == expected:
-                logger.error(f">>> differs")
-                logger.debug(derived)
-                logger.debug(expected)
-                logger.debug("derived", repr(derived))
-                logger.debug("expected", repr(parse_ext_key(expected)))
-                logger.debug()
+                logger.error("derived:")
+                logger.error(repr(derived))
+                logger.error("expected:")
+                logger.error(repr(parse_ext_key(expected)))
+            assert str(derived) == expected
