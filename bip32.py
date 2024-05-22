@@ -25,6 +25,9 @@ import base58
 from ecdsa import SigningKey, SECP256k1, VerifyingKey
 
 
+logger = logging.getLogger("btcseed")
+
+
 class ExtendedKey(
     namedtuple(
         "ExtendedKey",
@@ -85,10 +88,6 @@ VERSIONS = {
 }
 
 
-def hmac_(key: bytes, data: bytes) -> bytes:
-    return hmac.new(key=key, msg=data, digestmod="sha512").digest()
-
-
 def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     master = hmac_(key=b"Bitcoin seed", data=seed)
     secret_key = master[:32]
@@ -107,30 +106,6 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     )
 
 
-def validate_derived_key(key: bytes) -> bool:
-    assert len(key) == 64
-    secret_key = key[:32]
-    secret_int = int.from_bytes(secret_key, "big")
-    if (secret_int == 0) or (secret_int >= SECP256k1.order):
-        return False
-
-    return True
-
-
-def to_public_key(secret_key: bytes, as_point=False):
-    """returns compressed ecdsa public key"""
-    # ecdsa from_/to_string are actually from_/to_bytes b/c of some kind of
-    # Python 2 hangover
-    assert len(secret_key) == 33
-    # chop the first byte 0x00 else ECDSA will throw
-    private_key = SigningKey.from_string(secret_key[1:], curve=SECP256k1)
-    public_key = private_key.get_verifying_key()
-    compressed = public_key.to_string("compressed")
-    assert len(compressed) == 33, "compressed public key should be 32 bytes"
-
-    return compressed
-
-
 def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     segments = path.split("/")
     assert segments[0] == "m", "expected 'm' (private) at derivation path root"
@@ -141,13 +116,13 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
     # if we're doing any derivation start with the master private key
     parent_key = to_master_key(master_seed, mainnet=mainnet, private=True)
     for depth, (index, hardened) in enumerate(indexes, 1):
-        print("derive", index, hardened)
+        logger.debug(f"derive {index} {hardened}")
         # we implement the simplest algorithm: only use N() or CKDpub() at the
         # highest depth (final segment).
         # otherwise we would need to look ahead for the last hardened child
         # and use CKDpriv() up to that point (because hardened public children require
         # a private parent key) and such code would be hard to read
-        print("CKDpriv()")
+        logger.debug("CKDpriv()")
         next = CKDpriv(
             parent_key.data,
             parent_key.chain_code,
@@ -157,8 +132,8 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
         )
         last = depth == max_depth
         if last and not private:
-            print("N()")
-            neutered_key = N(
+            logger.info("N()")
+            parent_key = N(
                 next.data,
                 next.chain_code,
                 index,
@@ -167,36 +142,21 @@ def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
                 mainnet=mainnet,
             )
             if hardened:
-                parent_key = neutered_key
+                continue
             else:
+                logger.info("CKDpub()")
                 parent_key = CKDpub(
-                    neutered_key.data,
-                    neutered_key.chain_code,
+                    parent_key.data,
+                    parent_key.chain_code,
                     index,
                     depth,
+                    finger=parent_key.finger,
                     mainnet=mainnet,
                 )
-                assert (
-                    parent_key == neutered_key
-                ), "CKDpub() and N() should produce identical results for non-hardened public children"
         else:
             parent_key = next
 
     return parent_key
-
-
-def segment_to_index(segment: str) -> (bytes, bool):
-    """for internal (non-m) derivation path segments which should all be integers
-    once the optional hardened symbol is dropped"""
-    hardened = segment[-1] in {"h", "H", "'"}
-    if hardened:
-        segment = segment[:-1]
-    index = int(segment)
-    assert index <= (NORMAL_CHILD_KEY_COUNT - 1)
-    if hardened:
-        index += NORMAL_CHILD_KEY_COUNT
-
-    return (index, hardened)
 
 
 def parse_ext_key(key: str):
@@ -238,7 +198,8 @@ def CKDpriv(
         secret_key
         if hardened
         else VerifyingKey.from_public_point(
-            secret_int * SECP256k1.generator, curve=SECP256k1
+            secret_int * SECP256k1.generator,
+            curve=SECP256k1,
         ).to_string("compressed")
     )
     while True:
@@ -267,33 +228,6 @@ def CKDpriv(
     )
 
 
-def CKDpub(
-    public_key: bytes, chain_code: bytes, index: int, depth: int, mainnet: bool
-) -> ExtendedKey:
-    if index >= NORMAL_CHILD_KEY_COUNT:
-        return ValueError("Must not invoke CKDpub() for hardened child")
-    derived = hmac_(key=chain_code, data=public_key + index.to_bytes(4, "big"))
-    derived_key = int.from_bytes(derived[:32], "big")
-    derived_chain_code = derived[32:]
-    child_key = VerifyingKey.from_public_point(
-        derived_key * SECP256k1.generator
-        + VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
-    )
-
-    # TODO:
-    # In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting key is invalid,
-    # and one should proceed with the next value for i.
-
-    return ExtendedKey(
-        version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
-        depth=depth.to_bytes(1, "big"),
-        finger=fingerprint(derived[:32]),
-        child_number=index.to_bytes(4, "big"),
-        chain_code=derived_chain_code,
-        data=child_key.to_string("compressed"),
-    )
-
-
 def N(
     private_key: bytes,
     chain_code: bytes,
@@ -305,25 +239,97 @@ def N(
     """neuter a private key into the public one (no derivation per se)
     pass in the fingerprint which is of the parent (which we don't have)
     """
-    pub_key = to_public_key(private_key)
-
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
         depth=depth.to_bytes(1, "big"),
         finger=finger,
         child_number=index.to_bytes(4, "big"),
         chain_code=chain_code,
-        data=pub_key,
+        data=to_public_key(private_key),
     )
 
 
+def CKDpub(
+    public_key: bytes,
+    chain_code: bytes,
+    index: int,
+    depth: int,
+    finger: bytes,
+    mainnet: bool,
+) -> ExtendedKey:
+    if index >= NORMAL_CHILD_KEY_COUNT:
+        raise ValueError("Must not invoke CKDpub() for hardened child")
+    derived = hmac_(key=chain_code, data=public_key + index.to_bytes(4, "big"))
+    derived_key = int.from_bytes(derived[:32], "big")
+    derived_chain_code = derived[32:]
+    child_key = VerifyingKey.from_public_point(
+        derived_key * SECP256k1.generator
+        + VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
+    ).to_string("compressed")
+
+    # TODO:
+    # In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting key is invalid,
+    # and one should proceed with the next value for i.
+
+    return ExtendedKey(
+        version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
+        depth=depth.to_bytes(1, "big"),
+        finger=finger,
+        child_number=index.to_bytes(4, "big"),
+        chain_code=derived_chain_code,
+        data=child_key.to_bytes(),
+    )
+
+
+def to_public_key(secret_key: bytes, as_point=False):
+    """returns compressed ecdsa public key"""
+    # ecdsa from_/to_string are actually from_/to_bytes b/c of some kind of
+    # Python 2 hangover
+    assert len(secret_key) == 33
+    # chop the first byte 0x00 else ECDSA will throw
+    private_key = SigningKey.from_string(secret_key[1:], curve=SECP256k1)
+    public_key = private_key.get_verifying_key()
+    compressed = public_key.to_string("compressed")
+    assert len(compressed) == 33, "compressed public key should be 32 bytes"
+
+    return compressed
+
+
 def fingerprint(private_key: bytes) -> bytes:
-    print("fingerprint input:", private_key)
+    logger.debug(f"fingerprint input: {private_key}")
     pub_key = to_public_key(private_key)
-    print("fingerprint pubkey:", pub_key)
+    logger.debug(f"fingerprint pubkey: {pub_key}")
     ripemd = hashlib.new("ripemd160")
     ripemd.update(hashlib.sha256(pub_key).digest())
     fingerprint = ripemd.digest()[:4]
-    print("+ fingerprint: ", fingerprint)
+    logger.debug(f"+ fingerprint: {fingerprint}")
 
     return fingerprint
+
+
+def segment_to_index(segment: str) -> (bytes, bool):
+    """for internal (non-m) derivation path segments which should all be integers
+    once the optional hardened symbol is dropped"""
+    hardened = segment[-1] in {"h", "H", "'"}
+    if hardened:
+        segment = segment[:-1]
+    index = int(segment)
+    assert index <= (NORMAL_CHILD_KEY_COUNT - 1)
+    if hardened:
+        index += NORMAL_CHILD_KEY_COUNT
+
+    return (index, hardened)
+
+
+def hmac_(key: bytes, data: bytes) -> bytes:
+    return hmac.new(key=key, msg=data, digestmod="sha512").digest()
+
+
+def validate_derived_key(key: bytes) -> bool:
+    assert len(key) == 64
+    secret_key = key[:32]
+    secret_int = int.from_bytes(secret_key, "big")
+    if (secret_int == 0) or (secret_int >= SECP256k1.order):
+        return False
+
+    return True
