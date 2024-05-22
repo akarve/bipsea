@@ -237,7 +237,7 @@ def N(
     finger: bytes,
 ) -> ExtendedKey:
     """neuter a private key into the public one (no derivation per se)
-    pass in the fingerprint which is of the parent (which we don't have)
+    pass in the fingerprint since it is from the parent (which we don't have)
     """
     return ExtendedKey(
         version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
