@@ -42,16 +42,23 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     )
 
 
-def derive_key(master_seed: bytes, path: str, mainnet: bool, private: bool):
+def derive_key(master: ExtendedKey, path: str, mainnet: bool, private: bool):
+    """master: extended private key"""
+    assert master.is_private(), f"Expected master private key to start derivation: {master, master.data[0]}"
     segments = path.split("/")
     assert segments[0] == "m", "expected 'm' (private) at root of derivation path"
     indexes = [segment_to_index(s) for s in segments[1:]]
     key_chain = [
-        to_master_key(
-            master_seed,
+        # if we're doing any derivation we need to start with a private key
+        master
+        if indexes or private
+        else N(
+            master.data,
+            master.chain_code,
+            master.child_number,
+            bytes(1),
+            finger=master.finger,
             mainnet=mainnet,
-            # if we're doing any derivation we must start with the master private key
-            private=True if indexes else private,
         )
     ]
     for depth, (index, _) in enumerate(indexes, 1):
@@ -225,7 +232,7 @@ def segment_to_index(segment: str) -> (bytes, bool):
     """for internal (non-m) derivation path segments which should all be integers
     once the optional hardened symbol is dropped"""
     # As of BIP-44 we can use ' for hardened paths
-    # https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki Derivation paths
+    # https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
     hardened = segment[-1] in {"h", "H", "'"}
     if hardened:
         segment = segment[:-1]
@@ -238,7 +245,6 @@ def segment_to_index(segment: str) -> (bytes, bool):
 
 
 def fingerprint(private_key: bytes) -> bytes:
-
     pub_key = to_public_key(private_key)
     ripemd = hashlib.new("ripemd160")
     ripemd.update(hashlib.sha256(pub_key).digest())

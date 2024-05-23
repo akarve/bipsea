@@ -2,6 +2,7 @@ from collections import namedtuple
 from typing import Dict
 
 import base58
+from ecdsa import SECP256k1
 
 
 VERSIONS = {
@@ -29,7 +30,16 @@ class ExtendedKey(
         ],
     )
 ):
-    def __str__(self):
+    def is_public(self) -> bool:
+        return self.data[:1] in {
+            bytes.fromhex("02"),
+            bytes.fromhex("03"),
+        }
+
+    def is_private(self) -> bool:
+        return self.data[:1] == bytes.fromhex("00")
+
+    def __str__(self) -> str:
         # return super().__str__()
         key_ = (
             self.version
@@ -61,9 +71,10 @@ class ExtendedKey(
         )
 
 
-def parse_ext_key(key: str):
+def parse_ext_key(key: str, strict: bool = True):
     """
     master - bip32 extended key, base 58
+        strict=True to use strict BIP32 validation (not compatible with BIP85)
     """
     master_dec = base58.b58decode_check(key, alphabet=base58.BITCOIN_ALPHABET)
     assert len(master_dec) == 78, "expected 78 bytes"
@@ -77,26 +88,30 @@ def parse_ext_key(key: str):
         data=master_dec[45:],
     )
 
-    matched = False
-    for net in VERSIONS:
-        for vis in VERSIONS[net]:
-            if ext_key.version == VERSIONS[net][vis]:
-                matched = True
-                if net == "mainnet":
-                    assert key.startswith("x")
-                else:
-                    assert key.startswith("t")
-                if vis == "public":
-                    assert key[1:4] == "pub"
-                    assert ext_key.data[0] == bytes(1)
-                else:
-                    assert key[1:4] == "prv"
-                    assert ext_key.data[0] in {bytes.fromhex("02"), bytes.fromhex("03")}
-    assert matched, f"unrecognized version: {ext_key.version}"
+    if strict:
+        matched = False
+        for net in VERSIONS:
+            for vis in VERSIONS[net]:
+                if ext_key.version == VERSIONS[net][vis]:
+                    matched = True
+                    if net == "mainnet":
+                        assert key.startswith("x")
+                    else:
+                        assert key.startswith("t")
+                    if vis == "public":
+                        assert key[1:4] == "pub"
+                        assert ext_key.is_public()
+                    else:
+                        assert key[1:4] == "prv"
+                        assert ext_key.is_private()
+        assert matched, f"unrecognized version: {ext_key.version}"
 
+    int_key = int.from_bytes(ext_key.data, "big")
+    assert 0 < int_key < SECP256k1.order
     depth = int.from_bytes(ext_key.depth, "big")
     if depth == 0:
         assert ext_key.finger == bytes(4)
+        assert ext_key.child_number == bytes(4)
     else:
         assert ext_key.finger != bytes(4)
 

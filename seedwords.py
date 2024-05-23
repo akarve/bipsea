@@ -6,7 +6,6 @@ TODO: CLI design:
 (xprv or seed or entropy) | derivation path > output?
 """
 
-import binascii
 import hashlib
 import math
 from unicodedata import normalize
