@@ -6,7 +6,7 @@ import pytest
 from data.bip85_vectors import EXT_KEY_TO_ENTROPY
 from bip32 import derive_key
 from bip32_ext_key import parse_ext_key
-from bip85 import to_entropy, to_hex_string
+from bip85 import DRNG, to_entropy, to_hex_string
 
 
 logger = logging.getLogger("btcseed")
@@ -24,3 +24,6 @@ def test_vectors(vector):
     assert to_hex_string(secret) == vector["derived_key"]
     entropy = to_entropy(secret)
     assert to_hex_string(entropy) == vector["derived_entropy"]
+    if "drng" in vector:
+        output = DRNG(entropy).read(vector["drng_length"])
+        assert to_hex_string(output) == vector["drng"]
