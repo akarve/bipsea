@@ -1,7 +1,3 @@
-"""
-Mnemonic is only used a testing oracle in certain cases and is not
-part of our implementation.
-"""
 import hashlib
 import logging
 import re
