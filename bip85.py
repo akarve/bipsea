@@ -7,6 +7,22 @@ from bip32 import ExtendedKey, hmac_sha512
 
 
 HMAC_KEY = b"bip-entropy-from-k"
+ENTROPY_CODES = {
+    "12 words": {"entropy_bits": 128, "code": "12'"},
+    "18 words": {"entropy_bits": 192, "code": "18'"},
+    "24 words": {"entropy_bits": 256, "code": "24'"},
+}
+LANGUAGE_CODES = {
+    "English": "0'",
+    "Japanese": "1'",
+    "Korean": "2'",
+    "Spanish": "3'",
+    "Chinese (Simplified)": "4'",
+    "Chinese (Traditional)": "5'",
+    "French": "6'",
+    "Italian": "7'",
+    "Czech": "8'",
+}
 
 
 def to_entropy(data: bytes) -> bytes:
@@ -33,5 +49,3 @@ class DRNG:
         self.cursor = stop = start + n
 
         return self.shake.digest(stop)[start:stop]
-
-
