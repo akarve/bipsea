@@ -34,23 +34,23 @@ def to_entropy(data: bytes) -> bytes:
     return hmac_sha512(key=HMAC_KEY, data=data)
 
 
-def derive(master: ExtendedKey, path: str, mainnet: bool, private: bool):
+def derive(master: ExtendedKey, path: str, private: bool = True):
     if not master.is_private():
         raise ValueError("Derivations should begin with a private master key")
     segments = split_and_validate(path)
     if segments[1:]:
         purpose = segments[1]
         if purpose == PURPOSE_CODES["BIP-85"]:
-            if len(segments) < 4 or not all(s.endswith("'") for s in segments[1:]):
+            if len(segments) < 4 or not any(s.endswith("'") for s in segments[1:]):
                 raise ValueError(
-                    f"Expected BIP-85 path to have at least four segments and all hardened children: {segments}"
+                    f"Expected BIP-85 path to have at least four segments and mostly hardened children: {segments}"
                 )
-            application, *indexes = segments[2:5]
+            application, *indexes = segments[2:]
 
             if application == "39'":
                 language, words, index = indexes[:3]
-                logger.info(language, words, index)
-    return derive_key_bip32(master, segments, mainnet, private)
+
+    return derive_key_bip32(master, segments, private)
 
 
 def to_hex_string(data: bytes) -> str:

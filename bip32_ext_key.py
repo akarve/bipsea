@@ -1,8 +1,14 @@
-from collections import namedtuple
 from typing import Dict
+import logging
+from collections import namedtuple
 
 import base58
 from ecdsa import SECP256k1
+
+from const import LOGGER
+
+
+logger = logging.getLogger(LOGGER)
 
 
 VERSIONS = {
@@ -30,6 +36,10 @@ class ExtendedKey(
         ],
     )
 ):
+    def get_network(self) -> bool:
+        # we check integrity elsewhere so not mainnet is enough to mean testnet
+        return "mainnet" if self.version in VERSIONS["mainnet"].values() else "testnet"
+
     def is_public(self) -> bool:
         return self.data[:1] in {
             bytes.fromhex("02"),
@@ -88,11 +98,11 @@ def parse_ext_key(key: str):
     )
 
     if True:
-        matched = False
+        matches = 0
         for net in VERSIONS:
             for vis in VERSIONS[net]:
                 if ext_key.version == VERSIONS[net][vis]:
-                    matched = True
+                    matches += 1
                     if net == "mainnet":
                         assert key.startswith("x")
                     else:
@@ -103,10 +113,12 @@ def parse_ext_key(key: str):
                     else:
                         assert key[1:4] == "prv"
                         assert ext_key.is_private()
-        assert matched, f"unrecognized version: {ext_key.version}"
+        assert matches == 1, f"unrecognized version: {ext_key.version}"
 
-    int_key = int.from_bytes(ext_key.data, "big")
-    assert 0 < int_key < SECP256k1.order
+    if True:
+        int_key = int.from_bytes(ext_key.data, "big")
+        if (int_key < 1) or (int_key >= SECP256k1.order):
+            raise ValueError(f"Key out of bounds: {ext_key.data}")
     depth = int.from_bytes(ext_key.depth, "big")
     if depth == 0:
         assert ext_key.finger == bytes(4)

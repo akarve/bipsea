@@ -27,7 +27,7 @@ logger = logging.getLogger(LOGGER)
 TYPED_CHILD_KEY_COUNT = 2**31
 
 
-def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
+def to_master_key(seed: bytes, mainnet: bool, private: bool) -> ExtendedKey:
     master = hmac_sha512(key=b"Bitcoin seed", data=seed)
     secret_key = master[:32]
     chain_code = master[32:]
@@ -45,7 +45,7 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     )
 
 
-def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: bool):
+def derive_key(master: ExtendedKey, path: List[str], private: bool):
     """master: extended private key"""
     indexes = [segment_to_index(s) for s in path[1:]]
     key_chain = [
@@ -57,7 +57,7 @@ def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: boo
             master.child_number,
             depth=bytes(1),
             finger=master.finger,
-            mainnet=mainnet,
+            version=VERSIONS[master.get_network()]["public"],
         )
     ]
     for depth, (index, _) in enumerate(indexes, 1):
@@ -68,7 +68,7 @@ def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: boo
                 parent.chain_code,
                 index,
                 depth.to_bytes(1, "big"),
-                mainnet=mainnet,
+                version=parent.version,
             )
         )
     # only use N() or CKDpub() if public at the highest depth (final segment)
@@ -87,7 +87,7 @@ def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: boo
                 parent.child_number,
                 parent.depth,
                 finger=parent.finger,
-                mainnet=mainnet,
+                version=VERSIONS[parent.get_network()]["public"],
             )
         else:
             # CKDpub() is a true derivation so go to grandparent as parent
@@ -98,7 +98,7 @@ def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: boo
                 parent.child_number,
                 parent.depth,
                 finger=parent.finger,
-                mainnet=mainnet,
+                version=VERSIONS[parent.get_network()]["public"],
             )
 
 
@@ -107,7 +107,7 @@ def CKDpriv(
     chain_code: bytes,
     child_number: int,
     depth: bytes,
-    mainnet: bool,
+    version: bytes,
 ) -> ExtendedKey:
     hardened = child_number >= TYPED_CHILD_KEY_COUNT
     secret_int = int.from_bytes(secret_key[1:], "big")
@@ -138,7 +138,7 @@ def CKDpriv(
     child_key = bytes(1) + child_key_int.to_bytes(32, "big")
 
     return ExtendedKey(
-        version=VERSIONS["mainnet" if mainnet else "testnet"]["private"],
+        version=version,
         depth=depth,
         finger=fingerprint(secret_key),
         child_number=child_number.to_bytes(4, "big"),
@@ -153,13 +153,13 @@ def N(
     child_number: bytes,
     depth: bytes,
     finger: bytes,
-    mainnet: bool,
+    version: bytes,
 ) -> ExtendedKey:
     """neuter a private key into the public one (no derivation per se)
     pass in the fingerprint since it is from the parent (which we don't have)
     """
     return ExtendedKey(
-        version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
+        version=version,
         depth=depth,
         finger=finger,
         child_number=child_number,
@@ -174,7 +174,7 @@ def CKDpub(
     child_number: bytes,
     depth: bytes,
     finger: bytes,
-    mainnet: bool,
+    version: bytes,
 ) -> ExtendedKey:
     child_number_int = int.from_bytes(child_number, "big")
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
@@ -197,7 +197,7 @@ def CKDpub(
             ).to_string("compressed")
         except MalformedPointError as m:
             # Is this in fact how we detect the point at infinity?
-            logger.warn(
+            logger.warning(
                 "Point at infinity? Retrying with higher child_number in CKDPub()", m
             )
             child_number += 1
@@ -205,7 +205,7 @@ def CKDpub(
         break
 
     return ExtendedKey(
-        version=VERSIONS["mainnet" if mainnet else "testnet"]["public"],
+        version=version,
         depth=depth,
         finger=finger,
         child_number=child_number_int.to_bytes(4, "big"),

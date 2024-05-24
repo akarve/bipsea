@@ -19,7 +19,7 @@ logger = logging.getLogger(LOGGER)
 )
 def test_entropy(vector):
     master = parse_ext_key(vector["master"])
-    derived_key = derive(master, vector["path"], mainnet=True, private=True)
+    derived_key = derive(master, vector["path"])
     secret = derived_key.data[1:]  # chop the BIP32 byte prefix
     assert to_hex_string(secret) == vector["derived_key"]
     entropy = to_entropy(secret)
@@ -31,4 +31,6 @@ def test_entropy(vector):
 
 @pytest.mark.parametrize("vector", BIP39)
 def test_entropy(vector):
+    master = parse_ext_key(vector["master"])
+    derived_key = derive(master, vector["path"])
     logger.info(vector["path"])

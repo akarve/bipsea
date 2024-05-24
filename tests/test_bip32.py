@@ -27,12 +27,13 @@ def test_vectors(vector):
         for type_, expected in tests.items():
             assert type_ in {"ext pub", "ext prv"}
             logger.info(f"\nderive {ch} {type_}")
-            master = to_master_key(seed, private=True)
-            derived = derive(master, ch, mainnet=True, private=type_ == "ext prv")
+            master = to_master_key(seed, mainnet=True, private=True)
+            derived = derive(master, ch, private=type_ == "ext prv")
             if not str(derived) == expected:
                 logger.error("derived:")
                 logger.error(repr(derived))
                 logger.error("expected:")
+                # logger.error(repr(parse_ext_key(expected)))
                 logger.error(repr(parse_ext_key(expected)))
             assert str(derived) == expected
 
