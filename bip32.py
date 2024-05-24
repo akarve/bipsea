@@ -44,7 +44,9 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
 
 def derive_key(master: ExtendedKey, path: str, mainnet: bool, private: bool):
     """master: extended private key"""
-    assert master.is_private(), f"Expected master private key to start derivation: {master, master.data[0]}"
+    assert (
+        master.is_private()
+    ), f"Expected master private key to start derivation: {master, master.data[0]}"
     segments = path.split("/")
     assert segments[0] == "m", "expected 'm' (private) at root of derivation path"
     indexes = [segment_to_index(s) for s in segments[1:]]

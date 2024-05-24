@@ -71,10 +71,9 @@ class ExtendedKey(
         )
 
 
-def parse_ext_key(key: str, strict: bool = True):
+def parse_ext_key(key: str):
     """
     master - bip32 extended key, base 58
-        strict=True to use strict BIP32 validation (not compatible with BIP85)
     """
     master_dec = base58.b58decode_check(key, alphabet=base58.BITCOIN_ALPHABET)
     assert len(master_dec) == 78, "expected 78 bytes"
@@ -88,7 +87,7 @@ def parse_ext_key(key: str, strict: bool = True):
         data=master_dec[45:],
     )
 
-    if strict:
+    if True:
         matched = False
         for net in VERSIONS:
             for vis in VERSIONS[net]:
