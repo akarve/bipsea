@@ -39,7 +39,6 @@ def test_vectors(language, vectors):
                 len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
             )
             assert expected_words == computed_words
-        break
 
 
 @pytest.mark.network
