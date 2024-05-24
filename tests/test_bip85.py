@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from data.bip85_vectors import DERIVATIONS
+from data.bip85_vectors import EXT_KEY_TO_ENTROPY
 from bip32 import derive_key
 from bip32_ext_key import parse_ext_key
 from bip85 import to_entropy, to_hex_string
@@ -14,8 +14,8 @@ logger = logging.getLogger("btcseed")
 
 @pytest.mark.parametrize(
     "vector",
-    DERIVATIONS,
-    ids=[f"Vector-{i + 1}" for i, e in enumerate(DERIVATIONS)],
+    EXT_KEY_TO_ENTROPY,
+    ids=[f"Vector-{i + 1}" for i, e in enumerate(EXT_KEY_TO_ENTROPY)],
 )
 def test_vectors(vector):
     master = parse_ext_key(vector["master"])
