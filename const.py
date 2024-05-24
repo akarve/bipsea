@@ -1,0 +1,3 @@
+"""constants"""
+
+LOGGER = "btcentropy"

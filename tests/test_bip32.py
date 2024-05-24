@@ -4,10 +4,10 @@ import pytest
 
 from bip32 import to_master_key
 from bip85 import derive
-from to_seed import from_hex
+from preseed import from_hex
 from const import LOGGER
 from bip32_ext_key import parse_ext_key
-from data.bip32_vectors import INVALID_KEYS, TEST_VECTORS
+from data.bip32_vectors import INVALID_KEYS, VECTORS
 
 
 logger = logging.getLogger(LOGGER)
@@ -15,10 +15,9 @@ logger = logging.getLogger(LOGGER)
 
 @pytest.mark.parametrize(
     "vector",
-    TEST_VECTORS,
+    VECTORS,
     ids=[
-        f"Vector-{i + 1}-{', '.join(e['chain'].keys())}"
-        for i, e in enumerate(TEST_VECTORS)
+        f"Vector-{i + 1}-{', '.join(e['chain'].keys())}" for i, e in enumerate(VECTORS)
     ],
 )
 def test_vectors(vector):

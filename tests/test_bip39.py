@@ -1,90 +1,45 @@
 """
-for we accept non-deterministic tests as good in the huge space of possible
-entropy
+Mnemonic is only used a testing oracle in certain cases and is not
+part of our implementation.
 """
 import hashlib
+import logging
+import re
 from unicodedata import is_normalized
-import secrets
-import string
 
-from mnemonic import Mnemonic
+
 import pytest
 import requests
-from click.testing import CliRunner
-from seedwords import DICT_HASH, N_MNEMONICS, gen_words
+from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_seed
+from preseed import from_hex
+from const import LOGGER
+from data.bip39_vectors import VECTORS
 
-COVERAGE = 2**4  # stochastic
+
+logger = logging.getLogger(LOGGER)
+
 WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
-def test_entropy_flag():
-    """the entropy we report is also what mnemo computes"""
-    runner = CliRunner()
-    for w in WORD_COUNTS:
-        for _ in range(COVERAGE):
-            result = runner.invoke(gen_words, ["--meta", "--nwords", w])
-            lines = result.output.splitlines()
-            entropy = int(lines[0].split()[-1])
-            phrase = lines[-1]
-            mnemo = Mnemonic("english")
-            assert mnemo.check(phrase)
-            assert int.from_bytes(mnemo.to_entropy(phrase), "big") == entropy
+@pytest.mark.parametrize(
+    "language, vectors", VECTORS.items(), ids=[l for l in VECTORS.keys()]
+)
+def test_vectors(language, vectors):
+    logger.info(language)
+    for vector in vectors:
+        entropy_str, mnemonic, seed, xprv = vector
+        entropy_bytes = from_hex(entropy_str)
+        expected_words = re.split(r"\s", mnemonic)
+        expected_seed = from_hex(seed)
+        computed_seed = to_seed(expected_words, passphrase="TREZOR")
+        assert expected_seed == computed_seed
 
-
-def test_no_args():
-    """no args produces 12 seed words and checksums out"""
-    runner = CliRunner()
-    result = runner.invoke(gen_words)
-    assert result.exit_code == 0
-    assert len(result.output.splitlines()[-1].split()) == 12
-    mnemo = Mnemonic("english")
-    assert mnemo.check(result.output.splitlines()[-1])
-
-
-def test_seed():
-    """seed we put in is also what mnemonic gets out"""
-    runner = CliRunner()
-    for w in WORD_COUNTS:
-        for _ in range(COVERAGE):
-            ebits = 128 + (((w - 12) // 3) * 32)
-            entropy = secrets.randbits(ebits)
-            passphrase = _random_passphrase()
-            result = runner.invoke(
-                gen_words,
-                [
-                    "--nwords",
-                    w,
-                    "--entropy",
-                    entropy,
-                    "--passphrase",
-                    passphrase,
-                    "--meta",
-                ],
+        if language == "english":
+            computed_words = entropy_to_words(
+                len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
             )
-            lines = result.output.splitlines()
-            words = lines[-1]
-            mnemo = Mnemonic("english")
-            assert mnemo.check(words)
-            assert int.from_bytes(mnemo.to_entropy(words), "big") == entropy
-            seed = lines[-2].split()[-1]
-            assert seed == mnemo.to_seed(words, passphrase).hex()
-
-
-def test_word_counts():
-    """test differing word counts; incl erroneous ones"""
-    runner = CliRunner()
-    for c in range(31):
-        result = runner.invoke(gen_words, ["--nwords", str(c)])
-        if c in WORD_COUNTS:
-            assert result.exit_code == 0
-            assert len(result.output.split()) == c
-            mnemo = Mnemonic("english")
-            assert mnemo.check(result.output.splitlines()[-1])
-
-        else:
-            assert result.exit_code != 0
-            if result.exit_code != 2:
-                assert "Error" in str(result)
+            assert expected_words == computed_words
+        break
 
 
 @pytest.mark.network
@@ -97,8 +52,3 @@ def test_words_in_bip39_wordlist():
     assert len(wordlist) == N_MNEMONICS
     response_hash = hashlib.sha256(response.content).hexdigest()
     assert response_hash == DICT_HASH, f"Hash mismatch: {response_hash} != {DICT_HASH}"
-
-
-def _random_passphrase():
-    alphabet = string.ascii_letters + string.digits
-    return "".join(secrets.choice(alphabet) for _ in range(secrets.randbelow(32)))
