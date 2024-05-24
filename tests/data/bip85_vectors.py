@@ -20,3 +20,28 @@ EXT_KEY_TO_ENTROPY = [
         "drng_length": 80,
     },
 ]
+
+
+BIP39 = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/39'/0'/12'/0",
+        "derived_entropy": "6250b68daf746d12a24d58b4787a714b",
+        "derived_mnemonic": "girl mad pet galaxy egg matter matrix prison refuse sense ordinary nose",
+        "mnemonic_length": 12,
+    },
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/39'/0'/18'/0",
+        "derived_entropy": "938033ed8b12698449d4bbca3c853c66b293ea1b1ce9d9dc",
+        "derived_mnemonic": "near account window bike charge season chef number sketch tomorrow excuse sniff circle vital hockey outdoor supply token",
+        "mnemonic_length": 18,
+    },
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/39'/0'/24'/0",
+        "derived_entropy": "ae131e2312cdc61331542efe0d1077bac5ea803adf24b313a4f0e48e9c51f37f",
+        "derived_mnemonic": "puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
+        "mnemonic_length": 24,
+    },
+]

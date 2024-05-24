@@ -27,6 +27,7 @@ LANGUAGE_CODES = {
     "Italian": "7'",
     "Czech": "8'",
 }
+PURPOSE_CODES = {"BIP-85": "83696968'"}
 
 
 def to_entropy(data: bytes) -> bytes:
@@ -37,7 +38,19 @@ def derive(master: ExtendedKey, path: str, mainnet: bool, private: bool):
     if not master.is_private():
         raise ValueError("Derivations should begin with a private master key")
     segments = split_and_validate(path)
-    return derive_key_bip32(master, split_and_validate(path), mainnet, private)
+    if segments[1:]:
+        purpose = segments[1]
+        if purpose == PURPOSE_CODES["BIP-85"]:
+            if len(segments) < 4 or not all(s.endswith("'") for s in segments[1:]):
+                raise ValueError(
+                    f"Expected BIP-85 path to have at least four segments and all hardened children: {segments}"
+                )
+            application, *indexes = segments[2:5]
+
+            if application == "39'":
+                language, words, index = indexes[:3]
+                logger.info(language, words, index)
+    return derive_key_bip32(master, segments, mainnet, private)
 
 
 def to_hex_string(data: bytes) -> str:
