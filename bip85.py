@@ -1,9 +1,13 @@
 import binascii
 import hashlib
+import logging
+import re
 
-from ecdsa import SigningKey, SECP256k1
+from bip32 import derive_key as derive_key_bip32, ExtendedKey, hmac_sha512
+from const import LOGGER
 
-from bip32 import ExtendedKey, hmac_sha512
+
+logger = logging.getLogger(LOGGER)
 
 
 HMAC_KEY = b"bip-entropy-from-k"
@@ -29,8 +33,11 @@ def to_entropy(data: bytes) -> bytes:
     return hmac_sha512(key=HMAC_KEY, data=data)
 
 
-def derive_key(master: str, path: str):
-    pass
+def derive(master: ExtendedKey, path: str, mainnet: bool, private: bool):
+    if not master.is_private():
+        raise ValueError("Derivations should begin with a private master key")
+    segments = split_and_validate(path)
+    return derive_key_bip32(master, split_and_validate(path), mainnet, private)
 
 
 def to_hex_string(data: bytes) -> str:
@@ -49,3 +56,14 @@ class DRNG:
         self.cursor = stop = start + n
 
         return self.shake.digest(stop)[start:stop]
+
+
+def split_and_validate(path: str):
+    segments = path.split("/")
+    if segments[0] != "m":
+        raise ValueError(f"Expected 'm' (xprv) at root of derivation path: {path}")
+    pattern = r"^\d+['hH]?$"
+    if not all(re.match(pattern, s) for s in segments[1:]):
+        raise ValueError(f"Unexpected path segments: {path}")
+
+    return segments

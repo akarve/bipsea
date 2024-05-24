@@ -9,15 +9,18 @@ https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki Entropy
 
 
 import hashlib, hmac
+from typing import List
 import logging
+
 
 from ecdsa.keys import MalformedPointError
 from ecdsa import SigningKey, SECP256k1, VerifyingKey
 
+from const import LOGGER
 from bip32_ext_key import ExtendedKey, VERSIONS
 
 
-logger = logging.getLogger("btcseed")
+logger = logging.getLogger(LOGGER)
 
 
 # same count for hardened and unhardened children
@@ -42,23 +45,17 @@ def to_master_key(seed: bytes, mainnet=True, private=False) -> ExtendedKey:
     )
 
 
-def derive_key(master: ExtendedKey, path: str, mainnet: bool, private: bool):
+def derive_key(master: ExtendedKey, path: List[str], mainnet: bool, private: bool):
     """master: extended private key"""
-    assert (
-        master.is_private()
-    ), f"Expected master private key to start derivation: {master, master.data[0]}"
-    segments = path.split("/")
-    assert segments[0] == "m", "expected 'm' (private) at root of derivation path"
-    indexes = [segment_to_index(s) for s in segments[1:]]
+    indexes = [segment_to_index(s) for s in path[1:]]
     key_chain = [
-        # if we're doing any derivation we need to start with a private key
         master
         if indexes or private
         else N(
             master.data,
             master.chain_code,
             master.child_number,
-            bytes(1),
+            depth=bytes(1),
             finger=master.finger,
             mainnet=mainnet,
         )

@@ -4,12 +4,12 @@ import logging
 import pytest
 
 from data.bip85_vectors import EXT_KEY_TO_ENTROPY
-from bip32 import derive_key
+from const import LOGGER
 from bip32_ext_key import parse_ext_key
-from bip85 import DRNG, to_entropy, to_hex_string
+from bip85 import derive, DRNG, to_entropy, to_hex_string
 
 
-logger = logging.getLogger("btcseed")
+logger = logging.getLogger(LOGGER)
 
 
 @pytest.mark.parametrize(
@@ -19,7 +19,7 @@ logger = logging.getLogger("btcseed")
 )
 def test_vectors(vector):
     master = parse_ext_key(vector["master"])
-    derived_key = derive_key(master, vector["path"], mainnet=True, private=True)
+    derived_key = derive(master, vector["path"], mainnet=True, private=True)
     secret = derived_key.data[1:]  # chop the BIP32 byte prefix
     assert to_hex_string(secret) == vector["derived_key"]
     entropy = to_entropy(secret)

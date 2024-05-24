@@ -2,13 +2,15 @@ import logging
 
 import pytest
 
-from bip32 import derive_key, to_master_key
+from bip32 import to_master_key
+from bip85 import derive
 from to_seed import from_hex
+from const import LOGGER
 from bip32_ext_key import parse_ext_key
 from data.bip32_vectors import INVALID_KEYS, TEST_VECTORS
 
 
-logger = logging.getLogger("btcseed")
+logger = logging.getLogger(LOGGER)
 
 
 @pytest.mark.parametrize(
@@ -26,7 +28,7 @@ def test_vectors(vector):
             assert type_ in {"ext pub", "ext prv"}
             logger.info(f"\nderive {ch} {type_}")
             master = to_master_key(seed, private=True)
-            derived = derive_key(master, ch, mainnet=True, private=type_ == "ext prv")
+            derived = derive(master, ch, mainnet=True, private=type_ == "ext prv")
             if not str(derived) == expected:
                 logger.error("derived:")
                 logger.error(repr(derived))
