@@ -32,7 +32,6 @@ def test_vectors(vector):
                 logger.error("derived:")
                 logger.error(repr(derived))
                 logger.error("expected:")
-                # logger.error(repr(parse_ext_key(expected)))
                 logger.error(repr(parse_ext_key(expected)))
             assert str(derived) == expected
 

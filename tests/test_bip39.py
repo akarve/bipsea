@@ -10,6 +10,8 @@ from unicodedata import is_normalized
 
 import pytest
 import requests
+
+from bip32 import to_master_key
 from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_seed
 from preseed import from_hex
 from const import LOGGER
@@ -25,20 +27,31 @@ WORD_COUNTS = {12, 15, 18, 21, 24}
     "language, vectors", VECTORS.items(), ids=[l for l in VECTORS.keys()]
 )
 def test_vectors(language, vectors):
-    logger.info(language)
     for vector in vectors:
-        entropy_str, mnemonic, seed, xprv = vector
-        entropy_bytes = from_hex(entropy_str)
+        _, mnemonic, seed, xprv = vector
         expected_words = re.split(r"\s", mnemonic)
         expected_seed = from_hex(seed)
         computed_seed = to_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
+        computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
+        assert str(computed_xprv) == xprv
 
+
+@pytest.mark.parametrize(
+    "language, vectors", VECTORS.items(), ids=[l for l in VECTORS.keys()]
+)
+def test_seed_word_generation(language, vectors):
+    for vector in vectors:
+        entropy_str, mnemonic, seed, xprv = vector
+        expected_words = re.split(r"\s", mnemonic)
         if language == "english":
+            entropy_bytes = from_hex(entropy_str)
             computed_words = entropy_to_words(
                 len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
             )
             assert expected_words == computed_words
+        else:
+            pytest.skip("Unsupported language.")
 
 
 @pytest.mark.network
