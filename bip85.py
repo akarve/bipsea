@@ -4,6 +4,8 @@ import hashlib
 import logging
 import re
 
+import base58
+
 from bip32 import derive_key as derive_key_bip32, ExtendedKey, hmac_sha512
 from const import LOGGER
 from seedwords import entropy_to_words
@@ -45,6 +47,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, List
         )
     application, *indexes = segments[2:]
 
+    entropy = to_entropy(derived_key.data[1:])
     if application == "39'":
         language, n_words, index = indexes[:3]
         if not language == LANGUAGE_CODES["English"]:
@@ -52,13 +55,27 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, List
         if not n_words in CODE_39_TO_BITS:
             raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
         n_bytes = CODE_39_TO_BITS[n_words] // 8
-        entropy = to_entropy(derived_key.data[1:])[:n_bytes]
-
+        trimmed_entropy = entropy[:n_bytes]
         n_words_int = int(n_words[:-1])  # chop the ' from hardened derivation
         return {
-            "entropy": entropy[:n_bytes],
-            "application": entropy_to_words(n_words_int, entropy),
+            "entropy": trimmed_entropy,
+            "application": entropy_to_words(n_words_int, trimmed_entropy),
         }
+    elif application == "2'":
+        entropy = entropy[: 256 // 8]
+        prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
+        suffix = b"\x01"  # use with compressed public keys because BIP32
+        extended = prefix + entropy + suffix
+        hash1 = hashlib.sha256(extended).digest()
+        hash2 = hashlib.sha256(hash1).digest()
+        checksum = hash2[:4]
+
+        return {
+            "entropy": entropy[: 256 // 8],
+            "application": base58.b58encode_check(extended),
+            "checksum": checksum,
+        }
+
     else:
         raise NotImplementedError
 

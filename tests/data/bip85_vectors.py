@@ -21,7 +21,6 @@ EXT_KEY_TO_ENTROPY = [
     },
 ]
 
-
 BIP39 = [
     {
         "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
@@ -43,5 +42,14 @@ BIP39 = [
         "derived_entropy": "ae131e2312cdc61331542efe0d1077bac5ea803adf24b313a4f0e48e9c51f37f",
         "derived_mnemonic": "puppy ocean match cereal symbol another shed magic wrap hammer bulb intact gadget divorce twin tonight reason outdoor destroy simple truth cigar social volcano",
         "mnemonic_length": 24,
+    },
+]
+
+WIF = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/2'/0'",
+        "derived_entropy": "7040bb53104f27367f317558e78a994ada7296c6fde36a364e5baf206e502bb1",
+        "derived_wif": "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp",
     },
 ]
