@@ -1,3 +1,5 @@
+openssl_conf = openssl_init
+
 [openssl_init]
 providers = provider_sect
 
