@@ -1,36 +1,84 @@
-# `bipsea` unlimited entropy for Bitcoin 
+# `bipsea` — unlimited entropy for Bitcoin, passwords, and other cryptographic secrets
+
+> "One Seed to rule them all,  
+> One Key to find them,  
+> One Path to bring them all,  
+> And in cryptography bind them.  
+> —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
+
+bipsea is a from-scratch, open-source implementation of BIP-85 and BIP-32 designed
+for readability and security.
+
+You can use BIP-85 to generate private keys, seeds, passwords, and other cryptographic
+assets offline.
+
+# How is this useful?
+
+BIP-85 is like a better password manager that enables you to protect and store
+a _single_, potentially multi-factor, secret that can derive _all of your secrets_.
+
+BIP-85 offers the following benefits:
+
+* The security of many independent passwords **and** the operational efficiency
+of a single master password.
+* Uses Bitcoin's tried and true hierarchical deterministic wallet
+tree (including primitives like ECDSA, SHA256, and hardened derivation)
+* Generates infinite new Bitcoin wallet seed words and master keys
+* Generates infinite possible passwords from a single master root key (xprv)
+and a short _path_ (or _derivation_) string.
+
+You can therefore safely store all derivations (and even some derived secrets)
+in a hot password manager like Keychain because an attacker without your master
+key can do nothing with the derivation.
+
+## How does it work?
+
+The root of your BIP-85 password tree is an ordinary Bitcoin master private key.
+> In general, this _should not be a wallet seed with funds in it_.
+> In any case, fresh seeds are free and easy to generate with bipsea.
+
+The master key then uses the BIP-32 derivation tree with a clever trick: the
+derivation path includes an special application that 
 
 
-### Installation
-* Clone this repo
-* `pip install -r requirements.txt`
 
-## Usage
+### Example
 
-```sh
-# see commands
-python seedwords.py --help
-# generate 15 seed words at random (with checksum in final word)
-python seedwords.py --nwords 15
-```
+* The path `m/83696968'/707764'/10'/0'` means "Base64 password with 10 characters"
+(`dKLoepugzdV` in this case).
+* You can get a new, unique, and comlpetely independent password of the same format
+by simply incrementing the child index to `1'` `m/83696968'/707764'/10'/1'`. 
+In this example Base64 is the _application_ and `10'` is the number of password
+characters that you desire.
+* You may notice the trailing `'`. This indicates hardened derivation, recommended
+for all BIP-85 applications. _Hardened_ derivation means that even if both the parent public key and the child private key are exposed the 
+parent private key remains secure.
 
-### Verifying the word list for yourself
+## BIP-32 hierarchical deterministic wallet tree
 
-```sh
-curl -o english_source.txt https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
+![](imgs/derivation.png)
 
-shasum -a 256 english_source.txt
-shasum -a 256 english.txt
-```
+## How do I know the bipsea implementation is correct?
 
-## Project goals
+bipsea passes all BIP-32 and BIP-85 test vectors with the following provisos:
+* Only generates seed phrases in English
+* Fails a single partial test for derived entropy (but passes all others) from BIP-85
+    * [ ] File this and other clarification issues against BIP-85
 
-* [x] Click CLI utility
-* [x] Use Python `secrets` for strong random behavior where possible
-* [x] Add Unit tests
-* [x] Investigate [embit](https://github.com/diybitcoinhardware/embit/blob/master/src/embit/bip39.py)
+Run `make test` for details.
 
-## Sources
+* `pip install bipsea`
 
-* Implemented according to [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki).
-* BIP39 word list from [bips/bip-0039](https://github.com/bitcoin/bips/tree/master/bip-0039).
+# Developer
+
+* `make install-dev`
+* `make test`
+
+See [Makefile](./Makefile) for more.
+
+# References
+
+* [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) hierarchical
+deterministic wallets
+* [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki) for
+generalized cryptographic entropy
