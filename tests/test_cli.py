@@ -28,3 +28,14 @@ def test_from_and_n(runner):
     result = runner.invoke(cli, ["seed", "--from", "words", "-n", "45"])
     assert result.exit_code != 0
     assert "--number" in result.output
+
+def test_bad_from(runner):
+    result = runner.invoke(cli, ["seed", "--from", "baz"])
+    assert result.exit_code != 0
+    assert "not one of" in result.output
+
+def test_bad_to(runner):
+    result = runner.invoke(cli, ["seed", "--to", "blah"])
+    assert result.exit_code != 0
+    assert "not one of" in result.output
+
