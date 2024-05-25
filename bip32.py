@@ -4,7 +4,6 @@ https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
 
 """
 
-
 import hashlib, hmac
 from typing import List
 import logging
@@ -46,15 +45,17 @@ def derive_key(master: ExtendedKey, path: List[str], private: bool):
     """master: extended private key"""
     indexes = [segment_to_index(s) for s in path[1:]]
     key_chain = [
-        master
-        if indexes or private
-        else N(
-            master.data,
-            master.chain_code,
-            master.child_number,
-            depth=bytes(1),
-            finger=master.finger,
-            version=VERSIONS[master.get_network()]["public"],
+        (
+            master
+            if indexes or private
+            else N(
+                master.data,
+                master.chain_code,
+                master.child_number,
+                depth=bytes(1),
+                finger=master.finger,
+                version=VERSIONS[master.get_network()]["public"],
+            )
         )
     ]
     for depth, (index, _) in enumerate(indexes, 1):
