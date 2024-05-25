@@ -1,6 +1,7 @@
 """CLI"""
 
 import hashlib
+import re
 import select
 import sys
 import threading
@@ -13,12 +14,14 @@ from seedwords import entropy_to_words, to_seed
 
 SEED_FROM_VALUES = ["hex", "rand", "words", "xprv"]
 SEED_TO_VALUES = ["words", "xprv"]
+SEED_N_RANGE = list([str(i) for i in range(12, 25, 3)])
 TIMEOUT = 1
 
 
 class InputThread(threading.Thread):
     def run(self):
         self.seed = click.get_text_stream("stdin").read().strip()
+
 
 @click.group()
 @click.version_option(version=__version__, prog_name="bipsea")
@@ -47,17 +50,24 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice([str(i) for i in range(12, 25, 3)]),
+    type=click.Choice(SEED_N_RANGE),
 )
 @click.option("-p", "--passphrase", default="")
 def seed(from_, input, to, number, passphrase):
     if from_ != "rand" and not input:
-        raise click.BadOptionUsage(option_name="--from", message="--input is required unless --from rand")
+        raise click.BadOptionUsage(
+            option_name="--from", message="--input is required unless --from rand"
+        )
     if from_ == "words":
         if number:
-            raise click.BadOptionUsage(option_name="--number", message="omit --number when you specify --from words")
+            raise click.BadOptionUsage(
+                option_name="--number",
+                message="omit --number when you specify --from words",
+            )
         if to == "words":
-            raise click.BadOptionUsage(option_name="--to", message="--from words is redundant with --to words")
+            raise click.BadOptionUsage(
+                option_name="--to", message="--from words is redundant with --to words"
+            )
     number = 24  # set default here so it doesn't trip the above logic
     if to == "words":
         entropy = None
@@ -67,9 +77,22 @@ def seed(from_, input, to, number, passphrase):
             entropy = hashlib.sha256(input.encode("utf-8")).digest()
         elif from_ == "words":
             click.BadParameter("`--from words --to words` is weirdly redundant")
-        number = number if number else 24  # do this here so we don't break callback validation with defaults
+        number = (
+            number if number else 24
+        )  # do this here so we don't break callback validation with defaults
         words = entropy_to_words(int(number), entropy, passphrase)
         output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+    elif to == "xprv":
+        input = input.strip()
+        words = input.split(r"\s+")
+        n_words = len(words)
+        if not str(n_words) in SEED_N_RANGE:
+            raise click.BadOptionUsage(
+                option_name="--to words --input",
+                message=f"invalid number of words {n_words}",
+            )
+        to_seed()
+        pass
     click.echo(output)
 
 
