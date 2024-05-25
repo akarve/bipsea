@@ -5,26 +5,22 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-        OPENSSL_CONF: ${{ github.workspace }}/config/openssl.cnf
     strategy:
       matrix:
         python-version: [3.8, 3.9]
     steps:
-    - name: Check out code
+    - name: checkout repo
       uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: set up python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt -r test-requirements.txt
-    - name: Lint with Black
-      run: |
-        pip install black
-        black --check .
-    - name: Test with pytest
-      run: |
-        python -m pytest
+    - name: install
+      run: make install-dev
+    - name: lint
+      run: make check
+    - name: pytest
+      env:
+        OPENSSL_CONF: ${{ github.workspace }}/config/openssl.cnf
+      run: make test
+        
