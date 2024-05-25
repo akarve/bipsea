@@ -123,9 +123,19 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
 
         return {
             "entropy": entropy,
-            "application": base64.b64encode(entropy).decode("utf-8"),
+            "application": base64.b64encode(entropy).decode("utf-8")[:pwd_len],
         }
+    # PWD BASE85
+    elif application == "707785'":
+        pwd_len = int(indexes[0][:-1])
+        # TODO file spelling mistake: "Base64 encode **the all** 64 bytes of entropy."
+        if not (10 <= pwd_len <= 80):
+            raise ValueError("Expected pwd_len in [16, 64], got {num_bytes}")
 
+        return {
+            "entropy": entropy,
+            "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
+        }
     else:
         raise NotImplementedError
 

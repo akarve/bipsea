@@ -79,3 +79,12 @@ PWD_BASE64 = [
         "derived_pwd": "dKLoepugzdVJvdL56ogNV",
     },
 ]
+
+PWD_BASE85 = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/707785'/12'/0'",
+        "derived_entropy": "f7cfe56f63dca2490f65fcbf9ee63dcd85d18f751b6b5e1c1b8733af6459c904a75e82b4a22efff9b9e69de2144b293aa8714319a054b6cb55826a8e51425209",
+        "derived_pwd": "_s`{TW89)i4`",
+    },
+]

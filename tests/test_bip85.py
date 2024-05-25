@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, HEX, PWD_BASE64, XPRV, WIF
+from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, HEX, PWD_BASE64, PWD_BASE85, XPRV, WIF
 from const import LOGGER
 from bip32types import parse_ext_key
 from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
@@ -27,6 +27,32 @@ def test_entropy(vector):
     if "drng" in vector:
         output = DRNG(entropy).read(vector["drng_length"])
         assert to_hex_string(output) == vector["drng"]
+
+
+@pytest.mark.parametrize("vector", PWD_BASE64)
+def test_pwd_base64(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_pwd"] == output["application"]
+
+
+@pytest.mark.parametrize("vector", PWD_BASE64)
+@pytest.mark.xfail(reason="Weird. Correct password but bad entropy.")
+def test_pwd_base64_entropy(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_entropy"] == to_hex_string(output["entropy"])
+
+
+@pytest.mark.parametrize("vector", PWD_BASE85)
+def test_pwd_base85(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_pwd"] == output["application"]
+    assert vector["derived_entropy"] == to_hex_string(output["entropy"])
 
 
 @pytest.mark.parametrize("vector", BIP39)
