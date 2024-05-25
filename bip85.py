@@ -137,7 +137,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
         }
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Unsupported application: {application}")
 
 
 def to_entropy(data: bytes) -> bytes:

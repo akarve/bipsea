@@ -31,8 +31,8 @@ setup(
         "Source": "https://github.com/akarve/bipsea",
     },
     entry_points={
-        'console_scripts': [
-            'bipsea=bipsea:main',
+        "console_scripts": [
+            "bipsea=bipsea:main",
         ],
     },
 )

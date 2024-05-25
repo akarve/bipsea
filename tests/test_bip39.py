@@ -47,7 +47,7 @@ def test_seed_word_generation(language, vectors):
             )
             assert expected_words == computed_words
         else:
-            pytest.skip("Unsupported language.")
+            pytest.skip(f"{language} not supported")
 
 
 @pytest.mark.network

@@ -46,7 +46,7 @@ def test_pwd_base64(vector):
 
 
 @pytest.mark.parametrize("vector", PWD_BASE64)
-@pytest.mark.xfail(reason="Weird. Correct password but bad entropy.")
+@pytest.mark.xfail(reason="Head scratcher: correct password, bad entropy. File to BIP-85.")
 def test_pwd_base64_entropy(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -82,12 +82,13 @@ def test_hex(vector):
 
 
 @pytest.mark.parametrize("vector", XPRV)
-def test_xprv(vector):
+def test_rsa_unsupported(vector):
+    """currently no support for RSA application.
+    path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
+    rsa_path = "m/83696968'/828365'/1024'/0'"
     master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    assert vector["derived_key"] == output["application"]
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+    with pytest.raises(NotImplementedError):
+        apply_85(derive(master, rsa_path), rsa_path)
 
 
 @pytest.mark.parametrize("vector", WIF)
@@ -98,3 +99,12 @@ def test_wif(vector):
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
     # TODO: file against BIP85 poor test case does not include WIF checksum
     assert output["application"].decode("utf-8") == vector["derived_wif"]
+
+
+@pytest.mark.parametrize("vector", XPRV)
+def test_xprv(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_key"] == output["application"]
+    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]

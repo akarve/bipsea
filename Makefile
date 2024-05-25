@@ -13,6 +13,7 @@ install-go:
 
 lint:
 	black .
+	actionlint
 
 test:
 	python -m pytest tests -m "not network" -vx
