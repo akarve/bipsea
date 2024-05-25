@@ -14,7 +14,7 @@ from seedwords import entropy_to_words, to_seed
 
 SEED_FROM_VALUES = ["hex", "rand", "words", "xprv"]
 SEED_TO_VALUES = ["words", "xprv"]
-SEED_N_RANGE = list([str(i) for i in range(12, 25, 3)])
+SEED_N_RANGE_STR = list([str(i) for i in range(12, 25, 3)])
 TIMEOUT = 1
 
 
@@ -50,7 +50,7 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice(SEED_N_RANGE),
+    type=click.Choice(SEED_N_RANGE_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
@@ -96,7 +96,7 @@ def seed(from_, input, to, number, passphrase, pretty):
         input = input.strip()
         words = input.split(r"\s+")
         n_words = len(words)
-        if not str(n_words) in SEED_N_RANGE:
+        if not str(n_words) in SEED_N_RANGE_STR:
             raise click.BadOptionUsage(
                 option_name="--to words --input",
                 message=f"invalid number of words {n_words}",

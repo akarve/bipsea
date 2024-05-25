@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from bipsea import cli
+from bipsea import cli, SEED_N_RANGE_STR
 
 
 @pytest.fixture
@@ -8,9 +8,11 @@ def runner():
     return CliRunner()
 
 
-def test_seed_command(runner):
-    result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words"])
+@pytest.mark.parametrize("n", SEED_N_RANGE_STR)
+def test_seed_command_words(runner, n):
+    result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words", "-n", n])
     assert result.exit_code == 0
+    assert len(result.output.split()) == int(n)
 
 
 def test_bip85_command(runner):
