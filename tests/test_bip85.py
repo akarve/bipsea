@@ -6,7 +6,8 @@ import pytest
 from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY
 from const import LOGGER
 from bip32types import parse_ext_key
-from bip85 import derive, DRNG, to_entropy, to_hex_string
+from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
+from seedwords import entropy_to_words
 
 
 logger = logging.getLogger(LOGGER)
@@ -32,5 +33,8 @@ def test_entropy(vector):
 @pytest.mark.parametrize("vector", BIP39)
 def test_bip39(vector):
     master = parse_ext_key(vector["master"])
-    derived_entropy = derive(master, vector["path"])
-    assert to_hex_string(derived_entropy) == vector["derived_entropy"]
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+    assert len(output["application"]) == vector["mnemonic_length"]
+    assert " ".join(output["application"]) == vector["derived_mnemonic"]

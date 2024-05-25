@@ -35,7 +35,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     """* If the caller does not provide entropy use secrets.randbits to generate it
     * Only produces seed words in English"""
     if n_words not in N_WORDS_ALLOWED:
-        raise ValueError(f"nwords must be one of {N_WORDS_ALLOWED}")
+        raise ValueError(f"n_words must be one of {N_WORDS_ALLOWED}")
     n_checksum_bits = n_words // 3  # CS in BIP39
     n_total_bits = n_words * N_WORD_BITS  # ENT+CS in BIP39
     n_entropy_bits = n_total_bits - n_checksum_bits  # ENT in BIP39

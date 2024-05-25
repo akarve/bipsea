@@ -1,10 +1,12 @@
 import binascii
+from typing import Dict, List, Union
 import hashlib
 import logging
 import re
 
 from bip32 import derive_key as derive_key_bip32, ExtendedKey, hmac_sha512
 from const import LOGGER
+from seedwords import entropy_to_words
 
 
 logger = logging.getLogger(LOGGER)
@@ -14,6 +16,7 @@ HMAC_KEY = b"bip-entropy-from-k"
 CODE_39_TO_BITS = {
     "12'": 128,
     "18'": 192,
+    "21'": 224,
     "24'": 256,
 }
 LANGUAGE_CODES = {
@@ -30,6 +33,36 @@ LANGUAGE_CODES = {
 PURPOSE_CODES = {"BIP-85": "83696968'"}
 
 
+def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, List[str]]]:
+    """returns a dict with 'entropy': bytes and 'application': str"""
+    segments = split_and_validate(path)
+    purpose = segments[1]
+    if purpose != PURPOSE_CODES["BIP-85"]:
+        raise ValueError(f"Not a BIP85 path: {path}")
+    if len(segments) < 4 or not all(s.endswith("'") for s in segments[1:]):
+        raise ValueError(
+            f"BIP-85 paths should have 4+ segments and hardened children: {segments}"
+        )
+    application, *indexes = segments[2:]
+
+    if application == "39'":
+        language, n_words, index = indexes[:3]
+        if not language == LANGUAGE_CODES["English"]:
+            raise ValueError(f"Only English BIP39 words from BIP85 are supported.")
+        if not n_words in CODE_39_TO_BITS:
+            raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
+        n_bytes = CODE_39_TO_BITS[n_words] // 8
+        entropy = to_entropy(derived_key.data[1:])[:n_bytes]
+
+        n_words_int = int(n_words[:-1])  # chop the ' from hardened derivation
+        return {
+            "entropy": entropy[:n_bytes],
+            "application": entropy_to_words(n_words_int, entropy),
+        }
+    else:
+        raise NotImplementedError
+
+
 def to_entropy(data: bytes) -> bytes:
     return hmac_sha512(key=HMAC_KEY, data=data)
 
@@ -37,28 +70,8 @@ def to_entropy(data: bytes) -> bytes:
 def derive(master: ExtendedKey, path: str, private: bool = True):
     if not master.is_private():
         raise ValueError("Derivations should begin with a private master key")
-    segments = split_and_validate(path)
-    logger.debug(segments)
-    derived_key = derive_key_bip32(master, segments, private)
-    if segments[1:]:
-        purpose = segments[1]
-        if purpose == PURPOSE_CODES["BIP-85"]:
-            if len(segments) < 4 or not any(s.endswith("'") for s in segments[1:]):
-                raise ValueError(
-                    f"Expected BIP-85 path to have 4+ segments and some hardened children: {segments}"
-                )
-            application, *indexes = segments[2:]
 
-            if application == "39'":
-                language, n_words, index = indexes[:3]
-                if not n_words in CODE_39_TO_BITS:
-                    raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
-                n_bytes = CODE_39_TO_BITS[n_words] // 8
-                entropy = to_entropy(derived_key.data[1:])
-
-                return entropy[:n_bytes]
-
-    return derived_key
+    return derive_key_bip32(master, split_and_validate(path), private)
 
 
 def to_hex_string(data: bytes) -> str:
