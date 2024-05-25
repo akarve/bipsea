@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, WIF
+from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, XPRV, WIF
 from const import LOGGER
 from bip32types import parse_ext_key
 from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
@@ -35,8 +35,17 @@ def test_bip39(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    assert len(output["application"]) == vector["mnemonic_length"]
-    assert " ".join(output["application"]) == vector["derived_mnemonic"]
+    assert len(output["application"].split(" ")) == vector["mnemonic_length"]
+    assert output["application"] == vector["derived_mnemonic"]
+
+
+@pytest.mark.parametrize("vector", XPRV)
+def test_xprv(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_key"] == output["application"]
+    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
 
 
 @pytest.mark.parametrize("vector", WIF)
@@ -45,4 +54,5 @@ def test_wif(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+    # TODO: file against BIP85 poor test case does not include WIF checksum
     assert output["application"].decode("utf-8") == vector["derived_wif"]

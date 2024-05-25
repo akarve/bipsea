@@ -1,12 +1,17 @@
 import binascii
-from typing import Dict, List, Union
+from typing import Dict, Union
 import hashlib
 import logging
 import re
 
 import base58
 
-from bip32 import derive_key as derive_key_bip32, ExtendedKey, hmac_sha512
+from bip32 import (
+    derive_key as derive_key_bip32,
+    ExtendedKey,
+    hmac_sha512,
+    VERSIONS,
+)
 from const import LOGGER
 from seedwords import entropy_to_words
 
@@ -35,7 +40,7 @@ LANGUAGE_CODES = {
 PURPOSE_CODES = {"BIP-85": "83696968'"}
 
 
-def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, List[str]]]:
+def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]]:
     """returns a dict with 'entropy': bytes and 'application': str"""
     segments = split_and_validate(path)
     purpose = segments[1]
@@ -59,21 +64,44 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, List
         n_words_int = int(n_words[:-1])  # chop the ' from hardened derivation
         return {
             "entropy": trimmed_entropy,
-            "application": entropy_to_words(n_words_int, trimmed_entropy),
+            "application": " ".join(entropy_to_words(n_words_int, trimmed_entropy)),
         }
     elif application == "2'":
-        entropy = entropy[: 256 // 8]
+        trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
         suffix = b"\x01"  # use with compressed public keys because BIP32
-        extended = prefix + entropy + suffix
+        extended = prefix + trimmed_entropy + suffix
         hash1 = hashlib.sha256(extended).digest()
         hash2 = hashlib.sha256(hash1).digest()
-        checksum = hash2[:4]
 
         return {
-            "entropy": entropy[: 256 // 8],
+            "entropy": trimmed_entropy,
             "application": base58.b58encode_check(extended),
-            "checksum": checksum,
+            "checksum": hash2[:4],
+        }
+    elif application == "32'":
+        derived_key = ExtendedKey(
+            # TODO: file against bip85 that there is no provision to specify
+            # main vs testnet
+            # TODO: file against bip85 that they are inconsistent with
+            # hmac entropy order :shrug:
+            version=VERSIONS["mainnet"]["private"],
+            depth=bytes(1),
+            finger=bytes(4),
+            child_number=bytes(4),
+            chain_code=entropy[:32],
+            data=bytes(1) + entropy[32:],
+        )
+
+        return {
+            # TODO: also file against bip85 that there is no consistency about
+            # returned entropy length in test vectors?
+            # TODO: this is wrong on multiple levels; first we use
+            # 64 bytes from the entropy for this application
+            # second this isn't even the chain_code which in some universe
+            # might be considered derived entropy :(
+            "entropy": entropy[32:],
+            "application": str(derived_key),
         }
 
     else:

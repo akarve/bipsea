@@ -45,6 +45,15 @@ BIP39 = [
     },
 ]
 
+XPRV = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/32'/0'",
+        "derived_entropy": "ead0b33988a616cf6a497f1c169d9e92562604e38305ccd3fc96f2252c177682",
+        "derived_key": "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX",
+    },
+]
+
 WIF = [
     {
         "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
