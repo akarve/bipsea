@@ -1,8 +1,8 @@
-from const import __version__
+from const import __app_name__, __version__
 from setuptools import setup, find_packages
 
 setup(
-    name="bipsea",
+    name=__app_name__,
     version=__version__,
     packages=find_packages(),
     description="Python implementation of BIP 85 (and BIP 32)",

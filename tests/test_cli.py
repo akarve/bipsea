@@ -1,11 +1,33 @@
+import logging
+
 import pytest
 from click.testing import CliRunner
+from tests.data.bip39_vectors import VECTORS
+
+from const import LOGGER
+from bip32 import to_master_key
 from bipsea import cli, SEED_N_RANGE_STR
+from preseed import from_hex
+
+
+logger = logging.getLogger(LOGGER)
 
 
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+@pytest.mark.parametrize("language, vectors", VECTORS.items())
+def test_seed_command_to_actual_seed(runner, language, vectors):
+    for vector in vectors:
+        _, mnemonic, seed, xprv = vector
+        result = runner.invoke(
+            cli, ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == xprv
+        break
 
 
 @pytest.mark.parametrize("n", SEED_N_RANGE_STR)

@@ -1,6 +1,7 @@
 """CLI"""
 
 import hashlib
+import logging
 import re
 import select
 import sys
@@ -8,14 +9,18 @@ import threading
 
 import click
 
-from const import __version__
+from bip32 import to_master_key
+from const import __version__, LOGGER
 from seedwords import entropy_to_words, to_seed
 
 
-SEED_FROM_VALUES = ["hex", "rand", "words", "xprv"]
-SEED_TO_VALUES = ["words", "xprv"]
+SEED_FROM_VALUES = ["string", "rand", "words"]
+SEED_TO_VALUES = ["words", "tprv", "xprv"]
 SEED_N_RANGE_STR = list([str(i) for i in range(12, 25, 3)])
 TIMEOUT = 1
+
+
+logger = logging.getLogger(LOGGER)
 
 
 class InputThread(threading.Thread):
@@ -45,6 +50,7 @@ def cli():
     "--to",
     type=click.Choice(SEED_TO_VALUES, case_sensitive=True),
     default="words",
+    help="|".join(SEED_TO_VALUES),
     required=True,
 )
 @click.option(
@@ -57,7 +63,9 @@ def cli():
     "--pretty", is_flag=True, default=False, help="number and separate seed words"
 )
 def seed(from_, input, to, number, passphrase, pretty):
-    if from_ != "rand" and not input:
+    if input:
+        input = input.strip()
+    if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
             message="--input is required unless you say --from rand",
@@ -70,40 +78,36 @@ def seed(from_, input, to, number, passphrase, pretty):
             )
         if to == "words":
             raise click.BadOptionUsage(
-                option_name="--to", message="--from words is redundant with --to words"
+                option_name="--to", message="--from words --to words is redundant"
             )
-    if to == "words":
-        entropy = None
-        if from_ == "rand":
-            pass
-        elif from_ == "string":
-            entropy = hashlib.sha256(input.encode("utf-8")).digest()
-        elif from_ == "words":
-            click.BadParameter("`--from words --to words` is weirdly redundant")
-        # set default here so we know if the user set anything so we don't break
-        # validation above
+        words = re.split(r"\s+", input)
+        n_words = len(words)
+        if not str(n_words) in SEED_N_RANGE_STR:
+            raise click.BadOptionUsage(
+                option_name="--input",
+                message=f"invalid number of words {n_words}",
+            )
+    else:
         if not number:
-            number = 24
+            number = 24  # set here so we don't falsely trip `if number` above
+        if from_ == "string":
+            entropy = hashlib.sha256(input.encode("utf-8")).digest()
+        elif from_ == "rand":
+            entropy = None
         words = entropy_to_words(int(number), entropy, passphrase)
+    if to == "words":
         output = " ".join(words)
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
-    elif to == "xprv":
+        click.echo(output)
+    elif to in {"tprv", "xprv"}:
         if pretty:
             raise click.BadOptionUsage(
                 option_name="--pretty", message="--pretty has no effect on --to xprv"
             )
-        input = input.strip()
-        words = input.split(r"\s+")
-        n_words = len(words)
-        if not str(n_words) in SEED_N_RANGE_STR:
-            raise click.BadOptionUsage(
-                option_name="--to words --input",
-                message=f"invalid number of words {n_words}",
-            )
-        seed = to_seed(words, passphrase)
-        click.echo(seed)
-    click.echo(output)
+        mainnet = to == "xprv"
+        prv = to_master_key(to_seed(words, passphrase), mainnet=mainnet, private=True)
+        click.echo(str(prv))
 
 
 cli.add_command(seed)

@@ -17,7 +17,7 @@ lint:
 	actionlint
 
 test:
-	python -m pytest tests -m "not network" -vx
+	python -m pytest tests -m "not network" -vsx
 
 test-network:
 	python -m pytest tests

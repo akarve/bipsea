@@ -1,4 +1,5 @@
 """constants"""
 
 __version__ = "0.1"
-LOGGER = "btcentropy"
+__app_name__ = "bipsea"
+LOGGER = __app_name__
