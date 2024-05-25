@@ -1,4 +1,4 @@
-.PHONY: check install-dev install-go lint test test-on
+.PHONY: check install-dev install-go lint test test-network
 
 check:
 	black . --check
@@ -18,4 +18,4 @@ test:
 	python -m pytest tests -m "not network" -x
 
 test-network:
-	pytest tests
+	python -m pytest tests
