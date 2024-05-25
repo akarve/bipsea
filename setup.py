@@ -13,6 +13,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     keywords="Bitcoin BIP85  BIP32 cryptography",
     install_requires=[
@@ -22,7 +23,9 @@ setup(
         "pytest",
     ],
     tests_require=[
-        "yamllint>=1.35.1",
+        "black",
+        "pytest",
+        "requests",
     ],
     project_urls={
         "Source": "https://github.com/akarve/bipsea",
