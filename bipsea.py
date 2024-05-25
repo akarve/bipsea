@@ -11,7 +11,7 @@ import click
 
 from bip32 import to_master_key
 from const import __version__, LOGGER
-from seedwords import entropy_to_words, to_seed
+from seedwords import bip39_english_words, entropy_to_words, to_master_seed
 
 
 SEED_FROM_VALUES = ["string", "rand", "words"]
@@ -96,6 +96,11 @@ def seed(from_, input, to, number, passphrase, pretty):
             entropy = None
         words = entropy_to_words(int(number), entropy, passphrase)
     if to == "words":
+        english_words = set(bip39_english_words())
+        if not all(w in english_words for w in words):
+            raise click.BadOptionUsage(
+                option_name="--from words --input", message=f"One or more words not in BIP-39 English list {words}"
+            )
         output = " ".join(words)
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
@@ -106,7 +111,9 @@ def seed(from_, input, to, number, passphrase, pretty):
                 option_name="--pretty", message="--pretty has no effect on --to xprv"
             )
         mainnet = to == "xprv"
-        prv = to_master_key(to_seed(words, passphrase), mainnet=mainnet, private=True)
+        prv = to_master_key(
+            to_master_seed(words, passphrase), mainnet=mainnet, private=True
+        )
         click.echo(prv)
 
 

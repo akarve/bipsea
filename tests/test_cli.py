@@ -22,24 +22,15 @@ def runner():
 def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors:
         _, mnemonic, _, xprv = vector
-        result = runner.invoke(
-            cli, ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"]
-        )
-        assert result.exit_code == 0
-        assert result.output.strip() == xprv
 
-        diff_pass = runner.invoke(
-            cli, ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TrEZOR"]
-        )
-        assert diff_pass.exit_code == 0
-        assert diff_pass.output.strip() != xprv
-
-        diff_mnem = runner.invoke(
-            cli,
-            ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic + ".", "-p", "TrEZOR"],
-        )
-        assert diff_mnem.exit_code == 0
-        assert diff_mnem.output.strip() != xprv
+        for upper in [True, False]:
+            mnemonic = mnemonic.upper() if upper else mnemonic
+            result = runner.invoke(
+                cli,
+                ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"],
+            )
+            assert result.exit_code == 0
+            assert result.output.strip() == xprv
 
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items())
@@ -56,12 +47,12 @@ def test_seed_option_sensitivity(runner, language, vectors):
         assert change_passphrase.exit_code == 0
         assert change_passphrase.output.strip() != xprv
 
-        change_mnemonic = runner.invoke(
+        append_mnemonic = runner.invoke(
             cli,
             ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic + ".", "-p", "TREZOR"],
         )
-        assert change_mnemonic.exit_code == 0
-        assert change_mnemonic.output.strip() != xprv
+        assert append_mnemonic.exit_code == 0
+        assert append_mnemonic.output.strip() != xprv
 
         whitespace_mnemonic = runner.invoke(
             cli,

@@ -8,7 +8,7 @@ import pytest
 import requests
 
 from bip32 import to_master_key
-from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_seed
+from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_master_seed
 from preseed import from_hex
 from const import LOGGER
 from data.bip39_vectors import VECTORS
@@ -27,7 +27,7 @@ def test_vectors(language, vectors):
         _, mnemonic, seed, xprv = vector
         expected_words = re.split(r"\s", mnemonic)
         expected_seed = from_hex(seed)
-        computed_seed = to_seed(expected_words, passphrase="TREZOR")
+        computed_seed = to_master_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
         assert str(computed_xprv) == xprv

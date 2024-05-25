@@ -63,7 +63,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     )
     int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum  # shift CS bits in
 
-    dictionary = file_to_array()  # get bip39 words from disk
+    dictionary = bip39_english_words()  # get bip39 words from disk
     swords = []
     mask11 = N_MNEMONICS - 1  # mask lowest 11 bits
     for _ in range(n_words):
@@ -76,19 +76,25 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     return swords
 
 
-def file_to_array(file_name=DICT_NAME):
+def bip39_english_words(file_name=DICT_NAME) -> List[str]:
+    """returns a set or array of bip39 english words"""
     with open(file_name, "rb") as source:
         raw = source.read()
     file_hash = hashlib.sha256()
     file_hash.update(raw)
     assert DICT_HASH == file_hash.hexdigest(), f"unexpected contents: {DICT_NAME}"
     dictionary = raw.decode().split("\n")[:-1]
-    assert len(dictionary) == N_MNEMONICS, f"expected {N_MNEMONICS} words"
+    assert (
+        len(dictionary) == N_MNEMONICS == len(set(dictionary))
+    ), f"expected {N_MNEMONICS} words"
 
     return dictionary
 
 
-def to_seed(mnemonic: List[str], passphrase, iterations=2048):
+def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
+    """converts english mnemonics to all lower case"""
+    mnemonic = [m.lower() for m in mnemonic]
+    assert set(mnemonic)
     mnemonic_nfkd = normalize("NFKD", " ".join(mnemonic)).encode("utf-8")
     salt_nfkd = normalize("NFKD", "mnemonic" + passphrase).encode("utf-8")
 
