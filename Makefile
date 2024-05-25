@@ -17,4 +17,4 @@ test:
 	pytest tests -m "not network" -x
 
 test-network:
-	pytest tests
+	o tytest tests
