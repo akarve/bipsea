@@ -1,10 +1,7 @@
 """
 Complete implementation of BIP-32 hierarchical deterministic wallets.
-
 https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
 
-TODO: clean module for BIP-85
-https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki Entropy
 """
 
 

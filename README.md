@@ -1,4 +1,4 @@
-# BIP-39 Mnemonic Seed Generator in Python
+# `bipsea` 
 
 ## Disclaimer
 
