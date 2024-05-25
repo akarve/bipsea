@@ -53,10 +53,14 @@ def cli():
     type=click.Choice(SEED_N_RANGE),
 )
 @click.option("-p", "--passphrase", default="")
-def seed(from_, input, to, number, passphrase):
+@click.option(
+    "--pretty", is_flag=True, default=False, help="number and separate seed words"
+)
+def seed(from_, input, to, number, passphrase, pretty):
     if from_ != "rand" and not input:
         raise click.BadOptionUsage(
-            option_name="--from", message="--input is required unless --from rand"
+            option_name="--from",
+            message="--input is required unless you say --from rand",
         )
     if from_ == "words":
         if number:
@@ -68,7 +72,6 @@ def seed(from_, input, to, number, passphrase):
             raise click.BadOptionUsage(
                 option_name="--to", message="--from words is redundant with --to words"
             )
-    number = 24  # set default here so it doesn't trip the above logic
     if to == "words":
         entropy = None
         if from_ == "rand":
@@ -77,12 +80,19 @@ def seed(from_, input, to, number, passphrase):
             entropy = hashlib.sha256(input.encode("utf-8")).digest()
         elif from_ == "words":
             click.BadParameter("`--from words --to words` is weirdly redundant")
-        number = (
-            number if number else 24
-        )  # do this here so we don't break callback validation with defaults
+        # set default here so we know if the user set anything so we don't break
+        # validation above
+        if not number:
+            number = 24
         words = entropy_to_words(int(number), entropy, passphrase)
-        output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+        output = " ".join(words)
+        if pretty:
+            output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
     elif to == "xprv":
+        if pretty:
+            raise click.BadOptionUsage(
+                option_name="--pretty", message="--pretty has no effect on --to xprv"
+            )
         input = input.strip()
         words = input.split(r"\s+")
         n_words = len(words)
@@ -91,8 +101,8 @@ def seed(from_, input, to, number, passphrase):
                 option_name="--to words --input",
                 message=f"invalid number of words {n_words}",
             )
-        to_seed()
-        pass
+        seed = to_seed(words, passphrase)
+        click.echo(seed)
     click.echo(output)
 
 
