@@ -1,5 +1,8 @@
 """CLI"""
-import signal
+import hashlib
+import select
+import sys
+import threading
 
 import click
 
@@ -7,10 +10,21 @@ from const import __version__
 from seedwords import entropy_to_words
 
 
-SEED_FROM_VALUES = ["hex", "rand", "string", "words", "xprv"]
+SEED_FROM_VALUES = ["hex", "rand", "words", "xprv"]
 SEED_TO_VALUES = ["words", "xprv"]
 TIMEOUT = 1
 
+
+class InputThread(threading.Thread):
+    def run(self):
+        self.seed = click.get_text_stream("stdin").read().strip()
+
+def validate_number(ctx, param, value):
+    from_ = ctx.params.get('from_')
+    if from_ == 'words' and value is not None:
+        raise click.BadParameter("Omit --number when you call `bipsea --from words`")
+
+    return value
 
 @click.group()
 @click.version_option(version=__version__, prog_name="bipsea")
@@ -28,7 +42,7 @@ def cli():
     help="|".join(SEED_FROM_VALUES),
     default="rand",
 )
-@click.option("-i", "--input", default="")
+@click.option("-i", "--input", help="string in the format specified by --from")
 @click.option(
     "-t",
     "--to",
@@ -41,6 +55,7 @@ def cli():
     "--number",
     type=click.Choice([str(i) for i in range(12, 25, 3)]),
     default="24",
+    callback=validate_number,
 )
 @click.option("-p", "--passphrase", default="")
 def seed(from_, input, to, number, passphrase):
@@ -50,27 +65,30 @@ def seed(from_, input, to, number, passphrase):
             pass
         elif from_ == "string":
             entropy = hashlib.sha256(input.encode("utf-8")).digest()
+        elif from_ == "words":
+            pass
+
         words = entropy_to_words(int(number), entropy, passphrase)
         output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
     else:
         raise NotImplementedError
     click.echo(output)
 
-    return "bob"
-
 cli.add_command(seed)
 
-@click.command(name="entropy", help="BIP-85 entropy")
+
+@click.command(name="entropy", help="Derive entropy according to BIP-85")
 @click.option("-a", "--application", required=True)
 @click.option("-n", "--number", type=int, default=64, help="bytes")
 def bip85(application, number):
-    try:
-        signal.alarm(TIMEOUT)
-        seed = click.get_text_stream("stdin").read().strip()
-        signal.alarm(0)
-    except TimeoutError:
-        click.echo("No input. Try bipsea seed -t xprv | bipsea entropy")
-        return
+    i, o, e = select.select([sys.stdin], [], [], TIMEOUT)
+    if i:
+        seed = sys.stdin.readline().strip()
+        click.echo(seed)
+    else:
+        click.echo(
+            "bipsea entropy received no input. Try `bipsea seed -t xprv | bipsea entropy -a foo`"
+        )
 
 cli.add_command(bip85)
 
