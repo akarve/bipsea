@@ -25,7 +25,6 @@ def test_vectors(vector):
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
             assert type_ in {"ext pub", "ext prv"}
-            logger.info(f"\nderive {ch} {type_}")
             master = to_master_key(seed, mainnet=True, private=True)
             derived = derive(master, ch, private=type_ == "ext prv")
             if not str(derived) == expected:
