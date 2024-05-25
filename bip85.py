@@ -11,10 +11,10 @@ logger = logging.getLogger(LOGGER)
 
 
 HMAC_KEY = b"bip-entropy-from-k"
-ENTROPY_CODES = {
-    "12 words": {"entropy_bits": 128, "code": "12'"},
-    "18 words": {"entropy_bits": 192, "code": "18'"},
-    "24 words": {"entropy_bits": 256, "code": "24'"},
+CODE_39_TO_BITS = {
+    "12'": 128,
+    "18'": 192,
+    "24'": 256,
 }
 LANGUAGE_CODES = {
     "English": "0'",
@@ -38,6 +38,7 @@ def derive(master: ExtendedKey, path: str, private: bool = True):
     if not master.is_private():
         raise ValueError("Derivations should begin with a private master key")
     segments = split_and_validate(path)
+    logger.debug(segments)
     derived_key = derive_key_bip32(master, segments, private)
     if segments[1:]:
         purpose = segments[1]
@@ -49,7 +50,13 @@ def derive(master: ExtendedKey, path: str, private: bool = True):
             application, *indexes = segments[2:]
 
             if application == "39'":
-                language, words, index = indexes[:3]
+                language, n_words, index = indexes[:3]
+                if not n_words in CODE_39_TO_BITS:
+                    raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
+                n_bytes = CODE_39_TO_BITS[n_words] // 8
+                entropy = to_entropy(derived_key.data[1:])
+
+                return entropy[:n_bytes]
 
     return derived_key
 

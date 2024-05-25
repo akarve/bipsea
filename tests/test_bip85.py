@@ -5,7 +5,7 @@ import pytest
 
 from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY
 from const import LOGGER
-from bip32_ext_key import parse_ext_key
+from bip32types import parse_ext_key
 from bip85 import derive, DRNG, to_entropy, to_hex_string
 
 
@@ -30,7 +30,7 @@ def test_entropy(vector):
 
 
 @pytest.mark.parametrize("vector", BIP39)
-def test_entropy(vector):
+def test_bip39(vector):
     master = parse_ext_key(vector["master"])
-    derived_key = derive(master, vector["path"])
-    logger.info(vector["path"])
+    derived_entropy = derive(master, vector["path"])
+    assert to_hex_string(derived_entropy) == vector["derived_entropy"]
