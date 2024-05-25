@@ -1,8 +1,9 @@
+from const import __version__
 from setuptools import setup, find_packages
 
 setup(
     name="bipsea",
-    version="1.0",
+    version=__version__,
     packages=find_packages(),
     description="Python implementation of BIP 85 (and BIP 32)",
     author="Aneesh Karve",
@@ -32,7 +33,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "bipsea=bipsea:main",
+            "bipsea=bipsea:cli",
         ],
     },
 )

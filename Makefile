@@ -1,9 +1,10 @@
-.PHONY: check install-dev install-go lint test test-network
+.PHONY: check install install-go lint test test-network
 
 check:
 	black . --check
 
-install-dev:
+# developer install only
+install:
 	pip install -r requirements.txt -r test-requirements.txt
 	pip install -e .
 

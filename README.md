@@ -125,7 +125,8 @@ pip install bipsea
 # Developer
 
 ```
-make install-dev
+make install
+make install-go  # requires go
 make test
 ```
 
