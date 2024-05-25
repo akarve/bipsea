@@ -12,11 +12,14 @@ def test_seed_command(runner):
 
 def test_bip85_command(runner):
     pass
-    #result = runner.invoke(cli, ['entropy', '-a', 'foo'])
-    #assert result.exit_code == 0
 
 def test_from_and_to_words(runner):
     result = runner.invoke(cli, ['seed', '--from', 'words', '--to', 'words'])
     assert result.exit_code != 0
     assert "--input" in result.output
     assert "--from rand" in result.output
+
+def test_from_and_n(runner):
+    result = runner.invoke(cli, ['seed', '--from', 'words', '-n', '45'])
+    assert result.exit_code != 0
+    assert "--number" in result.output
