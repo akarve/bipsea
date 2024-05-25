@@ -50,20 +50,20 @@ def test_seed_option_sensitivity(runner, language, vectors):
     for vector in vectors[:1]:
         _, mnemonic, _, xprv = vector
 
-        diff_pass = runner.invoke(
+        change_passphrase = runner.invoke(
             cli, ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TrEZOR"]
         )
-        assert diff_pass.exit_code == 0
-        assert diff_pass.output.strip() != xprv
+        assert change_passphrase.exit_code == 0
+        assert change_passphrase.output.strip() != xprv
 
-        diff_mnem = runner.invoke(
+        change_mnemonic = runner.invoke(
             cli,
             ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic + ".", "-p", "TREZOR"],
         )
-        assert diff_mnem.exit_code == 0
-        assert diff_mnem.output.strip() != xprv
+        assert change_mnemonic.exit_code == 0
+        assert change_mnemonic.output.strip() != xprv
 
-        space_mnem = runner.invoke(
+        whitespace_mnemonic = runner.invoke(
             cli,
             [
                 "seed",
@@ -77,8 +77,16 @@ def test_seed_option_sensitivity(runner, language, vectors):
                 "TREZOR",
             ],
         )
-        assert space_mnem.exit_code == 0
-        assert space_mnem.output.strip() == xprv
+        assert whitespace_mnemonic.exit_code == 0
+        assert whitespace_mnemonic.output.strip() == xprv
+
+        testnet = runner.invoke(
+            cli, ["seed", "-t", "tprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"]
+        )
+        assert testnet.exit_code == 0
+        tprv = testnet.output.strip()
+        assert tprv != xprv
+        assert tprv.startswith("tprv")
 
 
 @pytest.mark.parametrize("n", SEED_N_RANGE_STR)
