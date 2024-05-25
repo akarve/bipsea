@@ -1,3 +1,4 @@
+import base64
 import binascii
 from typing import Dict, Union
 import hashlib
@@ -53,8 +54,9 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     application, *indexes = segments[2:]
 
     entropy = to_entropy(derived_key.data[1:])
+    # BIP 39
     if application == "39'":
-        language, n_words, index = indexes[:3]
+        language, n_words = indexes[:2]
         if not language == LANGUAGE_CODES["English"]:
             raise ValueError(f"Only English BIP39 words from BIP85 are supported.")
         if not n_words in CODE_39_TO_BITS:
@@ -66,6 +68,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": trimmed_entropy,
             "application": " ".join(entropy_to_words(n_words_int, trimmed_entropy)),
         }
+    # WIF
     elif application == "2'":
         trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
@@ -79,6 +82,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base58.b58encode_check(extended),
             "checksum": hash2[:4],
         }
+    # XPRV
     elif application == "32'":
         derived_key = ExtendedKey(
             # TODO: file against bip85 that there is no provision to specify
@@ -102,6 +106,24 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             # might be considered derived entropy :(
             "entropy": entropy[32:],
             "application": str(derived_key),
+        }
+    # HEX
+    elif application == "128169'":
+        num_bytes = int(indexes[0][:-1])
+        if not (16 <= num_bytes <= 64):
+            raise ValueError("Expected num_bytes in [16, 64], got {num_bytes}")
+
+        return {"entropy": entropy, "application": to_hex_string(entropy[:num_bytes])}
+    # PWD BASE64
+    elif application == "707764'":
+        pwd_len = int(indexes[0][:-1])
+        # TODO file Base64 encode the all 64 bytes of entropy.
+        if not (20 <= pwd_len <= 86):
+            raise ValueError("Expected pwd_len in [16, 64], got {num_bytes}")
+
+        return {
+            "entropy": entropy,
+            "application": base64.b64encode(entropy).decode("utf-8"),
         }
 
     else:

@@ -62,3 +62,20 @@ WIF = [
         "derived_wif": "Kzyv4uF39d4Jrw2W7UryTHwZr1zQVNk4dAFyqE6BuMrMh1Za7uhp",
     },
 ]
+
+HEX = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/128169'/64'/0'",
+        "derived_entropy": "492db4698cf3b73a5a24998aa3e9d7fa96275d85724a91e71aa2d645442f878555d078fd1f1f67e368976f04137b1f7a0d19232136ca50c44614af72b5582a5c",
+    },
+]
+
+PWD_BASE64 = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/707764'/21'/0'",
+        "derived_entropy": "d7ad61d4a76575c5bad773feeb40299490b224e8e5df6c8ad8fe3d0a6eed7b85ead9fef7bcca8160f0ee48dc6e92b311fc71f2146623cc6952c03ce82c7b63fe",
+        "derived_pwd": "dKLoepugzdVJvdL56ogNV",
+    },
+]

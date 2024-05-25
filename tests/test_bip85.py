@@ -3,7 +3,7 @@ import logging
 
 import pytest
 
-from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, XPRV, WIF
+from data.bip85_vectors import BIP39, EXT_KEY_TO_ENTROPY, HEX, PWD_BASE64, XPRV, WIF
 from const import LOGGER
 from bip32types import parse_ext_key
 from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
@@ -37,6 +37,14 @@ def test_bip39(vector):
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
     assert len(output["application"].split(" ")) == vector["mnemonic_length"]
     assert output["application"] == vector["derived_mnemonic"]
+
+
+@pytest.mark.parametrize("vector", HEX)
+def test_hex(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    assert vector["derived_entropy"] == output["application"]
 
 
 @pytest.mark.parametrize("vector", XPRV)
