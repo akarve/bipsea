@@ -1,7 +1,6 @@
 """
 Complete implementation of BIP-32 hierarchical deterministic wallets.
 https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
-
 """
 
 import hashlib, hmac
