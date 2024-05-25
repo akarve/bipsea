@@ -135,15 +135,49 @@ See [Makefile](./Makefile) for more commands.
 
 # Usage
 
-## Generate Bitcoin seed words
+```
+bipsea --help
+```
+
+## New bitcoin seed words
 
 ```sh
-bipsea --to-words --from-randbits
-bipsea --to-words --n-words 18 --from-string "adfadfadfadf"
-bipsea --to-85 --path "m/83696968'/707764'/10'/0'"
-
-bipsea --to-words  --from-words "a b c" | bipsea --to-85 --path "m/83696968'/707764'/10'/0'"
+bipsea seed -n 12 --pretty
 ```
+    1) crumble
+    2) shallow
+    3) hair
+    4) federal
+    5) cycle
+    6) grid
+    7) million
+    8) twist
+    9) turn
+    10) verb
+    11) orphan
+    12) suggest
+
+## xprv from existing seed words
+
+```
+bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" -t xprv
+```
+
+    xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
+
+```
+bipsea seed -f string -i "any string you want" -t xprv
+```
+    xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
+
+This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). If you're now thinking, _I could use anything as a source
+for a seed phrase you get it. And we haven't even gotten into BIP-85.
+
+> **Do not get too cute** with low-entropy sources or brain wallets.
+> You can only stretch entropy so far. Weak entropy in
+> means weak entropy out. Not to mention vulnerability to
+[rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
+
 
 ## Generate BIP-85 password 
 
@@ -157,7 +191,6 @@ warn on low entropy
 bipsea --from
 ```
 > "The seed value is calculated as SHA256 over the rolls, when expressed as an ASCII string."
-https://coldcard.com/docs/verifying-dice-roll-math/
 
 # References
 

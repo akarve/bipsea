@@ -18,7 +18,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: install
-      run: make install-dev
+      run: make install
     - name: lint
       run: make check
     - name: pytest

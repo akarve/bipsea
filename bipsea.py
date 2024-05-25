@@ -94,12 +94,15 @@ def seed(from_, input, to, number, passphrase, pretty):
             entropy = hashlib.sha256(input.encode("utf-8")).digest()
         elif from_ == "rand":
             entropy = None
-        words = entropy_to_words(int(number), entropy, passphrase)
+        words = entropy_to_words(
+            n_words=int(number), user_entropy=entropy, passphrase=passphrase
+        )
     if to == "words":
         english_words = set(bip39_english_words())
         if not all(w in english_words for w in words):
             raise click.BadOptionUsage(
-                option_name="--from words --input", message=f"One or more words not in BIP-39 English list {words}"
+                option_name="--from words --input",
+                message=f"One or more words not in BIP-39 English list {words}",
             )
         output = " ".join(words)
         if pretty:
