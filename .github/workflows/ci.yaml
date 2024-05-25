@@ -4,6 +4,8 @@ on: [push, pull_request]
 
 jobs:
   build:
+    env:
+      OPENSSL_CONF: ${{ github.workspace }}/config/openssl.cnf
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -20,7 +22,5 @@ jobs:
     - name: lint
       run: make check
     - name: pytest
-      env:
-        OPENSSL_CONF: ${{ github.workspace }}/config/openssl.cnf
       run: make test
         
