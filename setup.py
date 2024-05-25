@@ -8,7 +8,7 @@ setup(
     author="Aneesh Karve",
     author_email="bonded_metals_0u@icloud.com",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.8",
@@ -29,5 +29,10 @@ setup(
     ],
     project_urls={
         "Source": "https://github.com/akarve/bipsea",
+    },
+    entry_points={
+        'console_scripts': [
+            'bipsea=bipsea:main',
+        ],
     },
 )
