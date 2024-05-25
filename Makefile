@@ -15,7 +15,7 @@ lint:
 	black .
 
 test:
-	pytest tests -m "not network" -x
+	python -m pytest tests -m "not network" -x
 
 test-network:
 	pytest tests
