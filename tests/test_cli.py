@@ -72,7 +72,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
                 "-f",
                 "words",
                 "-i",
-                "  " + mnemonic + "\t\n ",
+                "  " + mnemonic + " \t\n ",
                 "-p",
                 "TREZOR",
             ],

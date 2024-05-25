@@ -107,7 +107,7 @@ def seed(from_, input, to, number, passphrase, pretty):
             )
         mainnet = to == "xprv"
         prv = to_master_key(to_seed(words, passphrase), mainnet=mainnet, private=True)
-        click.echo(str(prv))
+        click.echo(prv)
 
 
 cli.add_command(seed)
