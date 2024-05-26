@@ -13,7 +13,7 @@ from bip32 import (
     hmac_sha512,
     VERSIONS,
 )
-from util import LOGGER
+from util import LOGGER, to_hex_string
 from seedwords import entropy_to_words
 
 
@@ -129,7 +129,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     elif application == "707785'":
         pwd_len = int(indexes[0][:-1])
         if not (10 <= pwd_len <= 80):
-            raise ValueError(f"Expected pwd_len in [16, 64], got {num_bytes}")
+            raise ValueError("Expected pwd_len in [16, 64], got {num_bytes}")
 
         return {
             "entropy": entropy,
@@ -148,10 +148,6 @@ def derive(master: ExtendedKey, path: str, private: bool = True):
         raise ValueError("Derivations should begin with a private master key")
 
     return derive_key_bip32(master, split_and_validate(path), private)
-
-
-def to_hex_string(data: bytes) -> str:
-    return binascii.hexlify(data).decode("utf-8")
 
 
 class DRNG:

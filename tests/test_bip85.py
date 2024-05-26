@@ -12,7 +12,7 @@ from data.bip85_vectors import (
     XPRV,
     WIF,
 )
-from util import LOGGER
+from util import LOGGER, to_hex_string
 from bip32types import parse_ext_key
 from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
 

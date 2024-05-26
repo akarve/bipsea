@@ -11,8 +11,8 @@ import click
 
 from bip32 import to_master_key
 from bip32types import parse_ext_key
-from bip85 import apply_85, derive, PURPOSE_CODES
-from util import __version__, LOGGER
+from bip85 import apply_85, derive, DRNG, PURPOSE_CODES, to_entropy
+from util import __version__, LOGGER, to_hex_string
 from seedwords import (
     bip39_english_words,
     entropy_to_words,
@@ -197,24 +197,34 @@ def bip85(application, number, index):
         assert prv[:4] in ("tprv", "xprv")
         master = parse_ext_key(prv)
 
-        path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
+        path = f"m/{PURPOSE_CODES['BIP-85']}"
+        app_value = APPLICATIONS[application]
+        path += f"/{app_value}" if app_value else ""
         if application == "words":
             if number not in N_WORDS_ALLOWED:
                 raise click.BadOptionUsage(
                     option_name="--number",
                     message=f"--application wif requires --number in {N_WORDS_ALLOWED_HELP}",
                 )
-
             path += f"/0'/{number}'/{index}'"
         elif application in ("wif", "xprv"):
             path += f"/{index}'"
         elif application in ("hex", "base64", "base85"):
             path += f"/{number}'/{index}'"
+        else:
+            assert application == "drng"
+            # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
+            path += f"0'{index}"
 
         derived = derive(master, path)
-        output = apply_85(derived, path)
 
-        click.echo(output["application"])
+        if application == "drng":
+            drng = DRNG(to_entropy(master.data[1:]))
+            output = to_hex_string(drng.read(number))
+        else:
+            output = apply_85(derived, path)["application"]
+
+        click.echo(output)
     else:
         click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")
 
