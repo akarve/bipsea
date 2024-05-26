@@ -33,6 +33,7 @@ publish: build
 	python3 -m twine upload dist/*
 
 push: lint check test git-branch git-unsaved
+	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
 test:
