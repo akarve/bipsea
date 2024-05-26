@@ -2,7 +2,7 @@
 
 check:
 	black . --check
-	isort . --check-only
+	isort . --check
 
 # developer install only
 install:
