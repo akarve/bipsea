@@ -8,9 +8,9 @@ import pytest
 import requests
 from data.bip39_vectors import VECTORS
 
-from bip32 import to_master_key
-from seedwords import DICT_HASH, N_MNEMONICS, entropy_to_words, to_master_seed
-from util import LOGGER, from_hex
+from bipsea.bip32 import to_master_key
+from bipsea.seedwords import DICT_HASH, N_MNEMONICS, entropy_to_words, to_master_seed
+from bipsea.util import LOGGER, from_hex
 
 logger = logging.getLogger(LOGGER)
 

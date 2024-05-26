@@ -148,16 +148,16 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 bipsea seed -f string -i "123456123456123456" -t xprv
 ```
 
-<pre><code style="color: #CCCC00">Warning: stretched 144 bits of entropy to 256 bits. Provide more entropy.</code></pre>
+<pre><code style="color: #CCCC00">Warning: 144 bits in, 256 bits out. Input more entropy.</code></pre>
 
-    xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
+    xprv9s21ZrQH143K3Ee3pgdhHb9xdu3D1EPT8J45zZ5Th5xPvWT9sujnPDCpA8bZhjz73UkkNWR8WnNg39C3hEHeeXKWLEQKfx9gySgjzMowEwH
 
 This is similar to how coldcard implements
 [verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/).
 If you are now thinking, _I could use any string to derive a master key_,
 then you get it. And we haven't even gottent into BIP-85.
 
-> That said, **do not get cute and derive valuable keys or secrets from short
+> **Do not get cute and derive valuable keys or secrets from short
 > strings**. You can only stretch entropy so far. **Weak entropy in, weaker entropy out**.
 > Short, common strings are also susceptible to
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
@@ -172,7 +172,7 @@ then you get it. And we haven't even gottent into BIP-85.
 ```
 bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10
 ```
-    C(s>@zBUg8
+    aqn+dPu%^~
 
 Increment the index to get a fresh password.
 

@@ -16,7 +16,7 @@ from unicodedata import normalize
 
 import click
 
-from util import LOGGER, from_hex
+from .util import LOGGER, from_hex
 
 logger = logging.getLogger(LOGGER)
 

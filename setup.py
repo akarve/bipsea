@@ -1,11 +1,10 @@
 from setuptools import find_packages, setup
 
-from util import __app_name__, __version__
-
 setup(
-    name=__app_name__,
-    version=__version__,
-    packages=find_packages(),
+    name="bipsea",
+    version="0.1.1",
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     description="Python implementation of BIP 85 (and BIP 32)",
     author="Aneesh Karve",
     author_email="bonded_metals_0u@icloud.com",
@@ -17,7 +16,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
-    keywords="Bitcoin BIP85  BIP32 cryptography",
+    keywords="Bitcoin BIP85 BIP32 cryptography",
     install_requires=[
         "click",
         "base58",
@@ -26,6 +25,7 @@ setup(
     ],
     tests_require=[
         "black",
+        "isort",
         "pytest",
         "requests",
     ],
@@ -34,7 +34,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "bipsea=bipsea:cli",
+            "bipsea=bipsea.bipsea:cli",
         ],
     },
 )
