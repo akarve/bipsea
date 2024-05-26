@@ -160,7 +160,7 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 bipsea seed -f string -i "123456123456123456" -t xprv
 ```
 
-<pre><code style="color: #CCCC00">Warning: stretched 144 bits of entropy to 256 bits. Better to provide more entropy.</code></pre>
+<pre><code style="color: #CCCC00">Warning: stretched 144 bits of entropy to 256 bits. Provide more entropy.</code></pre>
 
     xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
 
