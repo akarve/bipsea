@@ -170,7 +170,6 @@ cli.add_command(seed)
     "-n",
     "--number",
     type=int,
-    default=12,
     help="target length for derived entropy (in bytes, chars, or words)",
 )
 @click.option(
@@ -182,6 +181,12 @@ cli.add_command(seed)
 )
 def bip85(application, number, index):
     stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
+    if number:
+        if application in {"wif"}:
+            raise click.BadOptionUsage(
+                option_name="--number", message="--number has no effect when --application wif"
+            )
+ 
     if stdin:
         logger.debug(stdin)
         prv = sys.stdin.readline().strip()
@@ -191,6 +196,8 @@ def bip85(application, number, index):
         path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
         if application == "words":
             path += f"/0'/{number}'/{index}'"
+        elif application in ("wif", "xprv"):
+            path += f"/{index}'"
         derived = derive(master, path)
         output = apply_85(derived, path)
 

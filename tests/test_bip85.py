@@ -100,6 +100,7 @@ def test_wif(vector):
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
     # TODO: file against BIP85 poor test case does not include WIF checksum
+    # (not a correct WIF)
     assert output["application"].decode("utf-8") == vector["derived_wif"]
 
 

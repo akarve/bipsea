@@ -89,14 +89,13 @@ def test_seed_command_n_words(runner, n):
             # "l"*32 is longer than the highest entropy of 256 bits
             for input in ("s" * 15, "l" * 32):
                 cmd += ["-i", input]
-                with warnings.catch_warnings(record=True) as w:
-                    result = runner.invoke(cli, cmd)
-                    if "s" in input:
-                        assert len(w) > 0
-                    else:
-                        assert len(w) == 0
-                    assert result.exit_code == 0
+                result = runner.invoke(cli, cmd, catch_exceptions=False)
+                if "s" in input:
+                    assert "Stretching" in result.output
+                else:
+                    assert "Stretching" not in result.output
                     assert len(result.output.split()) == int(n)
+                assert result.exit_code == 0
 
 
 def test_bip85_command(runner):

@@ -15,6 +15,8 @@ from typing import List
 import secrets
 import warnings
 
+import click
+
 
 from util import from_hex
 from util import LOGGER
@@ -108,8 +110,9 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
 
 
 def warn_stretching(given: int, target: int):
-    warnings.warn(
-        f"Stretching {given} bits of entropy to {target} bits. Better to provide more entropy."
+    click.secho(
+        f"Stretching {given} bits of entropy to {target} bits. Better to provide more entropy.",
+        fg='yellow', err=True
     )
 
 
