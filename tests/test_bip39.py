@@ -6,6 +6,7 @@ from unicodedata import is_normalized
 
 import pytest
 import requests
+import warnings
 
 from bip32 import to_master_key
 from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_master_seed
@@ -42,6 +43,8 @@ def test_seed_word_generation(language, vectors):
         expected_words = re.split(r"\s", mnemonic)
         if language == "english":
             entropy_bytes = from_hex(entropy_str)
+            if int.from_bytes(entropy_bytes, "big") == 0:
+                warnings.simplefilter("ignore")
             computed_words = entropy_to_words(
                 len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
             )

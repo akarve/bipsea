@@ -118,10 +118,9 @@ def seed(from_, input, to, number, passphrase, pretty):
                 option_name="--pretty", message="--pretty has no effect on --to xprv"
             )
         mainnet = to == "xprv"
-        prv = to_master_key(
-            to_master_seed(words, passphrase), mainnet=mainnet, private=True
-        )
-        click.echo(prv)
+        seed = to_master_seed(words, passphrase)
+        kprv = to_master_key(seed, mainnet=mainnet, private=True)
+        click.echo(kprv)
 
 
 cli.add_command(seed)

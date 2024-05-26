@@ -80,8 +80,6 @@ def test_seed_option_sensitivity(runner, language, vectors):
 
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_n_words(runner, n):
-    logger.debug(n)
-    logger.debug(type(n))
     result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words", "-n", str(n)])
     assert result.exit_code == 0
     assert len(result.output.split()) == int(n)

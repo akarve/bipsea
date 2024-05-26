@@ -7,37 +7,43 @@
 > —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
 bipsea is a standalone, unit-tested implementation of BIP-85 and BIP-32.
-bipsea is designed for readability and security. bipsea does not rely on third-party
-libraries from a wallet vendor. bipsea relies the cryptographic primitives from Python
-and [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa).
+bipsea is designed for readability and security. bipsea offers a command-line
+interface and an API.
 
-You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
-and more.
+bipsea relies on cryptographic primitives from Python `secrets`, `hashlib`, and
+the external [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa).
+bipsea does not rely on third-party libraries from any wallet vendor.
+
+You can run bipsea offline on to generate general-use passwords, Bitcoin seed words,
+and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
+never has network access, and disables
+[Intel Management Engine](https://support.system76.com/articles/intel-me/)
+and other possible backdoors.
 
 # How is this useful?
 
-BIP-85 is in spirit the foundation for a next generation password manager
-that enables you to protect and store a _single_ master secret that can derive
-_millions of independent, multi-purpose secrets_. 
+BIP-85 is the foundation for a next generation password manager that enables you
+to protect and store a _single_ master secret that can derive _millions of independent, multi-purpose secrets_. 
 
 BIP-85 offers the following benefits:
-* The security of many independent passwords **AND** the operational efficiency
+* The security of numerous independent passwords with the operational efficiency
 of a single master password. (The master secret can be multi-factor.)
 * Uses Bitcoin's well-tested hierarchical deterministic wallet
 tree (including primitives like ECDSA and hardened children)
-* Can generate infinitely many new Bitcoin wallet seed words and master keys
-* Can generate infinitely many new passwords from a single master root key (xprv)
+* Can generate millions of new Bitcoin wallet seed words and master keys
+* Can generate millions of new passwords from a single master root key (xprv)
 and a short derivation path.
 
-Unlike a password manager, which protects many secrets with one secret,
-BIP-85 _derives_ many secrets with one secret meaning you only need to back up 
-the derivation paths, not the secrets themselves.
+Unlike a password manager, which protects many secrets with one hot secret,
+BIP-85 _derives_ many secrets from one protected secret. Therefore you only need
+to back up the derivation paths and the services they are for. You do not need to
+back up the derived secrets.
 
-You can safely store all derivation paths in a hot password manager
-like Keychain. You can store derived secrets in a hot password manager
-with no risk to the master key.
+You could safely store all derivation paths in a hot password manager
+like Keychain. You could even store the derived secrets in a hot password manager
+at no risk to the master private key.
 
-> Note: bipsea alone is not password manager, but you could use it to implement one.
+> Note: bipsea alone is not password manager, but you might use it to implement one.
 
 # How does it work?
 
@@ -66,24 +72,6 @@ BIP-85 specifies a variety of application codes including the following:
 bipsea implements all of the above applications plus the BIP-85 discrete random
 number generator (DRNG). bipsea does not implement the RSA application codes from
 BIP-85 but you could potentially use the DRNG for RSA and similar applications.
-
-## Notes for the curious and the paranoid
-
-Technically speaking, BIP-85 derives the entropy for each application by computing
-an HMAC of the private ECDSA key of the last hardened child. In this way
-the entropy is hierarchical, deterministic, and irreversibly hardened as long as
-ECDSA remains secure. The security of ECDSA is believed but not proven and may
-never be proven as it may or may not even be possible to prove that P is not equal
-to NP. Furthermore, ECDSA is [not post-quantum secure](https://blog.cloudflare.com/pq-2024)
-in that if someone somewhere could perform the fantastic feat of producing sufficient
-logical q-bits to run Shor's algorithm private keys could be reverse-engineered 
-from public keys. As unlikely as the emergence of a quantum computer may seem,
-the Chromium team is
-[taking no chances](https://blog.chromium.org/2024/05/advancing-our-amazing-bet-on-asymmetric.html)
-and has begun to roll out quantum-resistant changes to SSL.
-
-All of that to say even the hardest cryptography falls to the problem of induction:
-just because no one broke ECDSA today, doesn't mean they can't break it tomorrow.
 
 ## Example derivation path
 
@@ -165,6 +153,8 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
+
+## xprv
 ```
 bipsea seed -f string -i "any string you want" -t xprv
 ```
@@ -191,6 +181,29 @@ warn on low entropy
 bipsea --from
 ```
 > "The seed value is calculated as SHA256 over the rolls, when expressed as an ASCII string."
+
+# For the curious and the paranoid
+
+Technically speaking, BIP-85 derives the entropy for each application by computing
+an HMAC of the private ECDSA key of the last hardened child. Private child keys
+are pure functions of the parent key and the child index (part of the derivation
+path). In this way BIP-85 entropy is hierarchical, deterministic, and irreversibly
+hardened as long as ECDSA remains secure. ECDSA is believed to be secure but no
+one knows for sure. Moreover, may never be able to prove that ECDSA is secure if,
+for example, "P is not equal to NP" is unprovable.
+
+ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024) in that
+if someone somewhere performs the fantastic feat of producing sufficient logical
+q-bits to run Shor's algorithm, then ECDSA private can be reverse-engineered from
+public keys.  As unlikely as the emergence of a quantum computer may seem, the
+Chromium team is
+[taking no chances](https://blog.chromium.org/2024/05/advancing-our-amazing-bet-on-asymmetric.html)
+and has begun to roll out quantum-resistant changes to SSL.
+
+All of that to say **even the hardest cryptography falls to the problem of induction**:  
+
+> Just because no one broke has broken ECDSA until now,  
+> doesn't mean someone won't break it tomorrow.
 
 # References
 

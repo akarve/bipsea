@@ -13,6 +13,7 @@ from unicodedata import normalize
 from hashlib import pbkdf2_hmac
 from typing import List
 import secrets
+import warnings
 
 
 from preseed import from_hex
@@ -36,7 +37,6 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     * Only produces seed words in English"""
     if n_words not in N_WORDS_ALLOWED:
         raise ValueError(f"n_words must be one of {N_WORDS_ALLOWED}")
-    logger.debug(n_words)
     n_checksum_bits = n_words // 3  # CS in BIP39
     n_total_bits = n_words * N_WORD_BITS  # ENT+CS in BIP39
     n_entropy_bits = n_total_bits - n_checksum_bits  # ENT in BIP39
@@ -50,13 +50,15 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
         if user_entropy
         else secrets.randbits(n_entropy_bits)
     )
-    if user_entropy and int_entropy:  # could have bytes but an int of 0
-        approx_strength = math.ceil(math.log(int_entropy, 2))
-        desired_strength = math.ceil(approx_strength / N_WORD_BITS)
-        if approx_strength < desired_strength:
-            logger.warning(
-                f"{approx_strength} bits of entropy will be stretched to {desired_strength})"
+    difference = int_entropy.bit_length() - n_entropy_bits
+    if difference > 0:
+        int_entropy >>= difference
+    elif difference <= -8:
+        warnings.warn(
+            "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
+                int_entropy.bit_length(), n_entropy_bits
             )
+        )
 
     entropy_hash = hashlib.sha256(int_entropy.to_bytes(n_entropy_bits // 8, "big"))
     int_checksum = int.from_bytes(entropy_hash.digest(), "big") >> (
