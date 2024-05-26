@@ -1,4 +1,4 @@
-# `bipsea`: unlimited cryptographic entropy for Bitcoin, passwords, and other secrets
+# `bipsea`: unlimited entropy for Bitcoin, passwords, and other secrets
 
 > _One Seed to rule them all,  
 > One Key to find them,  
@@ -6,8 +6,9 @@
 > And in cryptography bind them._  
 > —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
+bipsea is currently for experimental purposes only.
 bipsea is a standalone, test-driven implementation of BIP-85 and BIP-32.
-bipsea is designed for readabilitybipsea offers a command-line
+bipsea is designed for readability. bipsea offers a command-line
 interface and an API.
 
 bipsea relies on cryptographic primitives from Python (`secrets`, `hashlib`),
@@ -103,10 +104,6 @@ following provisos:
 * Only generates seed phrases in English
 * Fails one partial test for derived entropy (but passes all others) from BIP-85
 
-### TODO
-
-* [ ] File the above and other "TODO" issues to BIP-85
-
 Run `make test` for details.
 
 # Usage
@@ -189,6 +186,13 @@ Alternatively you can pipe in an existing xprv:
 echo "$XPRV" | bipsea entropy -a base85 -n 10
 ```
 
+Or call `--input`:
+```
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10 -i 1
+```
+ 
+
+
 ### Derived seed words
 
 ```
@@ -243,3 +247,13 @@ hierarchical deterministic wallets
 generalized cryptographic entropy
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
+
+
+# TODO
+
+* [ ] File the above and other "TODO" issues to BIP-85
+* [ ] Investigate switch to secure ECDSA libs with constant-time programming and
+side-channel resistance.
+    * [ ] https://cryptography.io/en/latest/
+
+

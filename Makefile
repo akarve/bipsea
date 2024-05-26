@@ -1,4 +1,4 @@
-.PHONY: check install install-go lint test test-network
+.PHONY: check install install-go lint push test test-network
 
 check:
 	black . --check
@@ -17,6 +17,8 @@ lint:
 	isort .
 	black .
 	actionlint
+
+push: lint check test
 
 test:
 	python -m pytest tests -m "not network" -sx
