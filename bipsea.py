@@ -11,12 +11,16 @@ import click
 
 from bip32 import to_master_key
 from const import __version__, LOGGER
-from seedwords import bip39_english_words, entropy_to_words, to_master_seed
+from seedwords import (
+    bip39_english_words,
+    entropy_to_words,
+    N_WORDS_ALLOWED,
+    to_master_seed,
+)
 
 
 SEED_FROM_VALUES = ["string", "rand", "words"]
 SEED_TO_VALUES = ["words", "tprv", "xprv"]
-SEED_N_RANGE_STR = list([str(i) for i in range(12, 25, 3)])
 TIMEOUT = 1
 
 
@@ -56,7 +60,7 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice(SEED_N_RANGE_STR),
+    type=click.Choice(list(str(n) for n in N_WORDS_ALLOWED)),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
@@ -82,7 +86,7 @@ def seed(from_, input, to, number, passphrase, pretty):
             )
         words = re.split(r"\s+", input)
         n_words = len(words)
-        if not str(n_words) in SEED_N_RANGE_STR:
+        if not n_words in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
                 option_name="--input",
                 message=f"invalid number of words {n_words}",

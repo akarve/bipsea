@@ -5,9 +5,7 @@ from click.testing import CliRunner
 from tests.data.bip39_vectors import VECTORS
 
 from const import LOGGER
-from bip32 import to_master_key
-from bipsea import cli, SEED_N_RANGE_STR
-from preseed import from_hex
+from bipsea import cli, N_WORDS_ALLOWED
 
 
 logger = logging.getLogger(LOGGER)
@@ -80,9 +78,11 @@ def test_seed_option_sensitivity(runner, language, vectors):
         assert tprv.startswith("tprv")
 
 
-@pytest.mark.parametrize("n", SEED_N_RANGE_STR)
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_n_words(runner, n):
-    result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words", "-n", n])
+    logger.debug(n)
+    logger.debug(type(n))
+    result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words", "-n", str(n)])
     assert result.exit_code == 0
     assert len(result.output.split()) == int(n)
 
