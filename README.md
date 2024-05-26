@@ -103,7 +103,7 @@ following provisos:
 
 ### TODO
 
-* [ ] File the above and other clarification issues to BIP-85
+* [ ] File the above and other "TODO" issues to BIP-85
 
 Run `make test` for details.
 

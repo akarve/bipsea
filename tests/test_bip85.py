@@ -45,7 +45,7 @@ def test_pwd_base64(vector):
 
 @pytest.mark.parametrize("vector", PWD_BASE64)
 @pytest.mark.xfail(
-    reason="Head scratcher: correct password, bad entropy. File to BIP-85."
+    reason="correct password! bad entropy? file to BIP-85"
 )
 def test_pwd_base64_entropy(vector):
     master = parse_ext_key(vector["master"])
