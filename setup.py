@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="bipsea",
-    version="0.1.0",
+    version="0.1.1",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     description="Python implementation of BIP 85 (and BIP 32)",
