@@ -4,7 +4,7 @@ import pytest
 
 from bip32 import to_master_key
 from bip85 import derive
-from preseed import from_hex
+from util import from_hex
 from const import LOGGER
 from bip32types import parse_ext_key
 from data.bip32_vectors import INVALID_KEYS, VECTORS

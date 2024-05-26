@@ -10,7 +10,7 @@ import warnings
 
 from bip32 import to_master_key
 from seedwords import DICT_HASH, entropy_to_words, N_MNEMONICS, to_master_seed
-from preseed import from_hex
+from util import from_hex
 from const import LOGGER
 from data.bip39_vectors import VECTORS
 

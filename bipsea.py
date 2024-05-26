@@ -10,7 +10,8 @@ import threading
 import click
 
 from bip32 import to_master_key
-from bip85 import PURPOSE_CODES
+from bip32types import parse_ext_key
+from bip85 import derive, PURPOSE_CODES
 from const import __version__, LOGGER
 from seedwords import (
     bip39_english_words,
@@ -169,18 +170,28 @@ cli.add_command(seed)
     "-n",
     "--number",
     type=int,
-    default=16,
-    help="length of derived entropy in chars or bytes",
+    default=12,
+    help="target length for derived entropy (in bytes, chars, or words)",
 )
-def bip85(application, number):
+@click.option(
+    "-i",
+    "--index",
+    type=click.IntRange(0, 2**31 - 1),
+    default=0,
+    help="child index",
+)
+def bip85(application, number, index):
     i, o, e = select.select([sys.stdin], [], [], TIMEOUT)
     if i:
         prv = sys.stdin.readline().strip()
         assert prv[:4] in ("tprv", "xprv")
         mainnet = prv.startswith("x")
-        click.echo(prv)
-
         path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
+
+        if application == "words":
+            path += f"/0'/{number}'/{index}'"
+        
+        master = parse_
     else:
         click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")
 

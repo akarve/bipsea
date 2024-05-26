@@ -16,7 +16,7 @@ import secrets
 import warnings
 
 
-from preseed import from_hex
+from util import from_hex
 from const import LOGGER
 
 
