@@ -222,6 +222,7 @@ def bip85(application, number, index):
         # TODO do we need to derive testnet?
         derived = derive(master, path)
         if application == "drng":
+            logger.error("DRNG")
             drng = DRNG(to_entropy(derived.data[1:]))
             output = to_hex_string(drng.read(number))
         else:
