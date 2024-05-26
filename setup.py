@@ -26,6 +26,7 @@ setup(
     ],
     tests_require=[
         "black",
+        "isort",
         "pytest",
         "requests",
     ],
