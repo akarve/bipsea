@@ -142,6 +142,7 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 ```
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
+
 ## xprv from dice rolls (or any string)
 ```
 bipsea seed -f string -i "123456123456123456" -t xprv
@@ -197,6 +198,17 @@ bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 --input "$XPRV"
 bipsea seed -t xprv | bipsea entropy -a words        
 ```
     loan height quality library maid defense minor token thought music claim actual hour ship robust burst live broccoli
+
+Transform one set of seed words int infinitely many others (increment `-i`):
+
+```
+bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" -t xprv | bipsea entropy -a words -n 12
+```
+    medal air cube edit offer pair source promote wrap pretty rare when
+
+Run the command with `-i 1` for new words:
+
+    run sea prison modify december any pottery melody aspect hero loan gown
 
 ### DRNG, enter the matrix
 
