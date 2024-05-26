@@ -205,23 +205,23 @@ bipsea seed -t xprv | bipsea entropy -a drng -n 10000
 
 BIP-85 derives the entropy for each application by computing an HMAC of the private
 ECDSA key of the last hardened child. Private child keys are pure functions of the
-parent key and the child index (one segment in the derivation path). In this way
-BIP-85 entropy is hierarchical, deterministic, and irreversibly hardened as long
-as ECDSA remains secure. ECDSA is believed to be secure but no one knows for sure.
-Moreover, we may never be able to prove that ECDSA is secure or insecure if,
-for example, "P is not equal to NP" is unprovable.
+parent key and the child index. In this way BIP-85 entropy is hierarchical,
+deterministic, and irreversibly hardened as long as ECDSA remains secure.
+ECDSA is believed to be secure but no one knows for certain. It may not even be
+possible to conclusively prove the security of any cryptographic algorithm as such
+a proof would simultaneously prove that "P is not equal to NP."
+
+All of that to say **even the hardest cryptography falls to the problem of induction**:
+> Just because no one broke has yet broken ECDSA
+> doesn't mean no one will break ECDSA.
 
 ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024).
-If someone somewhere creates a quant computer with sufficient logical q-bits
-to run Shor's algorithm on large keys, then ECDSA private keys can be
-reverse-engineered from public keys.  As unlikely as the emergence of a quantum
-computer may seem, the Chromium team is
+If someone were to creates the elusive quant computer with sufficiently many
+logical q-bits to run Shor's algorithm on large keys, then suddenly private
+could be reverse-engineered from public keys. As unlikely as a quantum computer
+may seem, the Chromium team is
 [taking no chances](https://blog.chromium.org/2024/05/advancing-our-amazing-bet-on-asymmetric.html)
 and has begun to roll out quantum-resistant changes to SSL.
-
-All of that to say **even the hardest cryptography falls to the problem of induction**:  
-
-> Just because no one broke has broken ECDSA yet doesn't mean no one will break it tomorrow.
 
 # Developer
 

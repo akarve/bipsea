@@ -6,6 +6,7 @@ https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
 import hashlib
 import hmac
 import logging
+import warnings
 from typing import List
 
 from ecdsa import SECP256k1, SigningKey, VerifyingKey
@@ -192,7 +193,7 @@ def CKDpub(
             ).to_string("compressed")
         except MalformedPointError as m:
             # Is this in fact how we detect the point at infinity?
-            logger.warning(
+            warnings.warning(
                 "Point at infinity? Retrying with higher child_number in CKDPub()", m
             )
             child_number += 1

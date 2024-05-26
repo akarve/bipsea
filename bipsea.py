@@ -43,6 +43,12 @@ APPLICATIONS = {
     "xprv": "32'",  # TODO file to 85 is there a testnet here
 }
 
+RANGES = {
+    "base64": (20, 86),
+    "base85": (10, 80),
+    "hex": (16, 64),
+}
+
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
@@ -125,7 +131,7 @@ def seed(from_, input, to, number, passphrase, pretty):
             target_bits = 128 + ((number - 12) // 3) * 32
             short = len(string_bytes) * 8 - target_bits
             if short < 0:
-                warn_stretching(short + target_bits, target_bits)
+                warn_stretching(short + target_bits, target_bits, True)
             entropy = hashlib.sha256(string_bytes).digest()
         elif from_ == "rand":
             entropy = None
@@ -172,7 +178,7 @@ cli.add_command(seed)
     "-n",
     "--number",
     type=int,
-    help="target length for derived entropy (in bytes, chars, or words)",
+    help="desired length for derived entropy (bytes, chars, or words)",
 )
 @click.option(
     "-i",
@@ -181,55 +187,59 @@ cli.add_command(seed)
     default=0,
     help="child index",
 )
-# TODO test_cli cases for bipsea entropy
-def bip85(application, number, index):
-    stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
-    if number:
-        if application in {"wif"}:
+@click.option("-p", "--input", help="Use instead of pipe --input xprv12345")
+def bip85(application, number, index, input):
+    if not input:
+        stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
+        if stdin:
+            prv = sys.stdin.readline().strip()
+        else:
+            no_prv()
+    else:
+        prv = input
+    if number is not None:
+        if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="--number has no effect when --application wif",
+                message="--number has no effect when --application wif|xprv",
+            )
+        elif number < 1:
+            raise click.BadOptionUsage(
+                option_name="--number",
+                message="must be a positive integer",
             )
     else:
-        number = 18
-    if stdin:
-        logger.debug(stdin)
-        prv = sys.stdin.readline().strip()
-        if not prv[:4] in ("tprv", "xprv"):
-            no_prv()
-        master = parse_ext_key(prv)
-
-        path = f"m/{PURPOSE_CODES['BIP-85']}"
-        app_value = APPLICATIONS[application]
-        path += f"/{app_value}" if app_value else ""
-        if application == "words":
-            if number not in N_WORDS_ALLOWED:
-                raise click.BadOptionUsage(
-                    option_name="--number",
-                    message=f"--application wif requires --number in {N_WORDS_ALLOWED_HELP}",
-                )
-            path += f"/0'/{number}'/{index}'"
-        elif application in ("wif", "xprv"):
-            path += f"/{index}'"
-        elif application in ("hex", "base64", "base85"):
-            path += f"/{number}'/{index}'"
-        else:
-            assert application == "drng"
-            # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
-            path += f"/0'/{index}"
-
-        # TODO do we need to derive testnet?
-        derived = derive(master, path)
-
-        if application == "drng":
-            drng = DRNG(to_entropy(master.data[1:]))
-            output = to_hex_string(drng.read(number))
-        else:
-            output = apply_85(derived, path)["application"]
-
-        click.echo(output)
-    else:
+        number = 24
+    if not prv[:4] in ("tprv", "xprv"):
         no_prv()
+    master = parse_ext_key(prv)
+
+    path = f"m/{PURPOSE_CODES['BIP-85']}"
+    app_value = APPLICATIONS[application]
+    path += f"/{app_value}" if app_value else ""
+    if application == "words":
+        if number not in N_WORDS_ALLOWED:
+            raise click.BadOptionUsage(
+                option_name="--number",
+                message=f"--application wif requires --number in {N_WORDS_ALLOWED_HELP}",
+            )
+        path += f"/0'/{number}'/{index}'"
+    elif application in ("wif", "xprv"):
+        path += f"/{index}'"
+    elif application in ("hex", "base64", "base85"):
+        path += f"/{number}'/{index}'"
+        check_range(number, application)
+    elif application == "drng":
+        # TODO file to 85: not clear structure if master root keys; is it {0'}/{index}'?
+        path += f"/0'/{index}'"
+    # TODO do we need to derive testnet?
+    derived = derive(master, path)
+    if application == "drng":
+        drng = DRNG(to_entropy(derived.data[1:]))
+        output = to_hex_string(drng.read(number))
+    else:
+        output = apply_85(derived, path)["application"]
+    click.echo(output)
 
 
 cli.add_command(bip85)
@@ -239,6 +249,15 @@ cli.add_command(bip85)
 # and one should proceed with the next value for i. (Note: this has probability lower than 1 in 2127.)
 # they say hard fail but does 39? i say let's hard fail in these cases because otherwise
 # you are modifying the path?
+
+
+def check_range(number: int, application: str):
+    (min, max) = RANGES[application]
+    if not (min <= number <= max):
+        raise click.BadOptionUsage(
+            option_name="--number",
+            message=f"out of range; try [{min}, {max}] for {application}",
+        )
 
 
 def no_prv():

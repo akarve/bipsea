@@ -9,6 +9,7 @@ TODO: CLI design:
 import hashlib
 import logging
 import secrets
+import warnings
 from hashlib import pbkdf2_hmac
 from typing import List
 from unicodedata import normalize
@@ -104,12 +105,12 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
     return seed
 
 
-def warn_stretching(given: int, target: int):
-    click.secho(
-        f"Warning: stretched {given} bits of entropy to {target} bits. Provide more entropy.",
-        fg="yellow",
-        err=True,
-    )
+def warn_stretching(given: int, target: int, cli: bool = False):
+    msg = f"Warning: {given} bits in, {target} bits out. Input more entropy."
+    if cli:
+        click.secho(msg, fg="yellow", err=True)
+    else:
+        warnings.warn(msg)
 
 
 if __name__ == "__main__":
