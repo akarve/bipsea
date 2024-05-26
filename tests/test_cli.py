@@ -80,9 +80,14 @@ def test_seed_option_sensitivity(runner, language, vectors):
 
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_n_words(runner, n):
-    result = runner.invoke(cli, ["seed", "-f", "rand", "-t", "words", "-n", str(n)])
-    assert result.exit_code == 0
-    assert len(result.output.split()) == int(n)
+    for from_ in {"string", "rand"}:
+        cmd = ["seed", "-t", "words", "-n", str(n)]
+        cmd += ["-f", from_]
+        if from_ == "string":
+            cmd += ["-i", "some string"]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
+        assert len(result.output.split()) == int(n)
 
 
 def test_bip85_command(runner):

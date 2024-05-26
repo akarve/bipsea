@@ -186,7 +186,7 @@ bipsea --from
 
 Technically speaking, BIP-85 derives the entropy for each application by computing
 an HMAC of the private ECDSA key of the last hardened child. Private child keys
-are pure functions of the parent key and the child index (part of the derivation
+are pure functions of the parent key and the child index (one segment in the derivation
 path). In this way BIP-85 entropy is hierarchical, deterministic, and irreversibly
 hardened as long as ECDSA remains secure. ECDSA is believed to be secure but no
 one knows for sure. Moreover, may never be able to prove that ECDSA is secure if,
