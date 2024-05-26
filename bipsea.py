@@ -40,7 +40,7 @@ APPLICATIONS = {
     "hex": "128169'",
     "words": "39'",
     "wif": "2'",
-    "xprv": "32'",
+    "xprv": "32'",  # TODO file to 85 is there a testnet here
 }
 
 N_WORDS_ALLOWED_HELP = "|".join(str(n) for n in N_WORDS_ALLOWED)
@@ -111,7 +111,7 @@ def seed(from_, input, to, number, passphrase, pretty):
         if not n_words in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
                 option_name="--number",
-                message=f"--",
+                message=f"must be in {N_WORDS_ALLOWED_HELP}",
             )
     else:
         if not number:
@@ -135,8 +135,8 @@ def seed(from_, input, to, number, passphrase, pretty):
         english_words = set(bip39_english_words())
         if not all(w in english_words for w in words):
             raise click.BadOptionUsage(
-                option_name="--from words --input",
-                message=f"One or more words not in BIP-39 English list {words}",
+                option_name="--input",
+                message=f"One or more words not in BIP-39 English list: {words}",
             )
         output = " ".join(words)
         if pretty:
@@ -147,7 +147,7 @@ def seed(from_, input, to, number, passphrase, pretty):
     elif to in ("tprv", "xprv"):
         if pretty:
             raise click.BadOptionUsage(
-                option_name="--pretty", message="--pretty has no effect on --to xprv"
+                option_name="--pretty", message="no effect with --to xprv"
             )
         mainnet = to == "xprv"
         seed = to_master_seed(words, passphrase)
@@ -180,6 +180,7 @@ cli.add_command(seed)
     default=0,
     help="child index",
 )
+# TODO test_cli cases for bipsea entropy
 def bip85(application, number, index):
     stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
     if number:
@@ -193,7 +194,8 @@ def bip85(application, number, index):
     if stdin:
         logger.debug(stdin)
         prv = sys.stdin.readline().strip()
-        assert prv[:4] in ("tprv", "xprv")
+        if not prv[:4] in ("tprv", "xprv"):
+            no_prv()
         master = parse_ext_key(prv)
 
         path = f"m/{PURPOSE_CODES['BIP-85']}"
@@ -213,7 +215,7 @@ def bip85(application, number, index):
         else:
             assert application == "drng"
             # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
-            path += f"0'{index}"
+            path += f"/0'/{index}"
 
         derived = derive(master, path)
 
@@ -225,10 +227,18 @@ def bip85(application, number, index):
 
         click.echo(output)
     else:
-        click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")
+        no_prv()
 
 
 cli.add_command(bip85)
+
+
+def no_prv():
+    raise click.BadOptionUsage(
+        option_name="[incoming pipe]",
+        message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`"
+    )
+    click.echo()
 
 
 if __name__ == "__main__":
