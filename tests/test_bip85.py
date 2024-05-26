@@ -1,10 +1,6 @@
 import logging
+
 import pytest
-
-from bipsea.bip32types import parse_ext_key
-from bipsea.bip85 import DRNG, apply_85, derive, to_entropy, to_hex_string
-from bipsea.util import LOGGER, to_hex_string
-
 from data.bip85_vectors import (
     BIP39,
     EXT_KEY_TO_ENTROPY,
@@ -15,7 +11,9 @@ from data.bip85_vectors import (
     XPRV,
 )
 
-
+from bipsea.bip32types import parse_ext_key
+from bipsea.bip85 import DRNG, apply_85, derive, to_entropy, to_hex_string
+from bipsea.util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
 

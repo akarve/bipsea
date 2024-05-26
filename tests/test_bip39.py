@@ -6,11 +6,11 @@ from unicodedata import is_normalized
 
 import pytest
 import requests
+from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
 from bipsea.seedwords import DICT_HASH, N_MNEMONICS, entropy_to_words, to_master_seed
 from bipsea.util import LOGGER, from_hex
-from data.bip39_vectors import VECTORS
 
 logger = logging.getLogger(LOGGER)
 
