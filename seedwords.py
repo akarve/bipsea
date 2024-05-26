@@ -106,7 +106,7 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
 
 
 def warn_stretching(given: int, target: int, cli: bool = False):
-    msg = f"Warning: stretched {given} bits of entropy to {target} bits. Provide more entropy."
+    msg = f"Warning: {given} bits in, {target} bits out. Input more entropy."
     if cli:
         click.secho(msg, fg="yellow", err=True)
     else:
