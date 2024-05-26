@@ -188,11 +188,9 @@ echo "$XPRV" | bipsea entropy -a base85 -n 10
 
 Or call `--input`:
 ```
-bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 --input "$XPRV"
 ```
  
-
-
 ### Derived seed words
 
 ```
