@@ -5,6 +5,7 @@ import re
 from typing import Dict, Union
 
 import base58
+from ecdsa import SECP256k1
 
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
@@ -53,7 +54,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     if application == "39'":
         language, n_words = indexes[:2]
         if not language == LANGUAGE_CODES["English"]:
-            raise ValueError(f"Only English BIP39 words from BIP85 are supported.")
+            raise ValueError(f"Only English BIP-39 words from BIP-85 are supported.")
         if not n_words in CODE_39_TO_BITS:
             raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
         n_bytes = CODE_39_TO_BITS[n_words] // 8
@@ -65,25 +66,22 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         }
     # WIF
     elif application == "2'":
+        # https://en.bitcoin.it/wiki/Wallet_import_format
         trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
         suffix = b"\x01"  # use with compressed public keys because BIP32
         extended = prefix + trimmed_entropy + suffix
         hash1 = hashlib.sha256(extended).digest()
         hash2 = hashlib.sha256(hash1).digest()
+        checksum = hash2[:4]
 
         return {
             "entropy": trimmed_entropy,
-            "application": base58.b58encode_check(extended),
-            "checksum": hash2[:4],
+            "application": base58.b58encode(extended + checksum).decode("utf-8"),
         }
     # XPRV
     elif application == "32'":
         derived_key = ExtendedKey(
-            # TODO: file against bip85 that there is no provision to specify
-            # main vs testnet
-            # TODO: file against bip85 that they are inconsistent with
-            # hmac entropy order :shrug:
             version=VERSIONS["mainnet"]["private"],
             depth=bytes(1),
             finger=bytes(4),
@@ -93,12 +91,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         )
 
         return {
-            # TODO: also file against bip85 that there is no consistency about
-            # returned entropy length in test vectors?
-            # TODO: this is wrong on multiple levels; first we use
-            # 64 bytes from the entropy for this application
-            # second this isn't even the chain_code which in some universe
-            # might be considered derived entropy :(
             "entropy": entropy[32:],
             "application": str(derived_key),
         }
@@ -112,7 +104,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     # PWD BASE64
     elif application == "707764'":
         pwd_len = int(indexes[0][:-1])
-        # TODO file Base64 typo in 85 "encode the all 64 bytes of entropy".
         if not (20 <= pwd_len <= 86):
             raise ValueError(f"Expected pwd_len in [20, 86], got {pwd_len}")
 
@@ -168,3 +159,11 @@ def split_and_validate(path: str):
         raise ValueError(f"Unexpected path segments: {path}")
 
     return segments
+
+
+def validate_key(entropy: bytes):
+    """per BIP-85 we should hard fail under these conditions"""
+    assert len(entropy) == 32
+    int_key = int.from_bytes(entropy, "big")
+    if not int_key or int_key > SECP256k1.order:
+        raise ValueError("Invalid derived key. Try again with next child index.")

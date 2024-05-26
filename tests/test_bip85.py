@@ -1,5 +1,7 @@
 import logging
+from hashlib import sha256
 
+import base58
 import pytest
 from data.bip85_vectors import (
     BIP39,
@@ -41,6 +43,11 @@ def test_pwd_base64(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert vector["derived_pwd"] == output["application"]
+    # Hardcode what we believe is correct; issue filed to BIP85
+    assert (
+        to_hex_string(output["entropy"])
+        == "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9"
+    )
 
 
 @pytest.mark.parametrize("vector", PWD_BASE64)
@@ -95,9 +102,7 @@ def test_wif(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    # TODO: file against BIP85 poor test case does not include WIF checksum
-    # (not a correct WIF)
-    assert output["application"].decode("utf-8") == vector["derived_wif"]
+    assert output["application"] == vector["derived_wif"]
 
 
 @pytest.mark.parametrize("vector", XPRV)
@@ -107,3 +112,20 @@ def test_xprv(vector):
     output = apply_85(derive(master, path), path)
     assert vector["derived_key"] == output["application"]
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+
+
+def test_private_key_to_wif():
+    """https://en.bitcoin.it/wiki/Wallet_import_format"""
+
+
+def test_private_key_to_wif():
+    pkey_hex = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D"
+    pkey = bytes.fromhex(pkey_hex)
+    extended = b"\x80" + pkey
+    hash1 = sha256(extended).digest()
+    hash2 = sha256(hash1).digest()
+    checksum = hash2[:4]
+    # they say "Base58Check encoding" but that doesn't mean
+    # b58encode_check because we already have a checksum apparently
+    wif = base58.b58encode(extended + checksum)
+    assert wif.decode("utf-8") == "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"

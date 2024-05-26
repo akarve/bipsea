@@ -6,7 +6,7 @@ from data.bip32_vectors import INVALID_KEYS, VECTORS
 from bipsea.bip32 import to_master_key
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip85 import derive
-from bipsea.util import LOGGER, from_hex
+from bipsea.util import LOGGER
 
 logger = logging.getLogger(LOGGER)
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(LOGGER)
     ],
 )
 def test_vectors(vector):
-    seed = from_hex(vector["seed_hex"])
+    seed = bytes.fromhex(vector["seed_hex"])
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
             assert type_ in ("ext pub", "ext prv")

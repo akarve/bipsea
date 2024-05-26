@@ -1,10 +1,5 @@
 #!/usr/bin/python
-"""Complete implementation of BIP-39 in Python with CLI
-https://en.bitcoin.it/wiki/BIP_0039
-
-TODO: CLI design:
-(xprv or seed or entropy) | derivation path > output?
-"""
+"""Complete BIP-39 implementation"""
 
 import hashlib
 import logging
@@ -16,7 +11,7 @@ from unicodedata import normalize
 
 import click
 
-from .util import LOGGER, from_hex
+from .util import LOGGER
 
 logger = logging.getLogger(LOGGER)
 

@@ -40,7 +40,7 @@ APPLICATIONS = {
     "hex": "128169'",
     "words": "39'",
     "wif": "2'",
-    "xprv": "32'",  # TODO file to 85 is there a testnet here
+    "xprv": "32'",
 }
 
 RANGES = {
@@ -230,9 +230,7 @@ def bip85(application, number, index, input):
         path += f"/{number}'/{index}'"
         check_range(number, application)
     elif application == "drng":
-        # TODO file to 85: not clear structure if master root keys; is it {0'}/{index}'?
         path += f"/0'/{index}'"
-    # TODO do we need to derive testnet?
     derived = derive(master, path)
     if application == "drng":
         drng = DRNG(to_entropy(derived.data[1:]))
