@@ -96,9 +96,10 @@ private key are exposed, the parent private key remains secure.
 
 ## How do I know the bipsea implementation is correct?
 
-bipsea passes all BIP-32 and BIP-85 test vectors with the following provisos:
+bipsea passes all BIP-32 and BIP-85 test vectors plus its own unit tests with the
+following provisos:
 * Only generates seed phrases in English
-* Fails a single partial test for derived entropy (but passes all others) from BIP-85
+* Fails one partial test for derived entropy (but passes all others) from BIP-85
 
 ### TODO
 
@@ -158,10 +159,13 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 ```
 bipsea seed -f string -i "123456123456123456" -t xprv
 ```
-    Stretching 144 bits of entropy to 256 bits. Better to provide more entropy.
+
+<pre><code style="color: #CCCC00">Warning: stretched 144 bits of entropy to 256 bits. Better to provide more entropy.</code></pre>
+
     xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
 
-This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). 
+This is similar to how coldcard implements
+[verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/).
 If you are now thinking, _I could use any string to derive a master key_,
 then you get it. And we haven't even gottent into BIP-85.
 

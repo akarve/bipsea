@@ -89,9 +89,9 @@ def test_seed_command_n_words(runner, n):
                 cmd += ["-i", input]
                 result = runner.invoke(cli, cmd, catch_exceptions=False)
                 if "s" in input:
-                    assert "Stretching" in result.output
+                    assert "Warning" in result.output
                 else:
-                    assert "Stretching" not in result.output
+                    assert "Warning" not in result.output
                     assert len(result.output.split()) == int(n)
                 assert result.exit_code == 0
 
