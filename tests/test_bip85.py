@@ -39,8 +39,14 @@ def test_entropy(vector):
 def test_pwd_base64(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
+    logger.debug(path)
     output = apply_85(derive(master, path), path)
     assert vector["derived_pwd"] == output["application"]
+    # Hardcode what we believe is correct; issue filed to BIP85
+    assert (
+        to_hex_string(output["entropy"])
+        == "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9"
+    )
 
 
 @pytest.mark.parametrize("vector", PWD_BASE64)

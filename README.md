@@ -249,7 +249,7 @@ generalized BIP-32 paths
 
 # TODO
 
-* [ ] File the above and other "TODO" issues to BIP-85
+* [x] File the above and other "TODO" issues to BIP-85
 * [ ] Investigate switch to secure ECDSA libs with constant-time programming and
 side-channel resistance.
     * [ ] https://cryptography.io/en/latest/

@@ -54,4 +54,3 @@ git-unsaved:
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
 	fi
- 

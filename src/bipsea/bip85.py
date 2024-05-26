@@ -80,10 +80,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     # XPRV
     elif application == "32'":
         derived_key = ExtendedKey(
-            # TODO: file against bip85 that there is no provision to specify
-            # main vs testnet
-            # TODO: file against bip85 that they are inconsistent with
-            # hmac entropy order :shrug:
             version=VERSIONS["mainnet"]["private"],
             depth=bytes(1),
             finger=bytes(4),
@@ -93,12 +89,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         )
 
         return {
-            # TODO: also file against bip85 that there is no consistency about
-            # returned entropy length in test vectors?
-            # TODO: this is wrong on multiple levels; first we use
-            # 64 bytes from the entropy for this application
-            # second this isn't even the chain_code which in some universe
-            # might be considered derived entropy :(
             "entropy": entropy[32:],
             "application": str(derived_key),
         }
@@ -112,7 +102,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     # PWD BASE64
     elif application == "707764'":
         pwd_len = int(indexes[0][:-1])
-        # TODO file Base64 typo in 85 "encode the all 64 bytes of entropy".
         if not (20 <= pwd_len <= 86):
             raise ValueError(f"Expected pwd_len in [20, 86], got {pwd_len}")
 
