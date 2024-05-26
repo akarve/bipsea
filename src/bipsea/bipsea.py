@@ -19,7 +19,7 @@ from .seedwords import (
     to_master_seed,
     warn_stretching,
 )
-from util import LOGGER, __version__, to_hex_string
+from .util import LOGGER, __version__, to_hex_string
 
 SEED_FROM_VALUES = [
     "string",

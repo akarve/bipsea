@@ -1,12 +1,13 @@
 import logging
 
 import pytest
-from data.bip32_vectors import INVALID_KEYS, VECTORS
 
-from bip32 import to_master_key
-from bip32types import parse_ext_key
-from bip85 import derive
-from util import LOGGER, from_hex
+from bipsea.bip32 import to_master_key
+from bipsea.bip32types import parse_ext_key
+from bipsea.bip85 import derive
+from bipsea.util import LOGGER, from_hex
+
+from data.bip32_vectors import INVALID_KEYS, VECTORS
 
 logger = logging.getLogger(LOGGER)
 
