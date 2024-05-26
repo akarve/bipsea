@@ -192,6 +192,8 @@ def bip85(application, number, index):
             )
     else:
         number = 24
+        # TODO validation for all different number ranges
+        # TODO verify numbers actually work
     if stdin:
         prv = sys.stdin.readline().strip()
         if not prv[:4] in ("tprv", "xprv"):
@@ -215,11 +217,12 @@ def bip85(application, number, index):
         else:
             assert application == "drng"
             # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
-            path += f"/0'/{index}"
+            logger.debug(index)
+            path += f"/0'/{index}'"
         # TODO do we need to derive testnet?
         derived = derive(master, path)
         if application == "drng":
-            drng = DRNG(to_entropy(master.data[1:]))
+            drng = DRNG(to_entropy(derived.data[1:]))
             output = to_hex_string(drng.read(number))
         else:
             output = apply_85(derived, path)["application"]
