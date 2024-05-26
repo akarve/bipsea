@@ -23,4 +23,3 @@ jobs:
       run: make check
     - name: pytest
       run: make test
-        
