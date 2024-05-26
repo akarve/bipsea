@@ -35,7 +35,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "bipsea=bipsea:cli",
+            "bipsea=bipsea.cli:cli",
         ],
     },
 )

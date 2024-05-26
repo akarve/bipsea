@@ -9,10 +9,10 @@ import threading
 
 import click
 
-from bip32 import to_master_key
-from bip32types import parse_ext_key
-from bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
-from seedwords import (
+from .bip32 import to_master_key
+from .bip32types import parse_ext_key
+from .bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
+from .seedwords import (
     N_WORDS_ALLOWED,
     bip39_english_words,
     entropy_to_words,

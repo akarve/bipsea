@@ -12,8 +12,8 @@ from typing import List
 from ecdsa import SECP256k1, SigningKey, VerifyingKey
 from ecdsa.keys import MalformedPointError
 
-from bip32types import VERSIONS, ExtendedKey
-from util import LOGGER
+from .bip32types import VERSIONS, ExtendedKey
+from .util import LOGGER
 
 logger = logging.getLogger(LOGGER)
 

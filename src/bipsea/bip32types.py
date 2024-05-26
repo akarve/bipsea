@@ -4,7 +4,7 @@ from collections import namedtuple
 import base58
 from ecdsa import SECP256k1
 
-from util import LOGGER
+from .util import LOGGER
 
 logger = logging.getLogger(LOGGER)
 
