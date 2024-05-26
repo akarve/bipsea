@@ -125,7 +125,7 @@ def seed(from_, input, to, number, passphrase, pretty):
             target_bits = 128 + ((number - 12) // 3) * 32
             short = len(string_bytes) * 8 - target_bits
             if short < 0:
-                warn_stretching(short + target_bits, target_bits)
+                warn_stretching(short + target_bits, target_bits, True)
             entropy = hashlib.sha256(string_bytes).digest()
         elif from_ == "rand":
             entropy = None
@@ -222,7 +222,7 @@ def bip85(application, number, index):
         # TODO do we need to derive testnet?
         derived = derive(master, path)
         if application == "drng":
-            logger.error("DRNG")
+            logger.debug("DRNG")
             drng = DRNG(to_entropy(derived.data[1:]))
             output = to_hex_string(drng.read(number))
         else:
