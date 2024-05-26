@@ -1,4 +1,4 @@
-.PHONY: all build check clean install install-go lint push test test-network unsaved
+.PHONY: all build check clean install install-go lint push test test-network git-unsaved
 
 # for PyPI
 build: clean push
@@ -32,7 +32,8 @@ lint:
 publish: build
 	python3 -m twine upload dist/*
 
-push: lint check test
+push: lint check test git-branch git-unsaved
+	git push origin $$branch
 
 test:
 	python -m pytest tests -m "not network" -sx
@@ -40,7 +41,14 @@ test:
 test-network:
 	python -m pytest tests
 
-unsaved:
+git-branch:
+	@branch=$$(git symbolic-ref --short HEAD); \
+	if [ "$$branch" = "main" ]; then \
+		echo "Cowardly refusing push, not on branch."; \
+		exit 1; \
+	fi
+
+git-unsaved:
 	@if ! git diff --quiet; then \
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
