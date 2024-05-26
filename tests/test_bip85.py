@@ -102,9 +102,7 @@ def test_wif(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    # TODO: file against BIP85 poor test case does not include WIF checksum
-    # (not a correct WIF)
-    assert output["application"].decode("utf-8") == vector["derived_wif"]
+    assert output["application"] == vector["derived_wif"]
 
 
 @pytest.mark.parametrize("vector", XPRV)
@@ -118,18 +116,16 @@ def test_xprv(vector):
 
 def test_private_key_to_wif():
     """https://en.bitcoin.it/wiki/Wallet_import_format"""
-    pkey_hex = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D"
-    # do it like the example (no suffix) to prove correctness
-    for suffix in (b"", b"\x01"):
-        pkey = bytes.fromhex(pkey_hex)
-        assert len(pkey_hex) == 64
-        assert len(pkey) == 32
-        extended = b"\xef" + pkey + suffix
-        assert len(extended) == 34 if suffix else 33
-        hash1 = sha256(extended).digest()
-        hash2 = sha256(extended).digest()
-        checksum = hash2[:4]
-        logger.debug(to_hex_string(extended))
 
-        wif = base58.b58encode_check(extended + checksum)
-        logger.debug(wif)
+
+def test_private_key_to_wif():
+    pkey_hex = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D"
+    pkey = bytes.fromhex(pkey_hex)
+    extended = b"\x80" + pkey
+    hash1 = sha256(extended).digest()
+    hash2 = sha256(hash1).digest()
+    checksum = hash2[:4]
+    # they say "Base58Check encoding" but that doesn't mean
+    # b58encode_check because we already have a checksum apparently
+    wif = base58.b58encode(extended + checksum)
+    assert wif.decode("utf-8") == "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"

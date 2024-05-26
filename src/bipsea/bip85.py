@@ -73,11 +73,11 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         extended = prefix + trimmed_entropy + suffix
         hash1 = hashlib.sha256(extended).digest()
         hash2 = hashlib.sha256(hash1).digest()
+        checksum = hash2[:4]
 
         return {
             "entropy": trimmed_entropy,
-            "application": base58.b58encode_check(extended),
-            "checksum": hash2[:4],
+            "application": base58.b58encode(extended + checksum).decode("utf-8"),
         }
     # XPRV
     elif application == "32'":
