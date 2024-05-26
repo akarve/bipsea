@@ -237,7 +237,7 @@ cli.add_command(bip85)
 def no_prv():
     raise click.BadOptionUsage(
         option_name="[incoming pipe]",
-        message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`"
+        message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`",
     )
     click.echo()
 
