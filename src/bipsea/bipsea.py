@@ -19,7 +19,7 @@ from .seedwords import (
     to_master_seed,
     warn_stretching,
 )
-from .util import LOGGER, __version__, to_hex_string
+from .util import LOGGER, __app_name__, __version__, to_hex_string
 
 SEED_FROM_VALUES = [
     "string",
@@ -62,7 +62,7 @@ class InputThread(threading.Thread):
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="bipsea")
+@click.version_option(version=__version__, prog_name=__app_name__)
 def cli():
     pass
 
