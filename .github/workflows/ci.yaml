@@ -1,0 +1,25 @@
+name: Test Python package
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    env:
+      OPENSSL_CONF: ${{ github.workspace }}/config/openssl.cnf
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v4
+    - name: set up python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: install
+      run: make install
+    - name: lint
+      run: make check
+    - name: pytest
+      run: make test
