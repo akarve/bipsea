@@ -171,7 +171,7 @@ cli.add_command(seed)
 @click.option(
     "-n",
     "--number",
-    type=int,
+    type=click.IntRange(16, 86),
     help="target length for derived entropy (in bytes, chars, or words)",
 )
 @click.option(
@@ -184,11 +184,11 @@ cli.add_command(seed)
 # TODO test_cli cases for bipsea entropy
 def bip85(application, number, index):
     stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
-    if number:
-        if application in {"wif"}:
+    if number is not None:
+        if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="--number has no effect when --application wif",
+                message="--number has no effect when --application wif|xprv",
             )
     else:
         number = 24
@@ -217,12 +217,10 @@ def bip85(application, number, index):
         else:
             assert application == "drng"
             # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
-            logger.debug(index)
             path += f"/0'/{index}'"
         # TODO do we need to derive testnet?
         derived = derive(master, path)
         if application == "drng":
-            logger.debug("DRNG")
             drng = DRNG(to_entropy(derived.data[1:]))
             output = to_hex_string(drng.read(number))
         else:
