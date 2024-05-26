@@ -191,9 +191,8 @@ def bip85(application, number, index):
                 message="--number has no effect when --application wif",
             )
     else:
-        number = 18
+        number = 24
     if stdin:
-        logger.debug(stdin)
         prv = sys.stdin.readline().strip()
         if not prv[:4] in ("tprv", "xprv"):
             no_prv()
@@ -217,10 +216,8 @@ def bip85(application, number, index):
             assert application == "drng"
             # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
             path += f"/0'/{index}"
-
         # TODO do we need to derive testnet?
         derived = derive(master, path)
-
         if application == "drng":
             drng = DRNG(to_entropy(master.data[1:]))
             output = to_hex_string(drng.read(number))

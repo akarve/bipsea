@@ -1,6 +1,7 @@
 """constants and utilities"""
 
 import binascii
+import logging
 from hashlib import pbkdf2_hmac
 from unicodedata import normalize as unicode_normalize
 
@@ -10,6 +11,9 @@ __app_name__ = "bipsea"
 FORMAT = "utf-8"
 NFKD = "NFKD"
 LOGGER = __app_name__
+
+
+logger = logging.getLogger(LOGGER)
 
 
 def from_hex(input: str, passphrase: str = "") -> bytes:
