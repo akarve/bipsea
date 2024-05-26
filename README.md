@@ -250,8 +250,7 @@ generalized BIP-32 paths
 # TODO
 
 * [x] File the above and other "TODO" issues to BIP-85
+  * https://github.com/bitcoin/bips/pull/1600
 * [ ] Investigate switch to secure ECDSA libs with constant-time programming and
 side-channel resistance.
     * [ ] https://cryptography.io/en/latest/
-
-
