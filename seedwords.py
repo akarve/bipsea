@@ -109,9 +109,7 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
 
 def warn_stretching(given: int, target: int):
     warnings.warn(
-        "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
-            given, target
-        )
+        f"Stretching {given} bits of entropy to {target} bits. Better to provide more entropy."
     )
 
 

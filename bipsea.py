@@ -11,7 +11,7 @@ import click
 
 from bip32 import to_master_key
 from bip32types import parse_ext_key
-from bip85 import derive, PURPOSE_CODES
+from bip85 import apply_85, derive, PURPOSE_CODES
 from util import __version__, LOGGER
 from seedwords import (
     bip39_english_words,
@@ -181,17 +181,20 @@ cli.add_command(seed)
     help="child index",
 )
 def bip85(application, number, index):
-    i, o, e = select.select([sys.stdin], [], [], TIMEOUT)
-    if i:
+    stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
+    if stdin:
+        logger.debug(stdin)
         prv = sys.stdin.readline().strip()
         assert prv[:4] in ("tprv", "xprv")
-        mainnet = prv.startswith("x")
-        path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
+        master = parse_ext_key(prv)
 
+        path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
         if application == "words":
             path += f"/0'/{number}'/{index}'"
+        derived = derive(master, path)
+        output = apply_85(derived, path)
 
-        master = parse_
+        click.echo(output["application"])
     else:
         click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")
 
