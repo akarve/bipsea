@@ -13,7 +13,7 @@ from bip32 import (
     hmac_sha512,
     VERSIONS,
 )
-from const import LOGGER
+from util import LOGGER
 from seedwords import entropy_to_words
 
 

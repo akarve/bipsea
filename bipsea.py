@@ -12,7 +12,7 @@ import click
 from bip32 import to_master_key
 from bip32types import parse_ext_key
 from bip85 import derive, PURPOSE_CODES
-from const import __version__, LOGGER
+from util import __version__, LOGGER
 from seedwords import (
     bip39_english_words,
     entropy_to_words,
@@ -190,7 +190,7 @@ def bip85(application, number, index):
 
         if application == "words":
             path += f"/0'/{number}'/{index}'"
-        
+
         master = parse_
     else:
         click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")

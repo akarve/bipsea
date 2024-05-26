@@ -1,4 +1,4 @@
-from const import __app_name__, __version__
+from util import __app_name__, __version__
 from setuptools import setup, find_packages
 
 setup(

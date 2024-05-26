@@ -11,7 +11,7 @@ import logging
 from ecdsa.keys import MalformedPointError
 from ecdsa import SigningKey, SECP256k1, VerifyingKey
 
-from const import LOGGER
+from util import LOGGER
 from bip32types import ExtendedKey, VERSIONS
 
 

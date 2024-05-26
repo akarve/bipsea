@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 from tests.data.bip39_vectors import VECTORS
 
-from const import LOGGER
+from util import LOGGER
 from bipsea import cli, N_WORDS_ALLOWED
 
 

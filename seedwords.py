@@ -17,7 +17,7 @@ import warnings
 
 
 from util import from_hex
-from const import LOGGER
+from util import LOGGER
 
 
 logger = logging.getLogger(LOGGER)
