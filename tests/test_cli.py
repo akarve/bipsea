@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from bipsea import N_WORDS_ALLOWED, cli
 from tests.data.bip39_vectors import VECTORS
-from tests.data.bip85_vectors import PWD_BASE64, PWD_BASE85
+from tests.data.bip85_vectors import BIP39, HEX, PWD_BASE64, PWD_BASE85, WIF
 from util import LOGGER
 
 logger = logging.getLogger(LOGGER)
@@ -153,3 +153,44 @@ def test_entropy_n(runner, vector):
             if app in ("hex", "drng"):
                 length = length // 2
             assert length == n
+
+
+@pytest.mark.parametrize("vector", PWD_BASE85)
+def test_entropy_n_out_of_range(runner, vector):
+    xprv = vector["master"]
+    for app in ("base64", "base85", "hex", "drng"):
+        for n in (-1, 0, 1025):
+            if n == 1025 and app == "drng":
+                break
+            result = runner.invoke(
+                cli, ["entropy", "-a", app, "-n", n, "--input", xprv]
+            )
+            assert result.exit_code != 0
+            assert "Error" in result.output
+
+
+@pytest.mark.parametrize("vector", BIP39)
+def test_entropy_bip39(runner, vector):
+    xprv = vector["master"]
+    n_words = vector["mnemonic_length"]
+    result = runner.invoke(
+        cli, ["entropy", "-a", "words", "--input", xprv, "-n", n_words]
+    )
+    assert result.exit_code == 0
+    assert result.output.strip() == vector["derived_mnemonic"]
+
+
+@pytest.mark.parametrize("vector", HEX)
+def test_entropy_hex(runner, vector):
+    xprv = vector["master"]
+    result = runner.invoke(cli, ["entropy", "-a", "hex", "--input", xprv, "-n", 64])
+    assert result.exit_code == 0
+    assert result.output.strip() == vector["derived_entropy"]
+
+
+@pytest.mark.parametrize("vector", WIF)
+def test_entropy_wif(runner, vector):
+    xprv = vector["master"]
+    result = runner.invoke(cli, ["entropy", "-a", "wif", "--input", xprv])
+    assert result.exit_code == 0
+    assert result.output.strip() == vector["derived_wif"]
