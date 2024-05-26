@@ -107,23 +107,11 @@ following provisos:
 
 Run `make test` for details.
 
-```sh
-pip install bipsea
-```
-
-# Developer
-
-```
-make install
-make install-go  # requires go
-make test
-```
-
-See [Makefile](./Makefile) for more commands.
-
-
 # Usage
 
+```
+pip install bipsea
+```
 ```
 bipsea --help
 ```
@@ -234,6 +222,16 @@ and has begun to roll out quantum-resistant changes to SSL.
 All of that to say **even the hardest cryptography falls to the problem of induction**:  
 
 > Just because no one broke has broken ECDSA yet doesn't mean no one will break it tomorrow.
+
+# Developer
+
+```
+make install
+make install-go  # requires go
+make test
+```
+
+See [Makefile](./Makefile) for more commands.
 
 # References
 
