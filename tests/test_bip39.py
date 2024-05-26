@@ -9,7 +9,12 @@ import requests
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
-from bipsea.seedwords import DICT_HASH, N_MNEMONICS, entropy_to_words, to_master_seed
+from bipsea.seedwords import (
+    N_MNEMONICS,
+    WORDS_FILE_HASH,
+    entropy_to_words,
+    to_master_seed,
+)
 from bipsea.util import LOGGER
 
 logger = logging.getLogger(LOGGER)
@@ -59,4 +64,6 @@ def test_words_in_bip39_wordlist():
     assert all(is_normalized("NFKD", w) for w in wordlist)
     assert len(wordlist) == N_MNEMONICS
     response_hash = hashlib.sha256(response.content).hexdigest()
-    assert response_hash == DICT_HASH, f"Hash mismatch: {response_hash} != {DICT_HASH}"
+    assert (
+        response_hash == WORDS_FILE_HASH
+    ), f"Hash mismatch: {response_hash} != {WORDS_FILE_HASH}"

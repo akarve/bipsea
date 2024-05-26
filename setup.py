@@ -7,6 +7,9 @@ setup(
     version=__version__,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    package_data={
+        __app_name__: ["english.txt"],
+    },
     description="Python implementation of BIP 85 (and BIP 32)",
     author="Aneesh Karve",
     author_email="bonded_metals_0u@icloud.com",

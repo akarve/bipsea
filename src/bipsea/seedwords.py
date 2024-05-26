@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """Complete BIP-39 implementation"""
 
 import hashlib
@@ -6,6 +5,7 @@ import logging
 import secrets
 import warnings
 from hashlib import pbkdf2_hmac
+from importlib import resources
 from typing import List
 from unicodedata import normalize
 
@@ -17,8 +17,8 @@ logger = logging.getLogger(LOGGER)
 
 
 # https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
-DICT_NAME = "english.txt"
-DICT_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
+WORDS_FILE_NAME = "english.txt"
+WORDS_FILE_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
 
 N_MNEMONICS = 2048
 N_WORD_BITS = 11
@@ -69,17 +69,16 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     return swords
 
 
-def bip39_english_words(file_name=DICT_NAME) -> List[str]:
-    """returns a set or array of bip39 english words"""
-    with open(file_name, "rb") as source:
-        raw = source.read()
-    file_hash = hashlib.sha256()
-    file_hash.update(raw)
-    assert DICT_HASH == file_hash.hexdigest(), f"unexpected contents: {DICT_NAME}"
-    dictionary = raw.decode().split("\n")[:-1]
+def bip39_english_words(file_name=WORDS_FILE_NAME) -> List[str]:
+    """Returns a list of BIP39 English words."""
+    with resources.open_text("bipsea", file_name) as f:
+        raw = f.read()
+    file_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    assert file_hash == WORDS_FILE_HASH, f"unexpected contents in {file_name}"
+    dictionary = raw.splitlines()
     assert (
         len(dictionary) == N_MNEMONICS == len(set(dictionary))
-    ), f"expected {N_MNEMONICS} words"
+    ), "expected {} unique words".format(N_MNEMONICS)
 
     return dictionary
 
