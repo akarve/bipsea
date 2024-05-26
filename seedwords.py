@@ -54,11 +54,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
     if difference > 0:
         int_entropy >>= difference
     elif difference <= -8:
-        warnings.warn(
-            "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
-                int_entropy.bit_length(), n_entropy_bits
-            )
-        )
+        warn_stretching(difference + n_entropy_bits, n_entropy_bits)
 
     entropy_hash = hashlib.sha256(int_entropy.to_bytes(n_entropy_bits // 8, "big"))
     int_checksum = int.from_bytes(entropy_hash.digest(), "big") >> (
@@ -109,6 +105,14 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
         iterations=iterations,
     )
     return seed
+
+
+def warn_stretching(given: int, target: int):
+    warnings.warn(
+        "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
+            given, target
+        )
+    )
 
 
 if __name__ == "__main__":

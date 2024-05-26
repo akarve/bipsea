@@ -160,12 +160,14 @@ bipsea seed -f string -i "any string you want" -t xprv
 ```
     xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
 
-This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). If you're now thinking, _I could use anything as a source
-for a seed phrase you get it. And we haven't even gotten into BIP-85.
+This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). 
+If you are now thinking, _I could use any string to derive a master key_,
+then you get it. And we haven't even gottent into BIP-85.
 
-> **Don't get cute** with low-entropy sources or short brain wallets.
-> You can only stretch entropy so far. Weak entropy in means weak entropy out.
-> and susceptibility to [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
+> That said, **do not get cute and derive valuable keys or secrets from short
+> strings**. You can only stretch entropy so far. **Weak entropy in, weaker entropy out**.
+> Short, common strings are also susceptible to
+[rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
 
 
 ## Generate BIP-85 password 

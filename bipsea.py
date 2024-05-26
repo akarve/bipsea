@@ -6,7 +6,6 @@ import re
 import select
 import sys
 import threading
-import warnings
 
 import click
 
@@ -17,6 +16,7 @@ from seedwords import (
     entropy_to_words,
     N_WORDS_ALLOWED,
     to_master_seed,
+    warn_stretching,
 )
 
 
@@ -105,11 +105,7 @@ def seed(from_, input, to, number, passphrase, pretty):
             target_bits = 128 + ((number - 12) // 3) * 32
             short = len(string_bytes) * 8 - target_bits
             if short < 0:
-                warnings.warn(
-                    "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
-                        len(string_bytes) * 8, target_bits
-                    )
-                )
+                warn_stretching(short + target_bits, target_bits)
             entropy = hashlib.sha256(string_bytes).digest()
         elif from_ == "rand":
             entropy = None
