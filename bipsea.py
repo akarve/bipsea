@@ -43,6 +43,12 @@ APPLICATIONS = {
     "xprv": "32'",  # TODO file to 85 is there a testnet here
 }
 
+RANGES = {
+    "base64": (20, 86),
+    "base85": (10, 80),
+    "hex": (16, 64),
+}
+
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
@@ -171,8 +177,8 @@ cli.add_command(seed)
 @click.option(
     "-n",
     "--number",
-    type=click.IntRange(16, 86),
-    help="target length for derived entropy (in bytes, chars, or words)",
+    type=int,
+    help="desired length for derived entropy (bytes, chars, or words)",
 )
 @click.option(
     "-i",
@@ -189,6 +195,11 @@ def bip85(application, number, index):
             raise click.BadOptionUsage(
                 option_name="--number",
                 message="--number has no effect when --application wif|xprv",
+            )
+        elif number < 1:
+            raise click.BadOptionUsage(
+                option_name="--number",
+                message="must be a positive integer",
             )
     else:
         number = 24
@@ -214,9 +225,10 @@ def bip85(application, number, index):
             path += f"/{index}'"
         elif application in ("hex", "base64", "base85"):
             path += f"/{number}'/{index}'"
+            check_range(number, application)
         else:
             assert application == "drng"
-            # TODO file to 85: not clear structure of master root keys; is it {0'}/{index}'?
+            # TODO file to 85: not clear structure if master root keys; is it {0'}/{index}'?
             path += f"/0'/{index}'"
         # TODO do we need to derive testnet?
         derived = derive(master, path)
@@ -238,6 +250,15 @@ cli.add_command(bip85)
 # and one should proceed with the next value for i. (Note: this has probability lower than 1 in 2127.)
 # they say hard fail but does 39? i say let's hard fail in these cases because otherwise
 # you are modifying the path?
+
+
+def check_range(number: int, application: str):
+    (min, max) = RANGES[application]
+    if not (min <= number <= max):
+        raise click.BadOptionUsage(
+            option_name="--number",
+            message=f"out of range; try [{min}, {max}] for {application}",
+        )
 
 
 def no_prv():
