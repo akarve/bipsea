@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from bipsea import N_WORDS_ALLOWED, cli
 from tests.data.bip39_vectors import VECTORS
-from tests.data.bip85_vectors import PWD_BASE64
+from tests.data.bip85_vectors import PWD_BASE64, PWD_BASE85
 from util import LOGGER
 
 logger = logging.getLogger(LOGGER)
@@ -134,6 +134,22 @@ def test_bipsea_integration(runner, vector):
         cli, ["entropy", "-a", "base64", "-n", "20", "--input", xprv]
     )
     assert result_entropy.exit_code == 0
-    final = result_entropy.output.strip()
-    assert final == "lGqIFs50nYCWA0DjxHRB"
-    assert len(final) == 20
+    pwd64 = result_entropy.output.strip()
+    assert pwd64 == "lGqIFs50nYCWA0DjxHRB"
+    assert len(pwd64) == 20
+
+
+@pytest.mark.parametrize("vector", PWD_BASE85)
+def test_entropy_n(runner, vector):
+    xprv = vector["master"]
+    for app in ("base64", "base85", "hex", "drng"):
+        for n in (20, 50, 64):
+            result = runner.invoke(
+                cli, ["entropy", "-a", app, "-n", n, "--input", xprv]
+            )
+            assert result.exit_code == 0
+            answer = result.output.strip()
+            length = len(answer)
+            if app in ("hex", "drng"):
+                length = length // 2
+            assert length == n

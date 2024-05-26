@@ -214,7 +214,6 @@ def bip85(application, number, index, input):
             )
     else:
         number = 24
-
     if not prv[:4] in ("tprv", "xprv"):
         no_prv()
     master = parse_ext_key(prv)
@@ -234,8 +233,7 @@ def bip85(application, number, index, input):
     elif application in ("hex", "base64", "base85"):
         path += f"/{number}'/{index}'"
         check_range(number, application)
-    else:
-        assert application == "drng"
+    elif application == "drng":
         # TODO file to 85: not clear structure if master root keys; is it {0'}/{index}'?
         path += f"/0'/{index}'"
     # TODO do we need to derive testnet?
@@ -245,7 +243,7 @@ def bip85(application, number, index, input):
         output = to_hex_string(drng.read(number))
     else:
         output = apply_85(derived, path)["application"]
-        click.echo(output)
+    click.echo(output)
 
 
 cli.add_command(bip85)
