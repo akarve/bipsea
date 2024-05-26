@@ -43,7 +43,8 @@ APPLICATIONS = {
     "xprv": "32'",  # TODO file to 85 is there a testnet here
 }
 
-N_WORDS_ALLOWED_HELP = "|".join(str(n) for n in N_WORDS_ALLOWED)
+N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
+N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
@@ -82,7 +83,7 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice(N_WORDS_ALLOWED),
+    type=click.Choice(N_WORDS_ALLOWED_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
@@ -232,6 +233,12 @@ def bip85(application, number, index):
 
 
 cli.add_command(bip85)
+
+
+# TODO From BIP32: In case parse256(IL) is 0 or ≥ n, the resulting key is invalid,
+# and one should proceed with the next value for i. (Note: this has probability lower than 1 in 2127.)
+# they say hard fail but does 39? i say let's hard fail in these cases because otherwise
+# you are modifying the path?
 
 
 def no_prv():

@@ -6,13 +6,13 @@
 > And in cryptography bind them._  
 > —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
-bipsea is a standalone, unit-tested implementation of BIP-85 and BIP-32.
+bipsea is a standalone, test-driven implementation of BIP-85 and BIP-32.
 bipsea is designed for readability and security. bipsea offers a command-line
 interface and an API.
 
-bipsea relies on cryptographic primitives from Python `secrets`, `hashlib`, and
-the external [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa).
-bipsea does not rely on third-party libraries from any wallet vendor.
+bipsea relies on cryptographic primitives from Python (`secrets`, `hashlib`),
+and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa). bipsea does not
+rely on third-party libraries from any wallet vendor.
 
 You can run bipsea offline on to generate general-use passwords, Bitcoin seed words,
 and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
@@ -96,33 +96,22 @@ private key are exposed, the parent private key remains secure.
 
 ## How do I know the bipsea implementation is correct?
 
-bipsea passes all BIP-32 and BIP-85 test vectors with the following provisos:
+bipsea passes all BIP-32 and BIP-85 test vectors plus its own unit tests with the
+following provisos:
 * Only generates seed phrases in English
-* Fails a single partial test for derived entropy (but passes all others) from BIP-85
+* Fails one partial test for derived entropy (but passes all others) from BIP-85
 
 ### TODO
 
-* [ ] File the above and other clarification issues to BIP-85
+* [ ] File the above and other "TODO" issues to BIP-85
 
 Run `make test` for details.
 
-```sh
-pip install bipsea
-```
-
-# Developer
-
-```
-make install
-make install-go  # requires go
-make test
-```
-
-See [Makefile](./Makefile) for more commands.
-
-
 # Usage
 
+```
+pip install bipsea
+```
 ```
 bipsea --help
 ```
@@ -158,10 +147,13 @@ bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food d
 ```
 bipsea seed -f string -i "123456123456123456" -t xprv
 ```
-    Stretching 144 bits of entropy to 256 bits. Better to provide more entropy.
+
+<pre><code style="color: #CCCC00">Warning: stretched 144 bits of entropy to 256 bits. Provide more entropy.</code></pre>
+
     xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
 
-This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). 
+This is similar to how coldcard implements
+[verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/).
 If you are now thinking, _I could use any string to derive a master key_,
 then you get it. And we haven't even gottent into BIP-85.
 
@@ -178,21 +170,21 @@ then you get it. And we haven't even gottent into BIP-85.
 ### base64 password
 
 ```
-bipsea seed -t xprv | bipsea entropy -a base85 -n 10
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10
 ```
     C(s>@zBUg8
 
 Increment the index to get a fresh password.
 
 ```
-bipsea seed -t xprv | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10 -i 1
 ```
-    s#c+vT_jpP
+    p6Ft=F40(*
 
 Alternatively you can pipe in an existing xprv:
 
 ```
-echo "$myxprv" | bipsea entropy -a base85 -n 10
+echo "$XPRV" | bipsea entropy -a base85 -n 10
 ```
 
 ### Derived seed words
@@ -230,6 +222,16 @@ and has begun to roll out quantum-resistant changes to SSL.
 All of that to say **even the hardest cryptography falls to the problem of induction**:  
 
 > Just because no one broke has broken ECDSA yet doesn't mean no one will break it tomorrow.
+
+# Developer
+
+```
+make install
+make install-go
+make test
+```
+
+See [Makefile](./Makefile) for more commands.
 
 # References
 
