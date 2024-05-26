@@ -1,7 +1,7 @@
 .PHONY: all build check clean install install-go lint push test test-network git-unsaved
 
 # for PyPI
-build: clean push
+build: clean
 	python -m build
 
 clean:
