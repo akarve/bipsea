@@ -1,8 +1,15 @@
 import logging
 
 import pytest
-from data.bip85_vectors import (BIP39, EXT_KEY_TO_ENTROPY, HEX, PWD_BASE64,
-                                PWD_BASE85, WIF, XPRV)
+from data.bip85_vectors import (
+    BIP39,
+    EXT_KEY_TO_ENTROPY,
+    HEX,
+    PWD_BASE64,
+    PWD_BASE85,
+    WIF,
+    XPRV,
+)
 
 from bip32types import parse_ext_key
 from bip85 import DRNG, apply_85, derive, to_entropy, to_hex_string
