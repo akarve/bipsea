@@ -1,5 +1,7 @@
 import logging
+from hashlib import sha256
 
+import base58
 import pytest
 from data.bip85_vectors import (
     BIP39,
@@ -39,7 +41,6 @@ def test_entropy(vector):
 def test_pwd_base64(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
-    logger.debug(path)
     output = apply_85(derive(master, path), path)
     assert vector["derived_pwd"] == output["application"]
     # Hardcode what we believe is correct; issue filed to BIP85
@@ -113,3 +114,22 @@ def test_xprv(vector):
     output = apply_85(derive(master, path), path)
     assert vector["derived_key"] == output["application"]
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+
+
+def test_private_key_to_wif():
+    """https://en.bitcoin.it/wiki/Wallet_import_format"""
+    pkey_hex = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D"
+    # do it like the example (no suffix) to prove correctness
+    for suffix in (b"", b"\x01"):
+        pkey = bytes.fromhex(pkey_hex)
+        assert len(pkey_hex) == 64
+        assert len(pkey) == 32
+        extended = b"\xef" + pkey + suffix
+        assert len(extended) == 34 if suffix else 33
+        hash1 = sha256(extended).digest()
+        hash2 = sha256(extended).digest()
+        checksum = hash2[:4]
+        logger.debug(to_hex_string(extended))
+
+        wif = base58.b58encode_check(extended + checksum)
+        logger.debug(wif)

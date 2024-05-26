@@ -5,6 +5,7 @@ import re
 from typing import Dict, Union
 
 import base58
+from ecdsa import SECP256k1
 
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
@@ -53,7 +54,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     if application == "39'":
         language, n_words = indexes[:2]
         if not language == LANGUAGE_CODES["English"]:
-            raise ValueError(f"Only English BIP39 words from BIP85 are supported.")
+            raise ValueError(f"Only English BIP-39 words from BIP-85 are supported.")
         if not n_words in CODE_39_TO_BITS:
             raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
         n_bytes = CODE_39_TO_BITS[n_words] // 8
@@ -65,6 +66,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         }
     # WIF
     elif application == "2'":
+        # https://en.bitcoin.it/wiki/Wallet_import_format
         trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
         suffix = b"\x01"  # use with compressed public keys because BIP32
@@ -157,3 +159,11 @@ def split_and_validate(path: str):
         raise ValueError(f"Unexpected path segments: {path}")
 
     return segments
+
+
+def validate_key(entropy: bytes):
+    """per BIP-85 we should hard fail under these conditions"""
+    assert len(entropy) == 32
+    int_key = int.from_bytes(entropy, "big")
+    if not int_key or int_key > SECP256k1.order:
+        raise ValueError("Invalid derived key. Try again with next child index.")

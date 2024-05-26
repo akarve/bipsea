@@ -16,10 +16,6 @@ LOGGER = __app_name__
 logger = logging.getLogger(LOGGER)
 
 
-def from_hex(input: str, passphrase: str = "") -> bytes:
-    return bytes.fromhex(input + passphrase)
-
-
 def to_hex_string(data: bytes) -> str:
     return binascii.hexlify(data).decode("utf-8")
 

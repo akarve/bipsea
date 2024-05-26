@@ -10,7 +10,7 @@ from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
 from bipsea.seedwords import DICT_HASH, N_MNEMONICS, entropy_to_words, to_master_seed
-from bipsea.util import LOGGER, from_hex
+from bipsea.util import LOGGER
 
 logger = logging.getLogger(LOGGER)
 
@@ -24,7 +24,7 @@ def test_vectors(language, vectors):
     for vector in vectors:
         _, mnemonic, seed, xprv = vector
         expected_words = re.split(r"\s", mnemonic)
-        expected_seed = from_hex(seed)
+        expected_seed = bytes.fromhex(seed)
         computed_seed = to_master_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
@@ -39,7 +39,7 @@ def test_seed_word_generation(language, vectors):
         entropy_str, mnemonic, seed, xprv = vector
         expected_words = re.split(r"\s", mnemonic)
         if language == "english":
-            entropy_bytes = from_hex(entropy_str)
+            entropy_bytes = bytes.fromhex(entropy_str)
             if all(b == 0 for b in entropy_bytes):
                 warnings.simplefilter("ignore")
             computed_words = entropy_to_words(
