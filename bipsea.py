@@ -10,6 +10,7 @@ import threading
 import click
 
 from bip32 import to_master_key
+from bip85 import PURPOSE_CODES
 from const import __version__, LOGGER
 from seedwords import (
     bip39_english_words,
@@ -20,9 +21,27 @@ from seedwords import (
 )
 
 
-SEED_FROM_VALUES = ["string", "rand", "words"]
-SEED_TO_VALUES = ["words", "tprv", "xprv"]
+SEED_FROM_VALUES = [
+    "string",
+    "rand",
+    "words",
+]
+SEED_TO_VALUES = [
+    "words",
+    "tprv",
+    "xprv",
+]
 TIMEOUT = 1
+
+APPLICATIONS = {
+    "base64": "707764'",
+    "base85": "707785'",
+    "drng": None,
+    "hex": "128169'",
+    "words": "39'",
+    "wif": "2'",
+    "xprv": "32'",
+}
 
 
 logger = logging.getLogger(LOGGER)
@@ -99,8 +118,6 @@ def seed(from_, input, to, number, passphrase, pretty):
             number = int(number)
         if from_ == "string":
             string_bytes = input.encode("utf-8")
-            # TODO: refactor this logic and share with seedwords.py, including
-            # warnings.warn
             # this is how entropy works out in BIP-39
             target_bits = 128 + ((number - 12) // 3) * 32
             short = len(string_bytes) * 8 - target_bits
@@ -122,7 +139,9 @@ def seed(from_, input, to, number, passphrase, pretty):
         output = " ".join(words)
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+
         click.echo(output)
+
     elif to in ("tprv", "xprv"):
         if pretty:
             raise click.BadOptionUsage(
@@ -131,6 +150,7 @@ def seed(from_, input, to, number, passphrase, pretty):
         mainnet = to == "xprv"
         seed = to_master_seed(words, passphrase)
         kprv = to_master_key(seed, mainnet=mainnet, private=True)
+
         click.echo(kprv)
 
 
@@ -138,13 +158,29 @@ cli.add_command(seed)
 
 
 @click.command(name="entropy", help="Derive entropy according to BIP-85")
-@click.option("-a", "--application", required=True)
-@click.option("-n", "--number", type=int, default=64, help="bytes")
+@click.option(
+    "-a",
+    "--application",
+    required=True,
+    help="|".join(APPLICATIONS.keys()),
+    type=click.Choice(APPLICATIONS.keys(), case_sensitive=True),
+)
+@click.option(
+    "-n",
+    "--number",
+    type=int,
+    default=16,
+    help="length of derived entropy in chars or bytes",
+)
 def bip85(application, number):
     i, o, e = select.select([sys.stdin], [], [], TIMEOUT)
     if i:
-        seed = sys.stdin.readline().strip()
-        click.echo(seed)
+        prv = sys.stdin.readline().strip()
+        assert prv[:4] in ("tprv", "xprv")
+        mainnet = prv.startswith("x")
+        click.echo(prv)
+
+        path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
     else:
         click.echo("Missing input: try `bipsea seed -t xprv | bipsea entropy -a foo`")
 
