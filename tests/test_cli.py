@@ -2,11 +2,10 @@ import logging
 
 import pytest
 from click.testing import CliRunner
+
+from bipsea import N_WORDS_ALLOWED, cli
 from tests.data.bip39_vectors import VECTORS
-
 from util import LOGGER
-from bipsea import cli, N_WORDS_ALLOWED
-
 
 logger = logging.getLogger(LOGGER)
 

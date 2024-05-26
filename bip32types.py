@@ -6,7 +6,6 @@ from ecdsa import SECP256k1
 
 from util import LOGGER
 
-
 logger = logging.getLogger(LOGGER)
 
 

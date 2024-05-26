@@ -2,6 +2,7 @@
 
 check:
 	black . --check
+	isort . --check-only
 
 # developer install only
 install:
@@ -13,6 +14,7 @@ install-go:
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 
 lint:
+	isort .
 	black .
 	actionlint
 

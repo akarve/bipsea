@@ -1,5 +1,6 @@
+from setuptools import find_packages, setup
+
 from util import __app_name__, __version__
-from setuptools import setup, find_packages
 
 setup(
     name=__app_name__,

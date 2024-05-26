@@ -8,17 +8,14 @@ TODO: CLI design:
 
 import hashlib
 import logging
-from unicodedata import normalize
+import secrets
 from hashlib import pbkdf2_hmac
 from typing import List
-import secrets
+from unicodedata import normalize
 
 import click
 
-
-from util import from_hex
-from util import LOGGER
-
+from util import LOGGER, from_hex
 
 logger = logging.getLogger(LOGGER)
 

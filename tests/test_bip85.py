@@ -1,20 +1,19 @@
 import logging
 
 import pytest
-
 from data.bip85_vectors import (
     BIP39,
     EXT_KEY_TO_ENTROPY,
     HEX,
     PWD_BASE64,
     PWD_BASE85,
-    XPRV,
     WIF,
+    XPRV,
 )
-from util import LOGGER, to_hex_string
-from bip32types import parse_ext_key
-from bip85 import apply_85, derive, DRNG, to_entropy, to_hex_string
 
+from bip32types import parse_ext_key
+from bip85 import DRNG, apply_85, derive, to_entropy, to_hex_string
+from util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
 

@@ -3,17 +3,16 @@ Complete implementation of BIP-32 hierarchical deterministic wallets.
 https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
 """
 
-import hashlib, hmac
-from typing import List
+import hashlib
+import hmac
 import logging
+from typing import List
 
-
+from ecdsa import SECP256k1, SigningKey, VerifyingKey
 from ecdsa.keys import MalformedPointError
-from ecdsa import SigningKey, SECP256k1, VerifyingKey
 
+from bip32types import VERSIONS, ExtendedKey
 from util import LOGGER
-from bip32types import ExtendedKey, VERSIONS
-
 
 logger = logging.getLogger(LOGGER)
 
