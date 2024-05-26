@@ -8,7 +8,7 @@
 
 bipsea is currently for experimental purposes only.
 bipsea is a standalone, test-driven implementation of BIP-85 and BIP-32.
-bipsea is designed for readability. bipsea offers a command-line
+bipsea is designed for readability and correctness. bipsea offers a command-line
 interface and an API.
 
 bipsea relies on cryptographic primitives from Python (`secrets`, `hashlib`),
