@@ -43,7 +43,8 @@ APPLICATIONS = {
     "xprv": "32'",  # TODO file to 85 is there a testnet here
 }
 
-N_WORDS_ALLOWED_HELP = "|".join(str(n) for n in N_WORDS_ALLOWED)
+N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
+N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
@@ -82,7 +83,7 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice(N_WORDS_ALLOWED),
+    type=click.Choice(N_WORDS_ALLOWED_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(

@@ -6,7 +6,7 @@
 > And in cryptography bind them._  
 > —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
-bipsea is a standalone, unit-tested implementation of BIP-85 and BIP-32.
+bipsea is a standalone, test-driven implementation of BIP-85 and BIP-32.
 bipsea is designed for readability and security. bipsea offers a command-line
 interface and an API.
 

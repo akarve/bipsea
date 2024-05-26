@@ -80,7 +80,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_n_words(runner, n):
     for from_ in ("string", "rand"):
-        cmd = ["seed", "-t", "words", "-n", n]
+        cmd = ["seed", "-t", "words", "-n", str(n)]
         cmd += ["-f", from_]
         if from_ == "string":
             # "s"*15 is shorter than the lowest entropy of 128 bits
