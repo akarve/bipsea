@@ -10,9 +10,9 @@ bipsea is a standalone, unit-tested implementation of BIP-85 and BIP-32.
 bipsea is designed for readability and security. bipsea offers a command-line
 interface and an API.
 
-bipsea relies on cryptographic primitives from Python `secrets`, `hashlib`, and
-the external [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa).
-bipsea does not rely on third-party libraries from any wallet vendor.
+bipsea relies on cryptographic primitives from Python (`secrets`, `hashlib`),
+and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa). bipsea does not
+rely on third-party libraries from any wallet vendor.
 
 You can run bipsea offline on to generate general-use passwords, Bitcoin seed words,
 and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
@@ -227,7 +227,7 @@ All of that to say **even the hardest cryptography falls to the problem of induc
 
 ```
 make install
-make install-go  # requires go
+make install-go
 make test
 ```
 
