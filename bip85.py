@@ -1,5 +1,4 @@
 import base64
-import binascii
 from typing import Dict, Union
 import hashlib
 import logging

@@ -8,12 +8,10 @@ TODO: CLI design:
 
 import hashlib
 import logging
-import math
 from unicodedata import normalize
 from hashlib import pbkdf2_hmac
 from typing import List
 import secrets
-import warnings
 
 import click
 

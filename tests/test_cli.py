@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 import pytest
 from click.testing import CliRunner
