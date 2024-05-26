@@ -1,4 +1,4 @@
-# `bipsea` — unlimited cryptographic entropy for Bitcoin, passwords, and other secrets
+# `bipsea`: unlimited cryptographic entropy for Bitcoin, passwords, and other secrets
 
 > _One Seed to rule them all,  
 > One Key to find them,  
@@ -127,7 +127,9 @@ See [Makefile](./Makefile) for more commands.
 bipsea --help
 ```
 
-## New bitcoin seed words
+## `bipsea seed`
+
+### New seed words
 
 ```sh
 bipsea seed -n 12 --pretty
@@ -145,19 +147,18 @@ bipsea seed -n 12 --pretty
     11) orphan
     12) suggest
 
-## xprv from existing seed words
+### xprv from existing seed words
 
 ```
 bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" -t xprv
 ```
-
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
-
-## xprv
+## xprv from dice rolls (or any string)
 ```
-bipsea seed -f string -i "any string you want" -t xprv
+bipsea seed -f string -i "123456123456123456" -t xprv
 ```
+    Stretching 144 bits of entropy to 256 bits. Better to provide more entropy.
     xprv9s21ZrQH143K35QDSCrHfhTJNQGS8ehYV74s65pMwTHfHq89oqcqVQJU4iD3B2M68skmz32eT8Kdr1thXJ6tHXRpy77QtAN1dhEdvqYPiVm
 
 This is similar to how [coldcard implements verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/). 
@@ -170,41 +171,65 @@ then you get it. And we haven't even gottent into BIP-85.
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
 
 
-## Generate BIP-85 password 
+## `bipsea entropy`
 
-```sh
---from-string
+`bipsea entropy` requires you to pipe in an xprv.
+
+### base64 password
+
 ```
-deck of cards example
-warn on low entropy
-
-```sh
-bipsea --from
+bipsea seed -t xprv | bipsea entropy -a base85 -n 10
 ```
-> "The seed value is calculated as SHA256 over the rolls, when expressed as an ASCII string."
+    C(s>@zBUg8
 
-# For the curious and the paranoid
+Increment the index to get a fresh password.
 
-Technically speaking, BIP-85 derives the entropy for each application by computing
-an HMAC of the private ECDSA key of the last hardened child. Private child keys
-are pure functions of the parent key and the child index (one segment in the derivation
-path). In this way BIP-85 entropy is hierarchical, deterministic, and irreversibly
-hardened as long as ECDSA remains secure. ECDSA is believed to be secure but no
-one knows for sure. Moreover, may never be able to prove that ECDSA is secure if,
+```
+bipsea seed -t xprv | bipsea entropy -a base85 -n 10 -i 1
+```
+    s#c+vT_jpP
+
+Alternatively you can pipe in an existing xprv:
+
+```
+echo "$myxprv" | bipsea entropy -a base85 -n 10
+```
+
+### Derived seed words
+
+```
+bipsea seed -t xprv | bipsea entropy -a words        
+```
+    loan height quality library maid defense minor token thought music claim actual hour ship robust burst live broccoli
+
+### DRNG, enter the matrix
+
+```
+bipsea seed -t xprv | bipsea entropy -a drng -n 10000
+```
+    <10K hex chars from the DRNG>
+
+# For the curious and paranoid
+
+BIP-85 derives the entropy for each application by computing an HMAC of the private
+ECDSA key of the last hardened child. Private child keys are pure functions of the
+parent key and the child index (one segment in the derivation path). In this way
+BIP-85 entropy is hierarchical, deterministic, and irreversibly hardened as long
+as ECDSA remains secure. ECDSA is believed to be secure but no one knows for sure.
+Moreover, we may never be able to prove that ECDSA is secure or insecure if,
 for example, "P is not equal to NP" is unprovable.
 
-ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024) in that
-if someone somewhere performs the fantastic feat of producing sufficient logical
-q-bits to run Shor's algorithm, then ECDSA private can be reverse-engineered from
-public keys.  As unlikely as the emergence of a quantum computer may seem, the
-Chromium team is
+ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024).
+If someone somewhere creates a quant computer with sufficient logical q-bits
+to run Shor's algorithm on large keys, then ECDSA private keys can be
+reverse-engineered from public keys.  As unlikely as the emergence of a quantum
+computer may seem, the Chromium team is
 [taking no chances](https://blog.chromium.org/2024/05/advancing-our-amazing-bet-on-asymmetric.html)
 and has begun to roll out quantum-resistant changes to SSL.
 
 All of that to say **even the hardest cryptography falls to the problem of induction**:  
 
-> Just because no one broke has broken ECDSA until now,  
-> doesn't mean someone won't break it tomorrow.
+> Just because no one broke has broken ECDSA yet doesn't mean no one will break it tomorrow.
 
 # References
 
