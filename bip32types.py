@@ -41,10 +41,10 @@ class ExtendedKey(
         return "mainnet" if self.version in VERSIONS["mainnet"].values() else "testnet"
 
     def is_public(self) -> bool:
-        return self.data[:1] in {
+        return self.data[:1] in (
             bytes.fromhex("02"),
             bytes.fromhex("03"),
-        }
+        )
 
     def is_private(self) -> bool:
         return self.data[:1] == bytes.fromhex("00")

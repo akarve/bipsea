@@ -24,7 +24,7 @@ def test_vectors(vector):
     seed = from_hex(vector["seed_hex"])
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
-            assert type_ in {"ext pub", "ext prv"}
+            assert type_ in ("ext pub", "ext prv")
             master = to_master_key(seed, mainnet=True, private=True)
             derived = derive(master, ch, private=type_ == "ext prv")
             if not str(derived) == expected:

@@ -229,7 +229,7 @@ def segment_to_index(segment: str) -> (bytes, bool):
     once the optional hardened symbol is dropped"""
     # As of BIP-44 we can use ' for hardened paths
     # https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
-    hardened = segment[-1] in {"h", "H", "'"}
+    hardened = segment[-1] in ("h", "H", "'")
     if hardened:
         segment = segment[:-1]
     index = int(segment)

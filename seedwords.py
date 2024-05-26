@@ -29,7 +29,7 @@ DICT_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
 
 N_MNEMONICS = 2048
 N_WORD_BITS = 11
-N_WORDS_ALLOWED = {12, 15, 18, 21, 24}
+N_WORDS_ALLOWED = [12, 15, 18, 21, 24]
 
 
 def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b""):
@@ -73,6 +73,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, passphrase: bytes = b"")
         idx = int_entropy_cs & mask11
         swords.append(dictionary[idx])
         int_entropy_cs >>= N_WORD_BITS
+
     assert int_entropy_cs == 0, "Unexpected unused entropy"
     swords.reverse()  # backwards is forwards because we started masking from the checksum end
 

@@ -43,7 +43,7 @@ def test_seed_word_generation(language, vectors):
         expected_words = re.split(r"\s", mnemonic)
         if language == "english":
             entropy_bytes = from_hex(entropy_str)
-            if int.from_bytes(entropy_bytes, "big") == 0:
+            if all(b == 0 for b in entropy_bytes):
                 warnings.simplefilter("ignore")
             computed_words = entropy_to_words(
                 len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"

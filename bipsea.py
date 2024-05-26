@@ -6,6 +6,7 @@ import re
 import select
 import sys
 import threading
+import warnings
 
 import click
 
@@ -94,8 +95,22 @@ def seed(from_, input, to, number, passphrase, pretty):
     else:
         if not number:
             number = 24  # set here so we don't falsely trip `if number` above
+        else:
+            number = int(number)
         if from_ == "string":
-            entropy = hashlib.sha256(input.encode("utf-8")).digest()
+            string_bytes = input.encode("utf-8")
+            # TODO: refactor this logic and share with seedwords.py, including
+            # warnings.warn
+            # this is how entropy works out in BIP-39
+            target_bits = 128 + ((number - 12) // 3) * 32
+            short = len(string_bytes) * 8 - target_bits
+            if short < 0:
+                warnings.warn(
+                    "Stretching {} bits of entropy to {} bits. Better to provide more entropy.".format(
+                        len(string_bytes) * 8, target_bits
+                    )
+                )
+            entropy = hashlib.sha256(string_bytes).digest()
         elif from_ == "rand":
             entropy = None
         words = entropy_to_words(
@@ -112,7 +127,7 @@ def seed(from_, input, to, number, passphrase, pretty):
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
         click.echo(output)
-    elif to in {"tprv", "xprv"}:
+    elif to in ("tprv", "xprv"):
         if pretty:
             raise click.BadOptionUsage(
                 option_name="--pretty", message="--pretty has no effect on --to xprv"

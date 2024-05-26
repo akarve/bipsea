@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import pytest
 from click.testing import CliRunner
@@ -21,7 +22,7 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors:
         _, mnemonic, _, xprv = vector
 
-        for upper in [True, False]:
+        for upper in (True, False):
             mnemonic = mnemonic.upper() if upper else mnemonic
             result = runner.invoke(
                 cli,
@@ -80,14 +81,22 @@ def test_seed_option_sensitivity(runner, language, vectors):
 
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_n_words(runner, n):
-    for from_ in {"string", "rand"}:
+    for from_ in ("string", "rand"):
         cmd = ["seed", "-t", "words", "-n", str(n)]
         cmd += ["-f", from_]
         if from_ == "string":
-            cmd += ["-i", "some string"]
-        result = runner.invoke(cli, cmd)
-        assert result.exit_code == 0
-        assert len(result.output.split()) == int(n)
+            # "s"*15 is shorter than the lowest entropy of 128 bits
+            # "l"*32 is longer than the highest entropy of 256 bits
+            for input in ("s" * 15, "l" * 32):
+                cmd += ["-i", input]
+                with warnings.catch_warnings(record=True) as w:
+                    result = runner.invoke(cli, cmd)
+                    if "s" in input:
+                        assert len(w) > 0
+                    else:
+                        assert len(w) == 0
+                    assert result.exit_code == 0
+                    assert len(result.output.split()) == int(n)
 
 
 def test_bip85_command(runner):
