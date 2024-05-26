@@ -184,9 +184,10 @@ def bip85(application, number, index):
     if number:
         if application in {"wif"}:
             raise click.BadOptionUsage(
-                option_name="--number", message="--number has no effect when --application wif"
+                option_name="--number",
+                message="--number has no effect when --application wif",
             )
- 
+
     if stdin:
         logger.debug(stdin)
         prv = sys.stdin.readline().strip()
