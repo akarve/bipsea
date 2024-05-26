@@ -57,7 +57,7 @@ The root of your BIP-85 password tree is a standard Bitcoin master private key (
 
 The master key then uses the BIP-32 derivation tree with a clever twist: the
 derivation path includes a purpose code (`83696968'`) followed by an _application_
-code. In this way, each unique derivation path produces a unique, independent,
+code. In this way, each unique derivation path produces unique, independent,
 and secure _derived entropy_ as a pure function of the master private key and the
 derivation path.
 
@@ -76,7 +76,7 @@ bipsea implements all of the above applications plus the BIP-85 discrete random
 number generator (DRNG). bipsea does not implement the RSA application codes from
 BIP-85 but you could potentially use the DRNG for RSA and similar applications.
 
-## Example derivation path
+## Example derivation
 
 Consider `m/83696968'/707764'/10'/0'`. It produces the password
 `dKLoepugzd` according to the following logic:
@@ -155,13 +155,13 @@ bipsea seed -f string -i "123456123456123456" -t xprv
 This is similar to how coldcard implements
 [verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/).
 If you are now thinking, _I could use any string to derive a master key_,
-then you get it. And we haven't even gottent into BIP-85.
+then you're ready to learn about BIP-85 with `bipsea entropy`.
 
 > **Do not get cute and derive valuable keys or secrets from short
-> strings**. You can only stretch entropy so far. **Weak entropy in, weaker entropy out**.
+> strings**. You can only stretch entropy so far.
+> **Weak entropy in, weaker entropy out**.
 > Short, common strings are also susceptible to
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
-
 
 ## `bipsea entropy`
 
@@ -199,7 +199,7 @@ bipsea seed -t xprv | bipsea entropy -a words
 ```
     loan height quality library maid defense minor token thought music claim actual hour ship robust burst live broccoli
 
-Transform one set of seed words int infinitely many others (increment `-i`):
+Transform one set of seed words into millions of others (increment `-i`):
 
 ```
 bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" -t xprv | bipsea entropy -a words -n 12
@@ -223,9 +223,9 @@ BIP-85 derives the entropy for each application by computing an HMAC of the priv
 ECDSA key of the last hardened child. Private child keys are pure functions of the
 parent key and the child index. In this way BIP-85 entropy is hierarchical,
 deterministic, and irreversibly hardened as long as ECDSA remains secure.
-ECDSA is believed to be secure but no one knows for certain. It may not even be
-possible to conclusively prove the security of any cryptographic algorithm as such
-a proof would simultaneously prove that "P is not equal to NP."
+ECDSA is believed to be secure but it may not even be possible to _prove_ the security
+of _any_ cryptographic algorithm as such a proof would need to demonstrate strong
+conjectures similar to "P is not equal to NP."
 
 All of that to say **even the hardest cryptography falls to the problem of induction**:
 > Just because no one broke has yet broken ECDSA
@@ -257,7 +257,6 @@ hierarchical deterministic wallets
 generalized cryptographic entropy
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
-
 
 # TODO
 
