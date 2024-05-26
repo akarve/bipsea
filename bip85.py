@@ -111,7 +111,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     elif application == "128169'":
         num_bytes = int(indexes[0][:-1])
         if not (16 <= num_bytes <= 64):
-            raise ValueError("Expected num_bytes in [16, 64], got {num_bytes}")
+            raise ValueError(f"Expected num_bytes in [16, 64], got {num_bytes}")
 
         return {"entropy": entropy, "application": to_hex_string(entropy[:num_bytes])}
     # PWD BASE64
@@ -119,7 +119,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         pwd_len = int(indexes[0][:-1])
         # TODO file Base64 typo in 85 "encode the all 64 bytes of entropy".
         if not (20 <= pwd_len <= 86):
-            raise ValueError("Expected pwd_len in [16, 64], got {num_bytes}")
+            raise ValueError(f"Expected pwd_len in [16, 64], got {num_bytes}")
 
         return {
             "entropy": entropy,
@@ -129,7 +129,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     elif application == "707785'":
         pwd_len = int(indexes[0][:-1])
         if not (10 <= pwd_len <= 80):
-            raise ValueError("Expected pwd_len in [16, 64], got {num_bytes}")
+            raise ValueError(f"Expected pwd_len in [16, 64], got {num_bytes}")
 
         return {
             "entropy": entropy,

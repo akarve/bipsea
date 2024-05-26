@@ -44,6 +44,8 @@ APPLICATIONS = {
     "xprv": "32'",
 }
 
+N_WORDS_ALLOWED_HELP = "|".join(str(n) for n in N_WORDS_ALLOWED)
+
 
 logger = logging.getLogger(LOGGER)
 
@@ -81,7 +83,7 @@ def cli():
 @click.option(
     "-n",
     "--number",
-    type=click.Choice(list(str(n) for n in N_WORDS_ALLOWED)),
+    type=click.Choice(N_WORDS_ALLOWED),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
@@ -93,24 +95,24 @@ def seed(from_, input, to, number, passphrase, pretty):
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="--input is required unless you say --from rand",
+            message="--input is required (unless --from rand)",
         )
     if from_ == "words":
         if number:
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="omit --number when you specify --from words",
+                message="omit when you specify --from words",
             )
         if to == "words":
             raise click.BadOptionUsage(
-                option_name="--to", message="--from words --to words is redundant"
+                option_name="--to", message="--from words is redundant"
             )
         words = re.split(r"\s+", input)
         n_words = len(words)
         if not n_words in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
-                option_name="--input",
-                message=f"invalid number of words {n_words}",
+                option_name="--number",
+                message=f"--",
             )
     else:
         if not number:
@@ -187,7 +189,8 @@ def bip85(application, number, index):
                 option_name="--number",
                 message="--number has no effect when --application wif",
             )
-
+    else:
+        number = 18
     if stdin:
         logger.debug(stdin)
         prv = sys.stdin.readline().strip()
@@ -196,9 +199,18 @@ def bip85(application, number, index):
 
         path = f"m/{PURPOSE_CODES['BIP-85']}/{APPLICATIONS[application]}"
         if application == "words":
+            if number not in N_WORDS_ALLOWED:
+                raise click.BadOptionUsage(
+                    option_name="--number",
+                    message=f"--application wif requires --number in {N_WORDS_ALLOWED_HELP}",
+                )
+
             path += f"/0'/{number}'/{index}'"
         elif application in ("wif", "xprv"):
             path += f"/{index}'"
+        elif application in ("hex", "base64", "base85"):
+            path += f"/{number}'/{index}'"
+
         derived = derive(master, path)
         output = apply_85(derived, path)
 
