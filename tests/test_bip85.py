@@ -92,7 +92,7 @@ def test_rsa_unsupported(vector):
     path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
     rsa_path = "m/83696968'/828365'/1024'/0'"
     master = parse_ext_key(vector["master"])
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         apply_85(derive(master, rsa_path), rsa_path)
 
 

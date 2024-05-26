@@ -26,13 +26,9 @@ APPLICATIONS = {
     "wif": "2'",
     "xprv": "32'",
 }
+REVERSE_APPLICATIONS = {v: k for k, v in APPLICATIONS.items()}
 
-RANGES = {
-    "base64": (20, 86),
-    "base85": (10, 80),
-    "hex": (16, 64),
-    "pin": (8, 64)
-}
+RANGES = {"base64": (20, 86), "base85": (10, 80), "hex": (16, 64), "pin": (8, 64)}
 
 PURPOSE_CODES = {"BIP-85": "83696968'"}
 
@@ -67,11 +63,9 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         raise ValueError(
             f"BIP-85 paths should have 4+ segments and hardened children: {segments}"
         )
-    application, *indexes = segments[2:]
-
+    app, *indexes = segments[2:]
     entropy = to_entropy(derived_key.data[1:])
-    # BIP 39
-    if application == "39'":
+    if app == APPLICATIONS["words"]:
         language, n_words = indexes[:2]
         if not language == LANGUAGE_CODES["English"]:
             raise ValueError(f"Only English BIP-39 words from BIP-85 are supported.")
@@ -84,8 +78,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": trimmed_entropy,
             "application": " ".join(entropy_to_words(n_words_int, trimmed_entropy)),
         }
-    # WIF
-    elif application == "2'":
+    elif app == APPLICATIONS["wif"]:
         # https://en.bitcoin.it/wiki/Wallet_import_format
         trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
@@ -99,8 +92,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": trimmed_entropy,
             "application": base58.b58encode(extended + checksum).decode("utf-8"),
         }
-    # XPRV
-    elif application == "32'":
+    elif app == APPLICATIONS["xprv"]:
         derived_key = ExtendedKey(
             version=VERSIONS["mainnet"]["private"],
             depth=bytes(1),
@@ -114,15 +106,13 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": entropy[32:],
             "application": str(derived_key),
         }
-    # HEX
-    elif application == "128169'":
+    elif app == APPLICATIONS["hex"]:
         num_bytes = int(indexes[0][:-1])
         if not (16 <= num_bytes <= 64):
             raise ValueError(f"Expected num_bytes in [16, 64], got {num_bytes}")
 
         return {"entropy": entropy, "application": to_hex_string(entropy[:num_bytes])}
-    # PWD BASE64
-    elif application == "707764'":
+    elif app == APPLICATIONS["base64"]:
         pwd_len = int(indexes[0][:-1])
         if not (20 <= pwd_len <= 86):
             raise ValueError(f"Expected pwd_len in [20, 86], got {pwd_len}")
@@ -131,8 +121,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": entropy,
             "application": base64.b64encode(entropy).decode("utf-8")[:pwd_len],
         }
-    # PWD BASE85
-    elif application == "707785'":
+    elif app == APPLICATIONS["base85"]:
         pwd_len = int(indexes[0][:-1])
         if not (10 <= pwd_len <= 80):
             raise ValueError("Expected pwd_len in [10, 80], got {pwd_len}")
@@ -142,7 +131,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
         }
     else:
-        raise NotImplementedError(f"Unsupported application: {application}")
+        raise ValueError(f"unsupported application {app}")
 
 
 def to_entropy(data: bytes) -> bytes:
