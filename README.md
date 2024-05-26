@@ -170,21 +170,21 @@ then you get it. And we haven't even gottent into BIP-85.
 ### base64 password
 
 ```
-bipsea seed -t xprv | bipsea entropy -a base85 -n 10
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10
 ```
     C(s>@zBUg8
 
 Increment the index to get a fresh password.
 
 ```
-bipsea seed -t xprv | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10 -i 1
 ```
-    s#c+vT_jpP
+    p6Ft=F40(*
 
 Alternatively you can pipe in an existing xprv:
 
 ```
-echo "$myxprv" | bipsea entropy -a base85 -n 10
+echo "$XPRV" | bipsea entropy -a base85 -n 10
 ```
 
 ### Derived seed words
