@@ -11,7 +11,7 @@ import click
 
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
-from .bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
+from .bip85 import APPLICATIONS, DRNG, PURPOSE_CODES, RANGES, apply_85, derive, to_entropy
 from .seedwords import (
     N_WORDS_ALLOWED,
     bip39_english_words,
@@ -32,22 +32,6 @@ SEED_TO_VALUES = [
     "xprv",
 ]
 TIMEOUT = 1
-
-APPLICATIONS = {
-    "base64": "707764'",
-    "base85": "707785'",
-    "drng": None,
-    "hex": "128169'",
-    "words": "39'",
-    "wif": "2'",
-    "xprv": "32'",
-}
-
-RANGES = {
-    "base64": (20, 86),
-    "base85": (10, 80),
-    "hex": (16, 64),
-}
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
@@ -226,11 +210,17 @@ def bip85(application, number, index, input):
         path += f"/0'/{number}'/{index}'"
     elif application in ("wif", "xprv"):
         path += f"/{index}'"
-    elif application in ("hex", "base64", "base85"):
+    elif application in ("base64", "base85", "hex"):
         path += f"/{number}'/{index}'"
         check_range(number, application)
     elif application == "drng":
         path += f"/0'/{index}'"
+    else:
+        raise click.BadOptionUsage(
+            option_name="--application",
+            message=f"unrecognized {application}",
+        )
+ 
     derived = derive(master, path)
     if application == "drng":
         drng = DRNG(to_entropy(derived.data[1:]))

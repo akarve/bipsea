@@ -16,13 +16,34 @@ from .util import LOGGER, to_hex_string
 logger = logging.getLogger(LOGGER)
 
 
-HMAC_KEY = b"bip-entropy-from-k"
+APPLICATIONS = {
+    "base64": "707764'",
+    "base85": "707785'",
+    "dice": "89101''",
+    "drng": None,
+    "hex": "128169'",
+    "words": "39'",
+    "wif": "2'",
+    "xprv": "32'",
+}
+
+RANGES = {
+    "base64": (20, 86),
+    "base85": (10, 80),
+    "hex": (16, 64),
+    "pin": (8, 64)
+}
+
+PURPOSE_CODES = {"BIP-85": "83696968'"}
+
 CODE_39_TO_BITS = {
     "12'": 128,
     "18'": 192,
     "21'": 224,
     "24'": 256,
 }
+HMAC_KEY = b"bip-entropy-from-k"
+
 LANGUAGE_CODES = {
     "English": "0'",
     "Japanese": "1'",
@@ -34,7 +55,6 @@ LANGUAGE_CODES = {
     "Italian": "7'",
     "Czech": "8'",
 }
-PURPOSE_CODES = {"BIP-85": "83696968'"}
 
 
 def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]]:
