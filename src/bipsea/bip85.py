@@ -20,16 +20,20 @@ logger = logging.getLogger(LOGGER)
 APPLICATIONS = {
     "base64": "707764'",
     "base85": "707785'",
-    "dice": "89101''",
+    "dice": "89101'",
     "drng": "0'",
     "hex": "128169'",
     "words": "39'",
     "wif": "2'",
     "xprv": "32'",
 }
-REVERSE_APPLICATIONS = {v: k for k, v in APPLICATIONS.items()}
 
-RANGES = {"base64": (20, 86), "base85": (10, 80), "hex": (16, 64), "pin": (8, 64)}
+RANGES = {
+    "base64": (20, 86),
+    "base85": (10, 80),
+    "hex": (16, 64),
+    "dice": (8, 64),
+}
 
 PURPOSE_CODES = {"BIP-85": "83696968'"}
 
@@ -134,11 +138,10 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
         }
     elif app == APPLICATIONS["dice"]:
-        sides, rolls, index = indexes[:3]
-
+        sides, rolls, index = (int(s[:-1]) for s in indexes[:3])
         return {
             "entropy": entropy,
-            "application": do_rolls(derived_key, sides, rolls, index),
+            "application": do_rolls(entropy, sides, rolls, index),
         }
     else:
         raise ValueError(f"Unsupported application {app}")
@@ -188,20 +191,21 @@ def validate_key(entropy: bytes):
         raise ValueError("Invalid derived key. Try again with next child index.")
 
 
-def do_rolls(master: ExtendedKey, sides: int, rolls: int, index: int) -> str:
+def do_rolls(entropy: bytes, sides: int, rolls: int, index: int) -> str:
     """sides > 1, 1 < rolls > 100"""
-    assert rolls > 0
     max_width = len(str(sides))
     history = []
-    # need n_bits per fair die
-    n_bytes = math.ceil(math.log(sides, 2) // 8)
-    drng = DRNG(master.data[1:])
+    bits_per_roll = math.ceil(math.log(sides, 2))
+    bytes_per_roll = math.ceil(bits_per_roll / 8)
+    drng = DRNG(entropy)
     while len(history) < rolls:
-        trial_int = int.from_bytes(drng.read(n_bytes), "big")
+        trial_int = int.from_bytes(drng.read(bytes_per_roll), "big")
+        available_bits = 8 * bytes_per_roll
+        excess_bits = available_bits - bits_per_roll
+        trial_int >>= excess_bits
         if trial_int >= sides:
             continue
         else:
-            roll = trial_int + 1
-            history.append(f"{roll:0{max_width}d}")
+            history.append(f"{trial_int:0{max_width}d}")
 
     return "-".join(history)
