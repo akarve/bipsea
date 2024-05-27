@@ -182,11 +182,13 @@ cli.add_command(seed)
 @click.option(
     "-s",
     "--special",
-    default=2,
+    default=10,
     type=int,
     help="Additional integer (e.g. for 'dice' sides)",
 )
-@click.option("-p", "--input", help="Instead of UNIX | you can --input xprv12345...")
+@click.option(
+    "-p", "--input", help="--input xprv123... can be used in place of an input pipe |"
+)
 def bip85(application, number, index, special, input):
     if not input:
         stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)

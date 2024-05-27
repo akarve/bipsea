@@ -88,3 +88,12 @@ PWD_BASE85 = [
         "derived_pwd": "_s`{TW89)i4`",
     },
 ]
+
+DICE = [
+    {
+        "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
+        "path": "m/83696968'/89101'/6'/10'/0'",
+        "derived_entropy": "5e41f8f5d5d9ac09a20b8a5797a3172b28c806aead00d27e36609e2dd116a59176a738804236586f668da8a51b90c708a4226d7f92259c69f64c51124b6f6cd2",
+        "derived_rolls": "1,0,0,2,0,1,5,5,2,4",
+    },
+]

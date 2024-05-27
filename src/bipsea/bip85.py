@@ -193,7 +193,7 @@ def validate_key(entropy: bytes):
 
 def do_rolls(entropy: bytes, sides: int, rolls: int, index: int) -> str:
     """sides > 1, 1 < rolls > 100"""
-    max_width = len(str(sides))
+    max_width = len(str(sides - 1))
     history = []
     bits_per_roll = math.ceil(math.log(sides, 2))
     bytes_per_roll = math.ceil(bits_per_roll / 8)
@@ -208,4 +208,4 @@ def do_rolls(entropy: bytes, sides: int, rolls: int, index: int) -> str:
         else:
             history.append(f"{trial_int:0{max_width}d}")
 
-    return "-".join(history)
+    return ",".join(history)
