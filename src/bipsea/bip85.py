@@ -20,7 +20,7 @@ APPLICATIONS = {
     "base64": "707764'",
     "base85": "707785'",
     "dice": "89101''",
-    "drng": None,
+    "drng": "0'",
     "hex": "128169'",
     "words": "39'",
     "wif": "2'",
@@ -61,10 +61,12 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         raise ValueError(f"Not a BIP85 path: {path}")
     if len(segments) < 4 or not all(s.endswith("'") for s in segments[1:]):
         raise ValueError(
-            f"BIP-85 paths should have 4+ segments and hardened children: {segments}"
+            f"Paths should have 4+ segments, all hardened children: {path}"
         )
     app, *indexes = segments[2:]
+
     entropy = to_entropy(derived_key.data[1:])
+
     if app == APPLICATIONS["words"]:
         language, n_words = indexes[:2]
         if not language == LANGUAGE_CODES["English"]:
@@ -130,6 +132,9 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "entropy": entropy,
             "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
         }
+    elif app == APPLICATIONS["dice"]:
+        sides, rolls, index = indexes[:3]
+
     else:
         raise ValueError(f"unsupported application {app}")
 

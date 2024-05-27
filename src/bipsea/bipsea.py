@@ -207,8 +207,8 @@ def bip85(application, number, index, input):
     master = parse_ext_key(prv)
 
     path = f"m/{PURPOSE_CODES['BIP-85']}"
-    app_value = APPLICATIONS[application]
-    path += f"/{app_value}" if app_value else ""
+    app_code = APPLICATIONS[application]
+    path += f"/{app_code}"
     if application == "words":
         if number not in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
