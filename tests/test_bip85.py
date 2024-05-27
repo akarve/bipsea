@@ -143,4 +143,3 @@ def test_rsa_unsupported(vector):
     assert len(rolls_int) == 10
     assert all(0 <= r < 10 for r in rolls_int)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-
