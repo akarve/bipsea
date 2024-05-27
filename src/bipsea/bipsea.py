@@ -179,8 +179,14 @@ cli.add_command(seed)
     default=0,
     help="child index",
 )
+@click.option(
+    "-m",
+    "--more",
+    type=int,
+    help="Additional integer (e.g. for 'dice')",
+)
 @click.option("-p", "--input", help="Instead of UNIX | you can --input xprv12345...")
-def bip85(application, number, index, input):
+def bip85(application, number, index, more, input):
     if not input:
         stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
         if stdin:
@@ -223,6 +229,9 @@ def bip85(application, number, index, input):
         check_range(number, application)
     elif application == "drng":
         path += f"/0'/{index}'"
+    elif application == "dice":
+        path += f"/{number}'/{index}'"
+        check_range(number, application)
     else:
         raise click.BadOptionUsage(
             option_name="--application",

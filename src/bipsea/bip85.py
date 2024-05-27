@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import logging
+import math
 import re
 from typing import Dict, Union
 
@@ -135,8 +136,12 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     elif app == APPLICATIONS["dice"]:
         sides, rolls, index = indexes[:3]
 
+        return {
+            "entropy": entropy,
+            "application": do_rolls(derived_key, sides, rolls, index),
+        }
     else:
-        raise ValueError(f"unsupported application {app}")
+        raise ValueError(f"Unsupported application {app}")
 
 
 def to_entropy(data: bytes) -> bytes:
@@ -181,3 +186,22 @@ def validate_key(entropy: bytes):
     int_key = int.from_bytes(entropy, "big")
     if not int_key or int_key > SECP256k1.order:
         raise ValueError("Invalid derived key. Try again with next child index.")
+
+
+def do_rolls(master: ExtendedKey, sides: int, rolls: int, index: int) -> str:
+    """sides > 1, 1 < rolls > 100"""
+    assert rolls > 0
+    max_width = len(str(sides))
+    history = []
+    # need n_bits per fair die
+    n_bytes = math.ceil(math.log(sides, 2) // 8)
+    drng = DRNG(master.data[1:])
+    while len(history) < rolls:
+        trial_int = int.from_bytes(drng.read(n_bytes), "big")
+        if trial_int >= sides:
+            continue
+        else:
+            roll = trial_int + 1
+            history.append(f"{roll:0{max_width}d}")
+
+    return "-".join(history)
