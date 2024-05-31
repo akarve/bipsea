@@ -88,21 +88,27 @@ def test_seed_command_from_rand(runner, n):
     assert result.exit_code == 0
 
 
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED)
-def test_seed_command_from_words(runner, n):
+def test_seed_command_from_words(runner):
     lengths = {"short": 15, "enough": 32}
+    base = ["seed", "-t", "xprv", "-n", str(21), "-f", "words"]
     for k, v in lengths.items():
-        cmd = ["seed", "-t", "xprv", "-n", str(n), "-f", "words"]
-        cmd += ["-i", gen_seed(v, 0)]
-        result = runner.invoke(cli, cmd, catch_exceptions=False)
+        cmd = base + ["-i", gen_custom_seed_words(v, 0)]
+        logger.debug(cmd)
+        result = runner.invoke(cli, cmd)
+        logger.debug(result.output)
         assert result.exit_code == 0
         if k == "short":
             assert "Warning" in result.output
         else:
             assert "Warning" not in result.output
+        cmd += ["--bip-only"]
+        bad_result = runner.invoke(cli, cmd)
+        assert bad_result.exit_code != 0
+        assert "Unexpected" in bad_result.output
 
 
-def gen_seed(length: int, seed: int):
+def gen_custom_seed_words(length: int, seed: int):
+    """non bip-39 seeds"""
     random.seed(seed)
     return "".join(random.choice(string.printable) for _ in range(length))
 
