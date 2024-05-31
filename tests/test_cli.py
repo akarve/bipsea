@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 
 import pytest
 from click.testing import CliRunner
@@ -79,22 +81,30 @@ def test_seed_option_sensitivity(runner, language, vectors):
 
 
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
-def test_seed_command_n_words(runner, n):
-    for from_ in ("string", "rand"):
-        cmd = ["seed", "-t", "words", "-n", str(n)]
-        cmd += ["-f", from_]
-        if from_ == "string":
-            # "s"*15 is shorter than the lowest entropy of 128 bits
-            # "l"*32 is longer than the highest entropy of 256 bits
-            for input in ("s" * 15, "l" * 32):
-                cmd += ["-i", input]
-                result = runner.invoke(cli, cmd, catch_exceptions=False)
-                if "s" in input:
-                    assert "Warning" in result.output
-                else:
-                    assert "Warning" not in result.output
-                    assert len(result.output.split()) == int(n)
-                assert result.exit_code == 0
+def test_seed_command_from_rand(runner, n):
+    cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
+    result = runner.invoke(cli, cmd)
+    assert len(result.output.split()) == int(n)
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED)
+def test_seed_command_from_words(runner, n):
+    lengths = {"short": 15, "enough": 32}
+    for k, v in lengths.items():
+        cmd = ["seed", "-t", "xprv", "-n", str(n), "-f", "words"]
+        cmd += ["-i", gen_seed(v, 0)]
+        result = runner.invoke(cli, cmd, catch_exceptions=False)
+        assert result.exit_code == 0
+        if k == "short":
+            assert "Warning" in result.output
+        else:
+            assert "Warning" not in result.output
+
+
+def gen_seed(length: int, seed: int):
+    random.seed(seed)
+    return "".join(random.choice(string.printable) for _ in range(length))
 
 
 def test_seed_from_and_to_words(runner):
@@ -122,20 +132,33 @@ def test_seed_bad_to(runner):
     assert "not one of" in result.output
 
 
-@pytest.mark.parametrize("vector", PWD_BASE64)
-def test_bipsea_integration(runner, vector):
+def test_bipsea_integration(runner):
     result_seed = runner.invoke(
         cli,
-        ["seed", "-f", "string", "-i", "yooooooooooooooo", "-n", "12", "-t", "xprv"],
+        [
+            "seed",
+            "-f",
+            "words",
+            "-i",
+            "punch man spread gap size struggle clean crouch cloth swear erode fan",
+            "-n",
+            "12",
+            "-t",
+            "xprv",
+        ],
     )
     xprv = result_seed.output.strip()
+    assert (
+        xprv
+        == "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
+    )
     assert result_seed.exit_code == 0
     result_entropy = runner.invoke(
         cli, ["entropy", "-a", "base64", "-n", "20", "--input", xprv]
     )
     assert result_entropy.exit_code == 0
     pwd64 = result_entropy.output.strip()
-    assert pwd64 == "lGqIFs50nYCWA0DjxHRB"
+    assert pwd64 == "72zJIS7JhyR5r5NjkuE/"
     assert len(pwd64) == 20
 
 

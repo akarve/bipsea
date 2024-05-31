@@ -86,17 +86,17 @@ def bip39_english_words(file_name=WORDS_FILE_NAME) -> List[str]:
 def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
     """converts english mnemonics to all lower case"""
     mnemonic = [m.lower() for m in mnemonic]
-    assert set(mnemonic)
-    mnemonic_nfkd = normalize("NFKD", " ".join(mnemonic)).encode("utf-8")
+    mnemonic_nfkd = normalize("NFKD", " ".join(m.lower() for m in mnemonic)).encode(
+        "utf-8"
+    )
     salt_nfkd = normalize("NFKD", "mnemonic" + passphrase).encode("utf-8")
 
-    seed = pbkdf2_hmac(
+    return pbkdf2_hmac(
         hash_name="sha512",
         password=mnemonic_nfkd,
         salt=salt_nfkd,
         iterations=iterations,
     )
-    return seed
 
 
 def warn_stretching(given: int, target: int, cli: bool = False):

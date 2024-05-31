@@ -1,6 +1,5 @@
 """CLI"""
 
-import hashlib
 import logging
 import re
 import select
@@ -30,7 +29,6 @@ from .seedwords import (
 from .util import LOGGER, __app_name__, __version__, to_hex_string
 
 SEED_FROM_VALUES = [
-    "string",
     "rand",
     "words",
 ]
@@ -59,7 +57,7 @@ def cli():
     pass
 
 
-@click.command(help="Generate a master private seed")
+@click.command(help="Generate an extended master private key (BIP-32, BIP-39)")
 @click.option(
     "-f",
     "--from",
@@ -74,68 +72,64 @@ def cli():
     "-t",
     "--to",
     type=click.Choice(SEED_TO_VALUES, case_sensitive=True),
-    default="words",
+    default="xprv",
     help="|".join(SEED_TO_VALUES),
     required=True,
 )
 @click.option(
     "-n",
     "--number",
+    default="24",
     type=click.Choice(N_WORDS_ALLOWED_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
     "--pretty", is_flag=True, default=False, help="number and separate seed words"
 )
-def seed(from_, input, to, number, passphrase, pretty):
+@click.option("--bip-only", is_flag=True, default=False, help="Allow only BIP-39 words")
+def seed(from_, input, to, number, passphrase, pretty, bip_only):
     if input:
         input = input.strip()
+    number = int(number)
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="--input is required (unless --from rand)",
+            message="--input required, unless --from rand",
         )
     if from_ == "words":
-        if number:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message="omit when you specify --from words",
-            )
-        if to == "words":
-            raise click.BadOptionUsage(
-                option_name="--to", message="--from words is redundant"
-            )
         words = re.split(r"\s+", input)
         n_words = len(words)
-        if not n_words in N_WORDS_ALLOWED:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message=f"must be in {N_WORDS_ALLOWED_HELP}",
-            )
-    else:
-        if not number:
-            number = 24  # set here so we don't falsely trip `if number` above
+        if bip_only:
+            allowed = set(bip39_english_words())
+            if not (all(w in allowed for w in words) and n_words in N_WORDS_ALLOWED):
+                unexpected = [w for w in words if w not in allowed]
+                raise click.BadOptionUsage(
+                    option_name="--input",
+                    message=f"Unexpected number of words ({n_words}) or unexpected words ({' '.join(unexpected)})",
+                )
         else:
-            number = int(number)
-        if from_ == "string":
             string_bytes = input.encode("utf-8")
             # this is how entropy works out in BIP-39
             target_bits = 128 + ((number - 12) // 3) * 32
             short = len(string_bytes) * 8 - target_bits
             if short < 0:
                 warn_stretching(short + target_bits, target_bits, True)
-            entropy = hashlib.sha256(string_bytes).digest()
-        elif from_ == "rand":
-            entropy = None
+        entropy = to_master_seed(words, passphrase)
+    else:  # from_ == "rand"
+        entropy = None
+        if bip_only:
+            raise click.BadOptionUsage(
+                option_name="--bip-only",
+                message="requires --from words",
+            )
         words = entropy_to_words(
-            n_words=int(number), user_entropy=entropy, passphrase=passphrase
+            n_words=number, user_entropy=entropy, passphrase=passphrase
         )
     if to == "words":
-        english_words = set(bip39_english_words())
-        if not all(w in english_words for w in words):
+        if from_ == "words":
             raise click.BadOptionUsage(
-                option_name="--input",
-                message=f"One or more words not in BIP-39 English list: {words}",
+                option_name="--to",
+                message="incompatible with --from words",
             )
         output = " ".join(words)
         if pretty:
@@ -162,6 +156,7 @@ cli.add_command(seed)
 @click.option(
     "-a",
     "--application",
+    default="words",
     required=True,
     help="|".join(APPLICATIONS.keys()),
     type=click.Choice(APPLICATIONS.keys(), case_sensitive=True),
@@ -199,6 +194,7 @@ def bip85(application, number, index, special, input):
     else:
         prv = input
     if number is not None:
+        number = int(number)
         if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
