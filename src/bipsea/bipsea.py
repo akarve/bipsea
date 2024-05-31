@@ -1,15 +1,19 @@
 """CLI"""
 
 import logging
+import math
 import re
 import select
+import string
 import sys
 import threading
+from collections import Counter
 
 import click
 
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
+from .bip39 import N_WORDS_ALLOWED, entropy_to_words, to_master_seed, verify_seed_words
 from .bip85 import (
     APPLICATIONS,
     DRNG,
@@ -19,15 +23,9 @@ from .bip85 import (
     derive,
     to_entropy,
 )
-from .seedwords import (
-    N_WORDS_ALLOWED,
-    bip39_english_words,
-    entropy_to_words,
-    to_master_seed,
-    warn_stretching,
-)
 from .util import LOGGER, __app_name__, __version__, to_hex_string
 
+MIN_ENTROPY = 256
 SEED_FROM_VALUES = [
     "rand",
     "words",
@@ -44,6 +42,7 @@ N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
+logger.setLevel(logging.DEBUG)
 
 
 class InputThread(threading.Thread):
@@ -86,8 +85,13 @@ def cli():
 @click.option(
     "--pretty", is_flag=True, default=False, help="number and separate seed words"
 )
-@click.option("--bip-only", is_flag=True, default=False, help="Allow only BIP-39 words")
-def seed(from_, input, to, number, passphrase, pretty, bip_only):
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Allow only checksummed BIP-39 English words",
+)
+def seed(from_, input, to, number, passphrase, pretty, strict):
     if input:
         input = input.strip()
     number = int(number)
@@ -99,27 +103,24 @@ def seed(from_, input, to, number, passphrase, pretty, bip_only):
     if from_ == "words":
         words = re.split(r"\s+", input)
         n_words = len(words)
-        if bip_only:
-            allowed = set(bip39_english_words())
-            if not (all(w in allowed for w in words) and n_words in N_WORDS_ALLOWED):
-                unexpected = [w for w in words if w not in allowed]
+        if strict:
+            if not verify_seed_words("english", words):
                 raise click.BadOptionUsage(
                     option_name="--input",
-                    message=f"Unexpected number of words ({n_words}) or unexpected words ({' '.join(unexpected)})",
+                    message=f"Unexpected words ({' '.join(words)}) and/or bad checksum",
                 )
         else:
-            string_bytes = input.encode("utf-8")
-            # this is how entropy works out in BIP-39
-            target_bits = 128 + ((number - 12) // 3) * 32
-            short = len(string_bytes) * 8 - target_bits
-            if short < 0:
-                warn_stretching(short + target_bits, target_bits, True)
+            implied = implied_entropy(input)
+            if implied < MIN_ENTROPY:
+                click.secho(
+                    f"Warning: {implied} bits of implied entropy is less than the recommended {MIN_ENTROPY} bits."
+                )
         entropy = to_master_seed(words, passphrase)
     else:  # from_ == "rand"
         entropy = None
-        if bip_only:
+        if strict:
             raise click.BadOptionUsage(
-                option_name="--bip-only",
+                option_name="--strict",
                 message="requires --from words",
             )
         words = entropy_to_words(
@@ -269,6 +270,10 @@ def no_prv():
         message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`",
     )
     click.echo()
+
+
+def implied_entropy(s):
+    return math.floor(math.log(len(s) ** len(string.printable), 2))
 
 
 if __name__ == "__main__":

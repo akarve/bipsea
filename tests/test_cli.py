@@ -89,11 +89,10 @@ def test_seed_command_from_rand(runner, n):
 
 
 def test_seed_command_from_words(runner):
-    lengths = {"short": 15, "enough": 32}
+    lengths = {"short": 5, "enough": 6}
     base = ["seed", "-t", "xprv", "-n", str(21), "-f", "words"]
     for k, v in lengths.items():
         cmd = base + ["-i", gen_custom_seed_words(v, 0)]
-        logger.debug(cmd)
         result = runner.invoke(cli, cmd)
         logger.debug(result.output)
         assert result.exit_code == 0
@@ -101,7 +100,7 @@ def test_seed_command_from_words(runner):
             assert "Warning" in result.output
         else:
             assert "Warning" not in result.output
-        cmd += ["--bip-only"]
+        cmd += ["--strict"]
         bad_result = runner.invoke(cli, cmd)
         assert bad_result.exit_code != 0
         assert "Unexpected" in bad_result.output
