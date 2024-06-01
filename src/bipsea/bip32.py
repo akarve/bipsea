@@ -115,22 +115,17 @@ def CKDpriv(
             curve=SECP256k1,
         ).to_string("compressed")
     )
-    while True:
-        derived = hmac_sha512(
-            key=chain_code, data=data + child_number.to_bytes(4, "big")
-        )
-        if validate_derived_key(derived):
-            break
-        else:
-            child_number += 1
-            if hardened:
-                assert child_number < 2**32
-            else:
-                assert child_number < TYPED_CHILD_KEY_COUNT
-
+    derived = hmac_sha512(
+        key=chain_code, data=data + child_number.to_bytes(4, "big"),
+    )
+    # BIP-32: In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid
+    # (Note: this has probability lower than 1 in 2**127.)
+    parse_256_IL = int.from_bytes(derived[:32], "big")
     child_key_int = (
-        int.from_bytes(derived[:32], "big") + int.from_bytes(secret_key, "big")
+         parse_256_IL + int.from_bytes(secret_key, "big")
     ) % SECP256k1.order
+    if (parse_256_IL >= SECP256k1.order) or not child_key_int:
+        raise ValueError(f"Rare invalid child key. Retry with the next higher child index: {child_number}.")
     child_key = bytes(1) + child_key_int.to_bytes(32, "big")
 
     return ExtendedKey(
@@ -177,6 +172,9 @@ def CKDpub(
         raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
 
     parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
+    # TODO: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
+    # key is invalid, and one should proceed with the next value for i.
+
     while True:
         derived = hmac_sha512(key=chain_code, data=public_key + child_number)
         derived_key = int.from_bytes(derived[:32], "big")
@@ -250,13 +248,3 @@ def fingerprint(private_key: bytes) -> bytes:
 
 def hmac_sha512(key: bytes, data: bytes) -> bytes:
     return hmac.new(key=key, msg=data, digestmod="sha512").digest()
-
-
-def validate_derived_key(key: bytes) -> bool:
-    assert len(key) == 64
-    secret_key = key[:32]
-    secret_int = int.from_bytes(secret_key, "big")
-    if (secret_int == 0) or (secret_int >= SECP256k1.order):
-        return False
-
-    return True
