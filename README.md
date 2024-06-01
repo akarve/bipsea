@@ -1,4 +1,4 @@
-# `bipsea`: unlimited entropy for Bitcoin, passwords, and other secrets
+# `bipsea`: secure entropy for Bitcoin seeds, general passwords, and other secrets
 
 > _One Seed to rule them all,  
 > One Key to find them,  
@@ -6,18 +6,18 @@
 > And in cryptography bind them._  
 > —[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
-bipsea is currently for experimental purposes only.
-bipsea is a standalone, test-driven implementation of BIP-85 and BIP-32.
-bipsea is designed for readability and correctness. bipsea offers a command-line
-interface and an API.
+bipsea is a standalone, test-driven implementation of BIP-32, BIP-39, and BIP-85.
+bipsea is designed for readability and correctness.
+bipsea offers a command-line interface and an API.
+**bipsea is currently for experimental purposes only.**
 
-bipsea relies on cryptographic primitives from Python (`secrets`, `hashlib`),
-and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) and is therefore
-also [vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
-bipsea does not rely on third-party libraries
-from any wallet vendor.
+bipsea relies on cryptographic primitives from Python
+and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module.
+bipsea is therefore also
+[vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
+bipsea does not rely on third-party libraries from any wallet vendor.
 
-You can run bipsea offline on to generate general-use passwords, Bitcoin seed words,
+You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
 and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
 never has network access, and disables
 [Intel Management Engine](https://support.system76.com/articles/intel-me/)
@@ -25,10 +25,11 @@ and other possible backdoors.
 
 # How is this useful?
 
-BIP-85 is the foundation for a next generation password manager that enables you
-to protect and store a _single_ master secret that can derive _millions of independent, multi-purpose secrets_. 
+BIP-85 is the foundation enables you to protect and store a _single_ master secret
+that can derive _millions of independent, multi-purpose secrets_. 
 
 BIP-85 offers the following benefits:
+
 * The security of numerous independent passwords with the operational efficiency
 of a single master password. (The master secret can be multi-factor.)
 * Uses Bitcoin's well-tested hierarchical deterministic wallet
@@ -43,9 +44,9 @@ BIP-85 _derives_ many secrets from one protected secret. Therefore you only need
 to back up the derivation paths and the services they are for. You do not need to
 back up the derived secrets.
 
-You could safely store all derivation paths in a hot password manager
-like Keychain. You could even store the derived secrets in a hot password manager
-at no risk to the master private key.
+You could safely store all derivation paths in a hot password manager like Apple Keychain.
+You could even store the derived secrets in a hot password manager at no risk to
+the master private key.
 
 > Note: bipsea alone is not password manager, but you might use it to implement one.
 
@@ -56,8 +57,9 @@ The root of your BIP-85 password tree is a standard Bitcoin master private key (
 > In general, you _should not use a wallet seed with funds in it_.
 > In any case, fresh seeds are free and easy to generate with bipsea.
 
-The master key then uses the BIP-32 derivation tree with a clever twist: the
-derivation path includes a purpose code (`83696968'`) followed by an _application_
+The master key is then derived according to BIP-32 hierarchical deterministic
+wallets with a clever twist:
+the derivation path includes a purpose code (`83696968'`) followed by an _application_
 code. In this way, each unique derivation path produces unique, independent,
 and secure _derived entropy_ as a pure function of the master private key and
 derivation path.
@@ -100,10 +102,11 @@ private key are exposed, the parent private key remains secure.
 
 ## How do I know the bipsea implementation is correct?
 
-bipsea passes all BIP-32 and BIP-85 test vectors plus its own unit tests with the
-following provisos:
-* Only generates seed phrases in English
-* Fails one partial test for derived entropy (but passes all others) from BIP-85
+bipsea passes all BIP-32, BIP-39 and BIP-85 test vectors plus its own unit tests
+with the following provisos:
+* Only generates and checks BIP-39 seed phrases in the English language
+* A [mistake in one BIP-85 test vector](https://github.com/bitcoin/bips/pull/1600)
+that xfails.
 
 Run `make test` for details.
 
@@ -117,6 +120,7 @@ bipsea --help
 ```
 
 ## `bipsea seed` (BIP-39)
+
 
 ### New seed words
 
@@ -135,6 +139,7 @@ bipsea seed -n 12 --pretty
     10) verb
     11) orphan
     12) suggest
+
 
 ### xprv from existing seed words
 
@@ -165,11 +170,13 @@ then you're ready to learn about BIP-85 with `bipsea entropy`.
 > Short, common strings are also susceptible to
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
 
-## `bipsea entropy` (BIP-85)
+
+## `bipsea entropy` (BIP-32, BIP-85)
 
 `bipsea entropy` requires you to pipe in an xprv, or provide an xprv with `--input`.
 This xprv input is your master secret from which BIP-85 derives all child secrets
 with no danger of compromising the root (or any parent key in the derivation).
+
 
 ### Derive new seed words
 
@@ -179,7 +186,7 @@ bipsea seed | bipsea entropy
     bounce cannon owner banner engine biology lava second tribe aim amused myth verify render almost siren hire laugh fruit canyon sting infant era system
 
 Of course the above is not reproducible (because `bipsea seed` defaults to a random
-seed), but you an provide a known master secret for consistent derivations.
+seed), but you can provide a fixed master secret for consistent derivations.
 
 ```
 bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
@@ -223,6 +230,7 @@ bipsea seed -t xprv | bipsea entropy -a drng -n 10000
 ```
     <10K hex chars from the DRNG>
 
+
 # ECDSA for the curious and paranoid
 
 BIP-85 derives the entropy for each application by computing an HMAC of the private
@@ -238,21 +246,22 @@ All of that to say **even the "most secure" algorithms are vulnerable to the**
 > Just because no one _has_ broken ECDSA  
 > doesn't mean no one _will_ break ECDSA.
 
-"break" refers the the ability to derive a private key from the corresponding
+"break" means the ability to derive a private key from the corresponding
 public key, a feat believed but not known to be infeasible in polynomial time
 because it requires the attacker to compute the discrete logarithm of the public
 key `p = Q*k`, where `Q` is the generator of the `SECP256k1` elliptic curve and
 `k` is the private key. `SECP256k1` is a cyclic group under addition modulo `n`,
-the order of the curve. We call this the "discrete logarithm" since, the same
-way `log(a^x) = x` the attacker must reduce the point `Q*k` to `k`.
+the order of the curve. We call computing `k` from `Q*k` the "discrete logarithm"
+since, the same way `log(a^x) = x` the attacker must reduce the point `Q*k` to `k`.
 
 ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024).
-If someone were to creates the elusive quant computer with sufficiently many
-logical q-bits to run Shor's algorithm on large keys, then suddenly private
-could be reverse-engineered from public keys. As unlikely as a quantum computer
-may seem, the Chromium team is
+If someone were to build a so-far elusive quantum computer with sufficiently many
+logical q-bits to run Shor's algorithm to compute the discrete log of an ECDSA
+private key, ECDSA would be broken.
+As unlikely as a quantum computer may seem, the Chromium team is
 [taking no chances](https://blog.chromium.org/2024/05/advancing-our-amazing-bet-on-asymmetric.html)
 and has begun to roll out quantum-resistant changes to SSL.
+
 
 # Developer
 
@@ -264,6 +273,7 @@ make test
 
 See [Makefile](./Makefile) for more commands.
 
+
 # References
 
 1. [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
@@ -273,10 +283,15 @@ generalized cryptographic entropy
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
 
+
+# More on BIP-85 as a full, cold password manager
+
+See the [BIP-Keychain-? Proposal](https://github.com/akarve/bip-keychain):
+General secrets keychain with semantic derivation paths.
+
+
 # TODO
 
-* [x] File the above and other "TODO" issues to BIP-85
-  * https://github.com/bitcoin/bips/pull/1600
 * [ ] Investigate switch to secure ECDSA libs with constant-time programming and
 side-channel resistance.
     * [ ] https://cryptography.io/en/latest/
