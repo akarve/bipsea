@@ -9,7 +9,7 @@ import requests
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
-from bipsea.seedwords import (
+from bipsea.bip39 import (
     N_MNEMONICS,
     WORDS_FILE_HASH,
     entropy_to_words,
