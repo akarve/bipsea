@@ -1,6 +1,7 @@
-.PHONY: all build check clean install install-dev install-go lint push test test-network git-unsaved
+.PHONY: all build check clean git-branch git-unsaved install install-dev install-go
+.PHONY: lint publish push test test-network
 
-build: clean check
+build: clean check test
 	python -m build
 
 clean:
@@ -29,7 +30,7 @@ lint:
 	actionlint
 	checkmake Makefile
 
-publish: build check git-unsaved
+publish: build git-unsaved
 	python3 -m twine upload dist/*
 
 push: lint check test git-branch git-unsaved
