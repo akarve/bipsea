@@ -11,7 +11,6 @@ import click
 
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
-from .bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
 from .bip39 import (
     N_WORDS_ALLOWED,
     bip39_english_words,
@@ -19,6 +18,7 @@ from .bip39 import (
     to_master_seed,
     warn_stretching,
 )
+from .bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
 from .util import LOGGER, __app_name__, __version__, to_hex_string
 
 SEED_FROM_VALUES = [
