@@ -29,9 +29,10 @@ def test_vectors(language, vectors):
     for vector in vectors:
         _, mnemonic, seed, xprv = vector
         expected_seed = bytes.fromhex(seed)
-        expected_words = re.split(r"\s", mnemonic.strip())
+        expected_words = re.split(r"\s", mnemonic)
         computed_seed = to_master_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
+        assert computed_seed != to_master_seed(expected_words, passphrase="TREZOr")
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
         assert str(computed_xprv) == xprv
         if language == "english":
@@ -62,14 +63,14 @@ def test_verify_checksum():
 )
 def test_seed_word_generation(language, vectors):
     for vector in vectors:
-        entropy_str, mnemonic, seed, xprv = vector
-        expected_words = re.split(r"\s", mnemonic)
+        entropy_str, mnemonic = vector[:2]
         if language == "english":
+            expected_words = re.split(r"\s", mnemonic)
             entropy_bytes = bytes.fromhex(entropy_str)
             if all(b == 0 for b in entropy_bytes):
                 warnings.simplefilter("ignore")
             computed_words = entropy_to_words(
-                len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
+                len(expected_words), user_entropy=entropy_bytes
             )
             assert expected_words == computed_words
             assert verify_seed_words("english", computed_words)

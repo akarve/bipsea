@@ -66,7 +66,7 @@ def cli():
     help="|".join(SEED_FROM_VALUES),
     default="rand",
 )
-@click.option("-i", "--input", help="string in the format specified by --from")
+@click.option("-i", "--input", help="String in the format specified by --from")
 @click.option(
     "-t",
     "--to",
@@ -83,7 +83,7 @@ def cli():
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
-    "--pretty", is_flag=True, default=False, help="number and separate seed words"
+    "--pretty", is_flag=True, default=False, help="Number and separate seed words"
 )
 @click.option(
     "--strict",
@@ -123,9 +123,7 @@ def seed(from_, input, to, number, passphrase, pretty, strict):
                 option_name="--strict",
                 message="requires --from words",
             )
-        words = entropy_to_words(
-            n_words=number, user_entropy=entropy, passphrase=passphrase
-        )
+        words = entropy_to_words(n_words=number, user_entropy=entropy)
     if to == "words":
         if from_ == "words":
             raise click.BadOptionUsage(
@@ -153,7 +151,7 @@ def seed(from_, input, to, number, passphrase, pretty, strict):
 cli.add_command(seed)
 
 
-@click.command(name="entropy", help="Derive entropy according to BIP-85")
+@click.command(name="entropy", help="Derive secrets according to BIP-85")
 @click.option(
     "-a",
     "--application",
