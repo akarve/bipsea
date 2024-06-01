@@ -42,6 +42,7 @@ def test_vectors(language, vectors):
 def test_meta():
     """Computed BIP-39 table with ENT, CS, ENT+CS"""
     for k, v in N_WORDS_META.items():
+        assert (v["entropy_bits"] % 32) == 0, "Entropy bits must be a multiple of 32"
         assert (
             v["checksum_bits"] == v["entropy_bits"] // 32
         ), "Unexpected mismatch between checksum and entropy sizes"
