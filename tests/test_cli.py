@@ -102,7 +102,7 @@ def test_seed_command_from_words(runner):
         cmd += ["--strict"]
         bad_result = runner.invoke(cli, cmd)
         assert bad_result.exit_code != 0
-        assert "Unexpected" in bad_result.output
+        assert "BIP-39" in bad_result.output
 
 
 def gen_custom_seed_words(length: int, seed: int):

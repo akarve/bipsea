@@ -1,10 +1,9 @@
-.PHONY: all build check clean install install-go lint push test test-network git-unsaved
+.PHONY: all build check clean install install-dev install-go lint push test test-network git-unsaved
 
 build: clean check
 	python -m build
 
 clean:
-	find . -type f -name '*.pyc' -delete
 	find . -type d -name '__pycache__' -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache dist
 
@@ -13,8 +12,10 @@ check:
 	isort . --check
 
 # developer install only
-install:
+install: install-dev
 	pip install -r requirements.txt -r test-requirements.txt
+
+install-dev:
 	pip install -e .
 
 install-go:
@@ -28,7 +29,7 @@ lint:
 	actionlint
 	checkmake Makefile
 
-publish: build
+publish: build check git-unsaved
 	python3 -m twine upload dist/*
 
 push: lint check test git-branch git-unsaved
@@ -44,7 +45,7 @@ test-network:
 git-branch:
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" = "main" ]; then \
-		echo "Cowardly refusing push, not on branch."; \
+		echo "Cowardly refusing push from main."; \
 		exit 1; \
 	fi
 
