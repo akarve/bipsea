@@ -5,6 +5,7 @@ import base58
 import pytest
 from data.bip85_vectors import (
     BIP39,
+    DICE,
     EXT_KEY_TO_ENTROPY,
     HEX,
     PWD_BASE64,
@@ -92,7 +93,7 @@ def test_rsa_unsupported(vector):
     path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
     rsa_path = "m/83696968'/828365'/1024'/0'"
     master = parse_ext_key(vector["master"])
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ValueError):
         apply_85(derive(master, rsa_path), rsa_path)
 
 
@@ -129,3 +130,16 @@ def test_private_key_to_wif():
     # b58encode_check because we already have a checksum apparently
     wif = base58.b58encode(extended + checksum)
     assert wif.decode("utf-8") == "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
+
+
+@pytest.mark.parametrize("vector", DICE)
+def test_rsa_unsupported(vector):
+    master = parse_ext_key(vector["master"])
+    path = vector["path"]
+    output = apply_85(derive(master, path), path)
+    rolls = output["application"]
+    assert rolls == vector["derived_rolls"]
+    rolls_int = [int(r) for r in rolls.split(",")]
+    assert len(rolls_int) == 10
+    assert all(0 <= r < 10 for r in rolls_int)
+    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]

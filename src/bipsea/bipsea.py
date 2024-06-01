@@ -1,28 +1,32 @@
 """CLI"""
 
-import hashlib
 import logging
+import math
 import re
 import select
+import string
 import sys
 import threading
+from collections import Counter
 
 import click
 
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
-from .bip85 import DRNG, PURPOSE_CODES, apply_85, derive, to_entropy
-from .seedwords import (
-    N_WORDS_ALLOWED,
-    bip39_english_words,
-    entropy_to_words,
-    to_master_seed,
-    warn_stretching,
+from .bip39 import N_WORDS_ALLOWED, entropy_to_words, to_master_seed, verify_seed_words
+from .bip85 import (
+    APPLICATIONS,
+    DRNG,
+    PURPOSE_CODES,
+    RANGES,
+    apply_85,
+    derive,
+    to_entropy,
 )
 from .util import LOGGER, __app_name__, __version__, to_hex_string
 
+MIN_ENTROPY = 256
 SEED_FROM_VALUES = [
-    "string",
     "rand",
     "words",
 ]
@@ -33,27 +37,12 @@ SEED_TO_VALUES = [
 ]
 TIMEOUT = 1
 
-APPLICATIONS = {
-    "base64": "707764'",
-    "base85": "707785'",
-    "drng": None,
-    "hex": "128169'",
-    "words": "39'",
-    "wif": "2'",
-    "xprv": "32'",
-}
-
-RANGES = {
-    "base64": (20, 86),
-    "base85": (10, 80),
-    "hex": (16, 64),
-}
-
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
+logger.setLevel(logging.DEBUG)
 
 
 class InputThread(threading.Thread):
@@ -67,7 +56,7 @@ def cli():
     pass
 
 
-@click.command(help="Generate a master private seed")
+@click.command(help="Generate an extended master private key (BIP-32, BIP-39)")
 @click.option(
     "-f",
     "--from",
@@ -77,73 +66,69 @@ def cli():
     help="|".join(SEED_FROM_VALUES),
     default="rand",
 )
-@click.option("-i", "--input", help="string in the format specified by --from")
+@click.option("-i", "--input", help="String in the format specified by --from")
 @click.option(
     "-t",
     "--to",
     type=click.Choice(SEED_TO_VALUES, case_sensitive=True),
-    default="words",
+    default="xprv",
     help="|".join(SEED_TO_VALUES),
     required=True,
 )
 @click.option(
     "-n",
     "--number",
+    default="24",
     type=click.Choice(N_WORDS_ALLOWED_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
-    "--pretty", is_flag=True, default=False, help="number and separate seed words"
+    "--pretty", is_flag=True, default=False, help="Number and separate seed words"
 )
-def seed(from_, input, to, number, passphrase, pretty):
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Allow only checksummed BIP-39 English words",
+)
+def seed(from_, input, to, number, passphrase, pretty, strict):
     if input:
         input = input.strip()
+    number = int(number)
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="--input is required (unless --from rand)",
+            message="--input required, unless --from rand",
         )
     if from_ == "words":
-        if number:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message="omit when you specify --from words",
-            )
-        if to == "words":
-            raise click.BadOptionUsage(
-                option_name="--to", message="--from words is redundant"
-            )
         words = re.split(r"\s+", input)
         n_words = len(words)
-        if not n_words in N_WORDS_ALLOWED:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message=f"must be in {N_WORDS_ALLOWED_HELP}",
-            )
-    else:
-        if not number:
-            number = 24  # set here so we don't falsely trip `if number` above
+        if strict:
+            if not verify_seed_words("english", words):
+                raise click.BadOptionUsage(
+                    option_name="--input",
+                    message=f"Unexpected words ({' '.join(words)}) and/or bad checksum",
+                )
         else:
-            number = int(number)
-        if from_ == "string":
-            string_bytes = input.encode("utf-8")
-            # this is how entropy works out in BIP-39
-            target_bits = 128 + ((number - 12) // 3) * 32
-            short = len(string_bytes) * 8 - target_bits
-            if short < 0:
-                warn_stretching(short + target_bits, target_bits, True)
-            entropy = hashlib.sha256(string_bytes).digest()
-        elif from_ == "rand":
-            entropy = None
-        words = entropy_to_words(
-            n_words=int(number), user_entropy=entropy, passphrase=passphrase
-        )
-    if to == "words":
-        english_words = set(bip39_english_words())
-        if not all(w in english_words for w in words):
+            implied = implied_entropy(input)
+            if implied < MIN_ENTROPY:
+                click.secho(
+                    f"Warning: {implied} bits of implied entropy is less than the recommended {MIN_ENTROPY} bits."
+                )
+        entropy = to_master_seed(words, passphrase)
+    else:  # from_ == "rand"
+        entropy = None
+        if strict:
             raise click.BadOptionUsage(
-                option_name="--input",
-                message=f"One or more words not in BIP-39 English list: {words}",
+                option_name="--strict",
+                message="requires --from words",
+            )
+        words = entropy_to_words(n_words=number, user_entropy=entropy)
+    if to == "words":
+        if from_ == "words":
+            raise click.BadOptionUsage(
+                option_name="--to",
+                message="incompatible with --from words",
             )
         output = " ".join(words)
         if pretty:
@@ -166,10 +151,11 @@ def seed(from_, input, to, number, passphrase, pretty):
 cli.add_command(seed)
 
 
-@click.command(name="entropy", help="Derive entropy according to BIP-85")
+@click.command(name="entropy", help="Derive secrets according to BIP-85")
 @click.option(
     "-a",
     "--application",
+    default="words",
     required=True,
     help="|".join(APPLICATIONS.keys()),
     type=click.Choice(APPLICATIONS.keys(), case_sensitive=True),
@@ -187,8 +173,17 @@ cli.add_command(seed)
     default=0,
     help="child index",
 )
-@click.option("-p", "--input", help="Use instead of pipe --input xprv12345")
-def bip85(application, number, index, input):
+@click.option(
+    "-s",
+    "--special",
+    default=10,
+    type=int,
+    help="Additional integer (e.g. for 'dice' sides)",
+)
+@click.option(
+    "-p", "--input", help="--input xprv123... can be used in place of an input pipe |"
+)
+def bip85(application, number, index, special, input):
     if not input:
         stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
         if stdin:
@@ -198,6 +193,7 @@ def bip85(application, number, index, input):
     else:
         prv = input
     if number is not None:
+        number = int(number)
         if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
@@ -215,8 +211,8 @@ def bip85(application, number, index, input):
     master = parse_ext_key(prv)
 
     path = f"m/{PURPOSE_CODES['BIP-85']}"
-    app_value = APPLICATIONS[application]
-    path += f"/{app_value}" if app_value else ""
+    app_code = APPLICATIONS[application]
+    path += f"/{app_code}"
     if application == "words":
         if number not in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
@@ -226,11 +222,19 @@ def bip85(application, number, index, input):
         path += f"/0'/{number}'/{index}'"
     elif application in ("wif", "xprv"):
         path += f"/{index}'"
-    elif application in ("hex", "base64", "base85"):
+    elif application in ("base64", "base85", "hex"):
         path += f"/{number}'/{index}'"
         check_range(number, application)
     elif application == "drng":
         path += f"/0'/{index}'"
+    elif application == "dice":
+        path += f"/{special}'/{number}'/{index}'"
+    else:
+        raise click.BadOptionUsage(
+            option_name="--application",
+            message=f"unrecognized {application}",
+        )
+
     derived = derive(master, path)
     if application == "drng":
         drng = DRNG(to_entropy(derived.data[1:]))
@@ -264,6 +268,10 @@ def no_prv():
         message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`",
     )
     click.echo()
+
+
+def implied_entropy(s):
+    return math.floor(math.log(len(s) ** len(string.printable), 2))
 
 
 if __name__ == "__main__":

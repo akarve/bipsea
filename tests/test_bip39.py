@@ -9,17 +9,17 @@ import requests
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
-from bipsea.seedwords import (
+from bipsea.bip39 import (
     N_MNEMONICS,
+    N_WORDS_META,
     WORDS_FILE_HASH,
     entropy_to_words,
     to_master_seed,
+    verify_seed_words,
 )
 from bipsea.util import LOGGER
 
 logger = logging.getLogger(LOGGER)
-
-WORD_COUNTS = {12, 15, 18, 21, 24}
 
 
 @pytest.mark.parametrize(
@@ -28,12 +28,35 @@ WORD_COUNTS = {12, 15, 18, 21, 24}
 def test_vectors(language, vectors):
     for vector in vectors:
         _, mnemonic, seed, xprv = vector
-        expected_words = re.split(r"\s", mnemonic)
         expected_seed = bytes.fromhex(seed)
+        expected_words = re.split(r"\s", mnemonic)
         computed_seed = to_master_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
+        assert computed_seed != to_master_seed(expected_words, passphrase="TREZOr")
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
         assert str(computed_xprv) == xprv
+        if language == "english":
+            assert verify_seed_words(language, expected_words)
+
+
+def test_meta():
+    """Computed BIP-39 table with ENT, CS, ENT+CS"""
+    for k, v in N_WORDS_META.items():
+        assert (v["entropy_bits"] % 32) == 0, "Entropy bits must be a multiple of 32"
+        assert (
+            v["checksum_bits"] == v["entropy_bits"] // 32
+        ), "Unexpected mismatch between checksum and entropy sizes"
+
+
+def test_verify_checksum():
+    correct = (
+        "noodle life devote warm sponsor truck ship safe race noble royal proof".split(
+            " "
+        )
+    )
+    assert verify_seed_words("english", correct)
+    assert not verify_seed_words("english", correct[:-1])
+    assert not verify_seed_words("english", correct[:-1] + ["mix"])
 
 
 @pytest.mark.parametrize(
@@ -41,16 +64,17 @@ def test_vectors(language, vectors):
 )
 def test_seed_word_generation(language, vectors):
     for vector in vectors:
-        entropy_str, mnemonic, seed, xprv = vector
-        expected_words = re.split(r"\s", mnemonic)
+        entropy_str, mnemonic = vector[:2]
         if language == "english":
+            expected_words = re.split(r"\s", mnemonic)
             entropy_bytes = bytes.fromhex(entropy_str)
             if all(b == 0 for b in entropy_bytes):
                 warnings.simplefilter("ignore")
             computed_words = entropy_to_words(
-                len(expected_words), user_entropy=entropy_bytes, passphrase="TREZOR"
+                len(expected_words), user_entropy=entropy_bytes
             )
             assert expected_words == computed_words
+            assert verify_seed_words("english", computed_words)
         else:
             pytest.skip(f"{language} not supported")
 
