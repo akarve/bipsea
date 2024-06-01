@@ -76,7 +76,6 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
         words = entropy_to_words(n_words, trimmed_entropy)
-        assert verify_seed_words("english", words)
         return {
             "entropy": trimmed_entropy,
             "application": " ".join(entropy_to_words(n_words, trimmed_entropy)),
@@ -90,7 +89,8 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         hash1 = hashlib.sha256(extended).digest()
         hash2 = hashlib.sha256(hash1).digest()
         checksum = hash2[:4]
-
+        # TODO: question this application because it should be using the WIF
+        # checksum but instead we do one ourselves :/
         return {
             "entropy": trimmed_entropy,
             "application": base58.b58encode(extended + checksum).decode("utf-8"),
