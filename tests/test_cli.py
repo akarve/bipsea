@@ -94,7 +94,6 @@ def test_seed_command_from_words(runner):
     for k, v in lengths.items():
         cmd = base + ["-i", gen_custom_seed_words(v, 0)]
         result = runner.invoke(cli, cmd)
-        logger.debug(result.output)
         assert result.exit_code == 0
         if k == "short":
             assert "Warning" in result.output
