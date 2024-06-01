@@ -116,16 +116,17 @@ def CKDpriv(
         ).to_string("compressed")
     )
     derived = hmac_sha512(
-        key=chain_code, data=data + child_number.to_bytes(4, "big"),
+        key=chain_code,
+        data=data + child_number.to_bytes(4, "big"),
     )
     # BIP-32: In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid
     # (Note: this has probability lower than 1 in 2**127.)
     parse_256_IL = int.from_bytes(derived[:32], "big")
-    child_key_int = (
-         parse_256_IL + int.from_bytes(secret_key, "big")
-    ) % SECP256k1.order
+    child_key_int = (parse_256_IL + int.from_bytes(secret_key, "big")) % SECP256k1.order
     if (parse_256_IL >= SECP256k1.order) or not child_key_int:
-        raise ValueError(f"Rare invalid child key. Retry with the next higher child index: {child_number}.")
+        raise ValueError(
+            f"Rare invalid child key. Retry with the next child index: {child_number} + 1."
+        )
     child_key = bytes(1) + child_key_int.to_bytes(32, "big")
 
     return ExtendedKey(
@@ -172,39 +173,36 @@ def CKDpub(
         raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
 
     parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
-    # TODO: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
-    # key is invalid, and one should proceed with the next value for i.
 
-    while True:
-        derived = hmac_sha512(key=chain_code, data=public_key + child_number)
-        derived_key = int.from_bytes(derived[:32], "big")
-        derived_chain_code = derived[32:]
-        if derived_key >= SECP256k1.order:
-            child_number += 1
-            assert child_number < TYPED_CHILD_KEY_COUNT, "exhausted available children"
-            continue
-        child_point = SECP256k1.generator * derived_key + parent_key
-        try:
-            child_key = VerifyingKey.from_public_point(
-                child_point,
-                curve=SECP256k1,
-            ).to_string("compressed")
-        except MalformedPointError as m:
-            # Is this in fact how we detect the point at infinity?
-            warnings.warning(
-                "Point at infinity? Retrying with higher child_number in CKDPub()", m
-            )
-            child_number += 1
-            continue
-        break
+    derived = hmac_sha512(
+        key=chain_code,
+        data=public_key + child_number,
+    )
+    parse_256_IL = int.from_bytes(derived[:32], "big")
+    child_point = SECP256k1.generator * parse_256_IL + parent_key
+    # BIP-39: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
+    # key is invalid, and one should proceed with the next value for i.
+    if parse_256_IL >= SECP256k1.order:
+        raise ValueError(f"Invalid key. Try next child index: {child_number} + 1.")
+    try:
+        child_key = VerifyingKey.from_public_point(
+            child_point,
+            curve=SECP256k1,
+        ).to_string("compressed")
+    except MalformedPointError as mal:
+        # TODO: Is this in fact how to detect the point at infinity?
+        raise ValueError(
+            f"Invalid key (point at infinity?). Try next child index: {child_number} + 1."
+        ) from mal
+    derived_chain_code = derived[32:]
 
     return ExtendedKey(
-        version=version,
-        depth=depth,
-        finger=finger,
-        child_number=child_number_int.to_bytes(4, "big"),
-        chain_code=derived_chain_code,
         data=child_key,
+        chain_code=derived_chain_code,
+        child_number=child_number_int.to_bytes(4, "big"),
+        depth=depth,
+        version=version,
+        finger=finger,
     )
 
 
