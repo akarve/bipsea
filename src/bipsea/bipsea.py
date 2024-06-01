@@ -45,18 +45,15 @@ logger = logging.getLogger(LOGGER)
 logger.setLevel(logging.DEBUG)
 
 
-class InputThread(threading.Thread):
-    def run(self):
-        self.seed = click.get_text_stream("stdin").read().strip()
-
-
 @click.group()
 @click.version_option(version=__version__, prog_name=__app_name__)
 def cli():
     pass
 
 
-@click.command(help="Generate an extended master private key (BIP-32, BIP-39)")
+@click.command(
+    name="seed", help="Generate an extended master private key (BIP-32, BIP-39)"
+)
 @click.option(
     "-f",
     "--from",
@@ -91,7 +88,7 @@ def cli():
     default=False,
     help="Allow only checksummed BIP-39 English words",
 )
-def seed(from_, input, to, number, passphrase, pretty, strict):
+def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     if input:
         input = input.strip()
     number = int(number)
@@ -148,7 +145,7 @@ def seed(from_, input, to, number, passphrase, pretty, strict):
         click.echo(kprv)
 
 
-cli.add_command(seed)
+cli.add_command(bip39_cmd)
 
 
 @click.command(name="entropy", help="Derive secrets according to BIP-85")
@@ -183,7 +180,7 @@ cli.add_command(seed)
 @click.option(
     "-p", "--input", help="--input xprv123... can be used in place of an input pipe |"
 )
-def bip85(application, number, index, special, input):
+def bip85_cmd(application, number, index, special, input):
     if not input:
         stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
         if stdin:
@@ -244,7 +241,7 @@ def bip85(application, number, index, special, input):
     click.echo(output)
 
 
-cli.add_command(bip85)
+cli.add_command(bip85_cmd)
 
 
 # TODO From BIP32: In case parse256(IL) is 0 or ≥ n, the resulting key is invalid,
@@ -267,7 +264,6 @@ def no_prv():
         option_name="[incoming pipe]",
         message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`",
     )
-    click.echo()
 
 
 def implied_entropy(s):
