@@ -48,7 +48,12 @@ You could safely store all derivation paths in a hot password manager like Apple
 You could even store the derived secrets in a hot password manager at no risk to
 the master private key.
 
-> Note: bipsea alone is not password manager, but you might use it to implement one.
+> Note: bipsea alone is not password manager, but you could use it to implement one.
+> See [BIP-?: General secrets keychain with semantic derivation paths](https://github.com/akarve/bip-keychain)
+> for more.
+
+
+General secrets keychain with semantic derivation paths
 
 # How does it work?
 
@@ -282,12 +287,6 @@ hierarchical deterministic wallets
 generalized cryptographic entropy
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
-
-
-# More on BIP-85 as a full, cold password manager
-
-See the [BIP-Keychain-? Proposal](https://github.com/akarve/bip-keychain):
-General secrets keychain with semantic derivation paths.
 
 
 # TODO
