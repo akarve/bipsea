@@ -12,8 +12,7 @@ check:
 	black . --check
 	isort . --check
 
-# developer install only
-install: install-dev
+install:
 	pip install -r requirements.txt -r test-requirements.txt
 
 install-dev: uninstall-dev
