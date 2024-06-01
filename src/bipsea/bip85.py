@@ -11,7 +11,7 @@ from ecdsa import SECP256k1
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
 from .bip32 import hmac_sha512
-from .bip39 import entropy_to_words
+from .bip39 import N_WORDS_META, entropy_to_words, verify_seed_words
 from .util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
@@ -32,17 +32,11 @@ RANGES = {
     "base64": (20, 86),
     "base85": (10, 80),
     "hex": (16, 64),
-    "dice": (8, 64),
+    "dice": (1, 10_000),
 }
 
 PURPOSE_CODES = {"BIP-85": "83696968'"}
 
-CODE_39_TO_BITS = {
-    "12'": 128,
-    "18'": 192,
-    "21'": 224,
-    "24'": 256,
-}
 HMAC_KEY = b"bip-entropy-from-k"
 
 LANGUAGE_CODES = {
@@ -74,16 +68,18 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
 
     if app == APPLICATIONS["words"]:
         language, n_words = indexes[:2]
+        n_words = int(n_words[:-1])  # chop the ' from hardened derivation
         if not language == LANGUAGE_CODES["English"]:
             raise ValueError(f"Only English BIP-39 words from BIP-85 are supported.")
-        if not n_words in CODE_39_TO_BITS:
-            raise ValueError(f"Expected word codes {CODE_39_TO_BITS.keys()}")
-        n_bytes = CODE_39_TO_BITS[n_words] // 8
+        if not n_words in N_WORDS_META.keys():
+            raise ValueError(f"Expected word codes {N_WORDS_META.keys()}")
+        n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
-        n_words_int = int(n_words[:-1])  # chop the ' from hardened derivation
+        words = entropy_to_words(n_words, trimmed_entropy)
+        assert verify_seed_words("english", words)
         return {
             "entropy": trimmed_entropy,
-            "application": " ".join(entropy_to_words(n_words_int, trimmed_entropy)),
+            "application": " ".join(entropy_to_words(n_words, trimmed_entropy)),
         }
     elif app == APPLICATIONS["wif"]:
         # https://en.bitcoin.it/wiki/Wallet_import_format

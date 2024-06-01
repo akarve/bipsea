@@ -226,11 +226,12 @@ def bip85_cmd(application, number, index, special, input):
     elif application in ("wif", "xprv"):
         path += f"/{index}'"
     elif application in ("base64", "base85", "hex"):
-        path += f"/{number}'/{index}'"
         check_range(number, application)
+        path += f"/{number}'/{index}'"
     elif application == "drng":
         path += f"/0'/{index}'"
     elif application == "dice":
+        check_range(number, application)
         path += f"/{special}'/{number}'/{index}'"
     else:
         raise click.BadOptionUsage(
