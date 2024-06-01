@@ -40,7 +40,7 @@ push: lint check test git-branch git-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-test: install-dev
+test:
 	pytest tests -m "not network" -sx
 
 test-network:

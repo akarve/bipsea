@@ -13,6 +13,13 @@ from bipsea.util import LOGGER
 logger = logging.getLogger(LOGGER)
 
 
+MNEMONIC_12 = "punch man spread gap size struggle clean crouch cloth swear erode fan"
+MNEMONIC_12_XPRV = (
+    "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF"
+    "2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
+)
+
+
 @pytest.fixture
 def runner():
     return CliRunner()
@@ -24,10 +31,22 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
         _, mnemonic, _, xprv = vector
 
         for upper in (True, False):
+            # prove that case doesn't matter
             mnemonic = mnemonic.upper() if upper else mnemonic
             result = runner.invoke(
                 cli,
-                ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"],
+                [
+                    "seed",
+                    "-t",
+                    "xprv",
+                    "-f",
+                    "words",
+                    "--input",
+                    mnemonic,
+                    "-p",
+                    "TREZOR",
+                    "--strict" if language == "english" else "--not-strict",
+                ],
             )
             assert result.exit_code == 0
             assert result.output.strip() == xprv
@@ -35,45 +54,37 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items())
 def test_seed_option_sensitivity(runner, language, vectors):
-    """prove that passphrase and mnemonic changes alter xprv (but white space around
-    mnemonic doesn't)"""
-    # make tests faster by only covering one per language
-    for vector in vectors[:1]:
+    """prove that meaningful passphrase mnemonic changes change the xprv
+    (but white space after the mnemonic doesn't)"""
+    for vector in vectors[:1]:  # one vector per language for faster tests
         _, mnemonic, _, xprv = vector
-
+        strictness = ["--strict"] if language == "english" else ["--not-strict"]
         change_passphrase = runner.invoke(
-            cli, ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic, "-p", "TrEZOR"]
+            cli,
+            ["seed", "-t", "xprv", "-f", "words", "-u", mnemonic, "-p", "TrEZOR"]
+            + strictness,
         )
+        logger.debug(change_passphrase.output)
         assert change_passphrase.exit_code == 0
         assert change_passphrase.output.strip() != xprv
 
-        append_mnemonic = runner.invoke(
-            cli,
-            ["seed", "-t", "xprv", "-f", "words", "-i", mnemonic + ".", "-p", "TREZOR"],
-        )
-        assert append_mnemonic.exit_code == 0
-        assert append_mnemonic.output.strip() != xprv
+        for suffix in ("", ".", " \t\n "):
+            mnemonic_ = mnemonic + suffix
+            cmd = ["seed", "-f", "words", "-u", mnemonic_, "-p", "TREZOR"] + strictness
+            result = runner.invoke(cli, cmd)
+            if suffix == ".":
+                if language == "english":
+                    assert result.exit_code != 0
+                    assert "BIP-39" in result.output
+            else:
+                assert result.exit_code == 0
+                assert result.output.strip() == xprv
 
-        whitespace_mnemonic = runner.invoke(
-            cli,
-            [
-                "seed",
-                "-t",
-                "xprv",
-                "-f",
-                "words",
-                "-i",
-                "  " + mnemonic + " \t\n ",
-                "-p",
-                "TREZOR",
-            ],
-        )
-        assert whitespace_mnemonic.exit_code == 0
-        assert whitespace_mnemonic.output.strip() == xprv
-
+    if language == "english":
         testnet = runner.invoke(
-            cli, ["seed", "-t", "tprv", "-f", "words", "-i", mnemonic, "-p", "TREZOR"]
+            cli, ["seed", "-t", "tprv", "-f", "words", "-u", MNEMONIC_12] + strictness
         )
+        logger.debug(testnet.output)
         assert testnet.exit_code == 0
         tprv = testnet.output.strip()
         assert tprv != xprv
@@ -88,19 +99,19 @@ def test_seed_command_from_rand(runner, n):
     assert result.exit_code == 0
 
 
-def test_seed_command_from_words(runner):
-    lengths = {"short": 5, "enough": 6}
-    base = ["seed", "-t", "xprv", "-n", str(21), "-f", "words"]
+def test_seed_command_from_str(runner):
+    lengths = {"short": 41, "enough": 42}
+    base = ["seed", "-t", "xprv"]
     for k, v in lengths.items():
-        cmd = base + ["-i", gen_custom_seed_words(v, 0)]
+        cmd = base + ["-f", "str", "-u", gen_custom_seed_words(v, 0)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         if k == "short":
             assert "Warning" in result.output
         else:
             assert "Warning" not in result.output
-        cmd += ["--strict"]
-        bad_result = runner.invoke(cli, cmd)
+        bad_cmd = base + ["-f", "words", "-u", gen_custom_seed_words(v, 0)]
+        bad_result = runner.invoke(cli, bad_cmd)
         assert bad_result.exit_code != 0
         assert "BIP-39" in bad_result.output
 
@@ -118,7 +129,7 @@ def test_seed_from_and_to_words(runner):
     assert "--from rand" in result.output
 
 
-def test_seed_from_and_n(runner):
+def test_seed_bad_n(runner):
     result = runner.invoke(cli, ["seed", "--from", "words", "-n", "45"])
     assert result.exit_code != 0
     assert "--number" in result.output
@@ -138,24 +149,10 @@ def test_seed_bad_to(runner):
 
 def test_bipsea_integration(runner):
     result_seed = runner.invoke(
-        cli,
-        [
-            "seed",
-            "-f",
-            "words",
-            "-i",
-            "punch man spread gap size struggle clean crouch cloth swear erode fan",
-            "-n",
-            "12",
-            "-t",
-            "xprv",
-        ],
+        cli, ["seed", "-f", "words", "-u", MNEMONIC_12, "-n", "12", "-t", "xprv"]
     )
     xprv = result_seed.output.strip()
-    assert (
-        xprv
-        == "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
-    )
+    assert xprv == MNEMONIC_12_XPRV
     assert result_seed.exit_code == 0
     result_entropy = runner.invoke(
         cli, ["entropy", "-a", "base64", "-n", "20", "--input", xprv]

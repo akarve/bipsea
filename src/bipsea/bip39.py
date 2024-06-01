@@ -119,13 +119,19 @@ def bip39_english_words(file_name=WORDS_FILE_NAME) -> List[str]:
     return dictionary
 
 
+def normalize_str(input: str, lower=False):
+    return normalize("NFKD", input.lower() if lower else input)
+
+
+def normalize_list(words: List[str], lower=False):
+    """lower() then nfkd()"""
+    return [normalize_str(w, lower) for w in words]
+
+
 def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
     """converts english mnemonics to all lower case"""
-    mnemonic = [m.lower() for m in mnemonic]
-    mnemonic_nfkd = normalize("NFKD", " ".join(m.lower() for m in mnemonic)).encode(
-        "utf-8"
-    )
-    salt_nfkd = normalize("NFKD", "mnemonic" + passphrase).encode("utf-8")
+    mnemonic_nfkd = " ".join(normalize_list(mnemonic, lower=True)).encode("utf-8")
+    salt_nfkd = normalize_str("mnemonic" + passphrase).encode("utf-8")
 
     return pbkdf2_hmac(
         hash_name="sha512",
