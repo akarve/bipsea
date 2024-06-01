@@ -64,7 +64,6 @@ def test_seed_option_sensitivity(runner, language, vectors):
             ["seed", "-t", "xprv", "-f", "words", "-u", mnemonic, "-p", "TrEZOR"]
             + strictness,
         )
-        logger.debug(change_passphrase.output)
         assert change_passphrase.exit_code == 0
         assert change_passphrase.output.strip() != xprv
 
@@ -84,7 +83,6 @@ def test_seed_option_sensitivity(runner, language, vectors):
         testnet = runner.invoke(
             cli, ["seed", "-t", "tprv", "-f", "words", "-u", MNEMONIC_12] + strictness
         )
-        logger.debug(testnet.output)
         assert testnet.exit_code == 0
         tprv = testnet.output.strip()
         assert tprv != xprv
