@@ -122,7 +122,9 @@ def CKDpriv(
     # BIP-32: In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid
     # (Note: this has probability lower than 1 in 2**127.)
     parse_256_IL = int.from_bytes(derived[:32], "big")
-    child_key_int = (parse_256_IL + int.from_bytes(private_key, "big")) % SECP256k1.order
+    child_key_int = (
+        parse_256_IL + int.from_bytes(private_key, "big")
+    ) % SECP256k1.order
     if (parse_256_IL >= SECP256k1.order) or not child_key_int:
         raise ValueError(
             f"Rare invalid child key. Retry with the next child index: {child_number} + 1."

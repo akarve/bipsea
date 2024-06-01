@@ -251,12 +251,6 @@ def bip85_cmd(application, number, index, special, input):
 cli.add_command(bip85_cmd)
 
 
-# TODO From BIP32: In case parse256(IL) is 0 or ≥ n, the resulting key is invalid,
-# and one should proceed with the next value for i. (Note: this has probability lower than 1 in 2127.)
-# they say hard fail but does 39? i say let's hard fail in these cases because otherwise
-# you are modifying the path?
-
-
 def check_range(number: int, application: str):
     (min, max) = RANGES[application]
     if not (min <= number <= max):
