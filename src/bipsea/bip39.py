@@ -50,7 +50,12 @@ def entropy_to_words(n_words: int, user_entropy: bytes):
     if difference > 0:
         int_entropy >>= difference
     elif difference <= -8:
-        warn_stretching(difference + n_entropy_bits, n_entropy_bits)
+        warnings.warn(
+            (
+                f"Warning: {difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."
+                " Input more entropy?"
+            )
+        )
 
     entropy_hash = hashlib.sha256(int_entropy.to_bytes(n_entropy_bits // 8, "big"))
     int_checksum = int.from_bytes(entropy_hash.digest(), "big") >> (
@@ -128,8 +133,3 @@ def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
         salt=salt_nfkd,
         iterations=iterations,
     )
-
-
-def warn_stretching(given: int, target: int):
-    msg = f"Warning: {given} bits in, {target} bits out. Input more entropy."
-    warnings.warn(msg)

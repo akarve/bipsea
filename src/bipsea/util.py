@@ -5,7 +5,7 @@ import logging
 from hashlib import pbkdf2_hmac
 from unicodedata import normalize as unicode_normalize
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __app_name__ = "bipsea"
 
 FORMAT = "utf-8"

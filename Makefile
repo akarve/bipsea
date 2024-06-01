@@ -1,5 +1,5 @@
 .PHONY: all build check clean git-branch git-unsaved install install-dev install-go
-.PHONY: lint publish push test test-network
+.PHONY: lint publish push test test-network uninstall-dev
 
 build: clean check test
 	python -m build
@@ -12,17 +12,19 @@ check:
 	black . --check
 	isort . --check
 
-# developer install only
-install: install-dev
+install:
 	pip install -r requirements.txt -r test-requirements.txt
 
-install-dev:
+install-dev: uninstall-dev
 	pip install -e .
 
 install-go:
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+
+uninstall-dev:
+	pip uninstall -y bipsea
 
 lint:
 	isort .
@@ -37,7 +39,7 @@ push: lint check test git-branch git-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-test:
+test: install-dev
 	pytest tests -m "not network" -sx
 
 test-network:
