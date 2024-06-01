@@ -34,7 +34,8 @@ of a single master password. (The master secret can be multi-factor.)
 * Uses Bitcoin's well-tested hierarchical deterministic wallet
 tree (including primitives like ECDSA and hardened children)
 * Can generate millions of new Bitcoin wallet seed words and master keys
-* Can generate millions of new passwords from a single master root key (xprv)
+* Can generate millions of new passwords from a single master root key
+(as an extended private key (xprv)
 and a short derivation path.
 
 Unlike a password manager, which protects many secrets with one hot secret,
@@ -58,7 +59,7 @@ The root of your BIP-85 password tree is a standard Bitcoin master private key (
 The master key then uses the BIP-32 derivation tree with a clever twist: the
 derivation path includes a purpose code (`83696968'`) followed by an _application_
 code. In this way, each unique derivation path produces unique, independent,
-and secure _derived entropy_ as a pure function of the master private key and the
+and secure _derived entropy_ as a pure function of the master private key and
 derivation path.
 
 BIP-85 specifies a variety of application codes including the following:
@@ -115,7 +116,7 @@ pip install bipsea
 bipsea --help
 ```
 
-## `bipsea seed`
+## `bipsea seed` (BIP-39)
 
 ### New seed words
 
@@ -138,77 +139,82 @@ bipsea seed -n 12 --pretty
 ### xprv from existing seed words
 
 ```
-bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" -t xprv
+bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" --strict
 ```
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
 
+`--strict` ensures that the input words are from the BIP-39 list and have
+a valid checksum.
+
+
 ## xprv from dice rolls (or any string)
+
 ```
-bipsea seed -f string -i "123456123456123456" -t xprv
+bipsea seed -f words -i "123456123456123456"
 ```
 
-<pre><code style="color: #CCCC00">Warning: 144 bits in, 256 bits out. Input more entropy.</code></pre>
+    xprv9s21ZrQH143K2Sxhvzbx2vvjLxPB2tJyfh5hm7ags5UWbKRHbm7x1wyCnqN4sdGTqxbq5tJJc3vV4vd51er6WgUiUC7ma1nKtfYRNTYaCeE
 
-    xprv9s21ZrQH143K3Ee3pgdhHb9xdu3D1EPT8J45zZ5Th5xPvWT9sujnPDCpA8bZhjz73UkkNWR8WnNg39C3hEHeeXKWLEQKfx9gySgjzMowEwH
-
-This is similar to how coldcard implements
-[verifiable dice rolls](https://coldcard.com/docs/verifying-dice-roll-math/).
 If you are now thinking, _I could use any string to derive a master key_,
 then you're ready to learn about BIP-85 with `bipsea entropy`.
 
 > **Do not get cute and derive valuable keys or secrets from short
 > strings**. You can only stretch entropy so far.
-> **Weak entropy in, weaker entropy out**.
+> **Weak entropy in, weak entropy out**.
 > Short, common strings are also susceptible to
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
 
-## `bipsea entropy`
+## `bipsea entropy` (BIP-85)
 
-`bipsea entropy` requires you to pipe in an xprv.
+`bipsea entropy` requires you to pipe in an xprv, or provide an xprv with `--input`.
+This xprv input is your master secret from which BIP-85 derives all child secrets
+with no danger of compromising the root (or any parent key in the derivation).
+
+### Derive new seed words
+
+```
+bipsea seed | bipsea entropy
+```
+    bounce cannon owner banner engine biology lava second tribe aim amused myth verify render almost siren hire laugh fruit canyon sting infant era system
+
+Of course the above is not reproducible (because `bipsea seed` defaults to a random
+seed), but you an provide a known master secret for consistent derivations.
+
+```
+bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
+```
+    medal air cube edit offer pair source promote wrap pretty rare when
+
+Append `-i 1` (the next index above the default of `-i 0`) for new words:
+
+    run sea prison modify december any pottery melody aspect hero loan gown
+
+And so on for millions of possible child indexes.
+
 
 ### base64 password
 
 ```
-bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10
+bipsea seed -f words -i "123456123456123456" | bipsea entropy -a base85 -n 10
 ```
-    aqn+dPu%^~
+    #uMALO}U2+
 
-Increment the index to get a fresh password.
-
-```
-bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 | bipsea entropy -a base85 -n 10 -i 1
-```
-    p6Ft=F40(*
-
-Alternatively you can pipe in an existing xprv:
+Increment the child index for a unique fresh secret.
 
 ```
-echo "$XPRV" | bipsea entropy -a base85 -n 10
+bipsea seed -f words -i "123456123456123456" | bipsea entropy -a base85 -n 10 -i 1
 ```
 
-Or call `--input`:
-```
-bipsea seed -f string -i "yoooooooooooooooo" -t xprv -n 12 --input "$XPRV"
-```
- 
-### Derived seed words
+    (!Ee#u@e4Z
+
+You can either pipe in an existing xprv (`echo "$XPRV" | bipsea entropy`)
+or provide it via `--input`:
 
 ```
-bipsea seed -t xprv | bipsea entropy -a words        
+bipsea entropy -a base85 -n 10 --input "$XPRV"
 ```
-    loan height quality library maid defense minor token thought music claim actual hour ship robust burst live broccoli
 
-Transform one set of seed words into millions of others (increment `-i`):
-
-```
-bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" -t xprv | bipsea entropy -a words -n 12
-```
-    medal air cube edit offer pair source promote wrap pretty rare when
-
-Run the command with `-i 1` for new words:
-
-    run sea prison modify december any pottery melody aspect hero loan gown
 
 ### DRNG, enter the matrix
 
@@ -217,19 +223,28 @@ bipsea seed -t xprv | bipsea entropy -a drng -n 10000
 ```
     <10K hex chars from the DRNG>
 
-# For the curious and paranoid
+# ECDSA for the curious and paranoid
 
 BIP-85 derives the entropy for each application by computing an HMAC of the private
 ECDSA key of the last hardened child. Private child keys are pure functions of the
-parent key and the child index. In this way BIP-85 entropy is hierarchical,
+parent key, child index, and depth. In this way BIP-85 entropy is hierarchical,
 deterministic, and irreversibly hardened as long as ECDSA remains secure.
 ECDSA is believed to be secure but it may not even be possible to _prove_ the security
 of _any_ cryptographic algorithm as such a proof would need to demonstrate strong
 conjectures similar to "P is not equal to NP."
 
-All of that to say **even the hardest cryptography falls to the problem of induction**:
-> Just because no one broke has yet broken ECDSA
-> doesn't mean no one will break ECDSA.
+All of that to say **even the "most secure" algorithms are vulnerable to the**
+**problem of induction**:
+> Just because no one _has_ broken ECDSA  
+> doesn't mean no one _will_ break ECDSA.
+
+"break" refers the the ability to derive a private key from the corresponding
+public key, a feat believed but not known to be infeasible in polynomial time
+because it requires the attacker to compute the discrete logarithm of the public
+key `p = Q*k`, where `Q` is the generator of the `SECP256k1` elliptic curve and
+`k` is the private key. `SECP256k1` is a cyclic group under addition modulo `n`,
+the order of the curve. We call this the "discrete logarithm" since, the same
+way `log(a^x) = x` the attacker must reduce the point `Q*k` to `k`.
 
 ECDSA is not [post-quantum secure](https://blog.cloudflare.com/pq-2024).
 If someone were to creates the elusive quant computer with sufficiently many
