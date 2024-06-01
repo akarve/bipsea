@@ -63,11 +63,11 @@ def entropy_to_words(n_words: int, user_entropy: bytes):
     )
     int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum  # shift CS bits in
 
-    dictionary = bip39_english_words()  # get bip39 words from disk
+    dictionary = bip39_english_words()
     swords = []
-    mask11 = N_MNEMONICS - 1  # mask lowest 11 bits
+    mask_11 = N_MNEMONICS - 1
     for _ in range(n_words):
-        idx = int_entropy_cs & mask11
+        idx = int_entropy_cs & mask_11
         swords.append(dictionary[idx])
         int_entropy_cs >>= N_WORD_BITS
 
