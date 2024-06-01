@@ -35,7 +35,7 @@ SEED_TO_VALUES = [
     "tprv",
     "xprv",
 ]
-TIMEOUT = 1
+TIMEOUT = 0.1
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
@@ -95,7 +95,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="--input required, unless --from rand",
+            message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
         )
     if from_ == "words":
         words = re.split(r"\s+", input)
@@ -104,13 +104,16 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
             if not verify_seed_words("english", words):
                 raise click.BadOptionUsage(
                     option_name="--input",
-                    message=f"Unexpected words ({' '.join(words)}) and/or bad checksum",
+                    message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
                 )
         else:
             implied = implied_entropy(input)
             if implied < MIN_ENTROPY:
                 click.secho(
-                    f"Warning: {implied} bits of implied entropy is less than the recommended {MIN_ENTROPY} bits."
+                    (
+                        f"Warning: {implied} bits of implied entropy is less than the"
+                        f"recommended {MIN_ENTROPY} bits."
+                    )
                 )
         entropy = to_master_seed(words, passphrase)
     else:  # from_ == "rand"
@@ -118,14 +121,14 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
         if strict:
             raise click.BadOptionUsage(
                 option_name="--strict",
-                message="requires --from words",
+                message="`--strict` requires `--from words`",
             )
         words = entropy_to_words(n_words=number, user_entropy=entropy)
     if to == "words":
         if from_ == "words":
             raise click.BadOptionUsage(
                 option_name="--to",
-                message="incompatible with --from words",
+                message="`--to words` incompatible with `--from words`",
             )
         output = " ".join(words)
         if pretty:
@@ -136,7 +139,8 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     elif to in ("tprv", "xprv"):
         if pretty:
             raise click.BadOptionUsage(
-                option_name="--pretty", message="no effect with --to xprv"
+                option_name="pretty",
+                message="`--pretty` has no effect with `--to xprv`",
             )
         mainnet = to == "xprv"
         seed = to_master_seed(words, passphrase)
@@ -178,11 +182,13 @@ cli.add_command(bip39_cmd)
     help="Additional integer (e.g. for 'dice' sides)",
 )
 @click.option(
-    "-p", "--input", help="--input xprv123... can be used in place of an input pipe |"
+    "-p",
+    "--input",
+    help="`--input xprv123...` can be used instead of an input pipe `bipsea seed | bipsea entropy`",
 )
 def bip85_cmd(application, number, index, special, input):
     if not input:
-        stdin, o, stderr = select.select([sys.stdin], [], [sys.stderr], TIMEOUT)
+        stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
             prv = sys.stdin.readline().strip()
         else:
@@ -194,7 +200,7 @@ def bip85_cmd(application, number, index, special, input):
         if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="--number has no effect when --application wif|xprv",
+                message="`--number` has no effect when `--application wif|xprv`",
             )
         elif number < 1:
             raise click.BadOptionUsage(
@@ -214,7 +220,7 @@ def bip85_cmd(application, number, index, special, input):
         if number not in N_WORDS_ALLOWED:
             raise click.BadOptionUsage(
                 option_name="--number",
-                message=f"--application wif requires --number in {N_WORDS_ALLOWED_HELP}",
+                message=f"`--application wif` requires `--number NUMBER` in {N_WORDS_ALLOWED_HELP}",
             )
         path += f"/0'/{number}'/{index}'"
     elif application in ("wif", "xprv"):
@@ -262,7 +268,7 @@ def check_range(number: int, application: str):
 def no_prv():
     raise click.BadOptionUsage(
         option_name="[incoming pipe]",
-        message="Bad input. Need xprv or tprv. Try `bipsea seed -t xprv | bipsea entropy -a base64`",
+        message="Bad input. Need xprv or tprv. Try `bipsea seed` | bipsea entropy`",
     )
 
 
