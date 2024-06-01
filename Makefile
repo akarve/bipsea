@@ -31,7 +31,8 @@ lint:
 	checkmake Makefile
 
 publish: build git-unsaved
-	python3 -m twine upload dist/*
+	git pull origin main
+	#python3 -m twine upload dist/*
 
 push: lint check test git-branch git-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
