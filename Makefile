@@ -32,7 +32,8 @@ lint:
 	actionlint
 	checkmake Makefile
 
-publish: build git-unsaved
+publish: build git-unsaved git-main
+	git pull origin main
 	python3 -m twine upload dist/*
 
 push: lint check test git-branch git-unsaved
@@ -49,6 +50,13 @@ git-branch:
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" = "main" ]; then \
 		echo "Cowardly refusing push from main."; \
+		exit 1; \
+	fi
+
+git-main:
+	@branch=$$(git symbolic-ref --short HEAD); \
+	if [ "$$branch" != "main" ]; then \
+		echo "Must be on main branch."; \
 		exit 1; \
 	fi
 
