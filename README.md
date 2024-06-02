@@ -170,8 +170,8 @@ bipsea seed -f str -u "123456123456123456"
 You can even load the input from a file.
 
 ```
- -u "$(cat example.pgn)"
 bipsea seed -f str -u "$(cat example.txt)"
+```
 
 
 If you are now thinking, _I could use any string to derive a master key_,
