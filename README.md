@@ -25,7 +25,7 @@ and other possible backdoors.
 
 # How is this useful?
 
-BIP-85 is the foundation enables you to protect and store a _single_ master secret
+BIP-85 enables you to protect and store a _single_ master secret
 that can derive _millions of independent, multi-purpose secrets_. 
 
 BIP-85 offers the following benefits:
@@ -34,7 +34,7 @@ BIP-85 offers the following benefits:
 of a single master password. (The master secret can be multi-factor.)
 * Uses Bitcoin's well-tested hierarchical deterministic wallet
 tree (including primitives like ECDSA and hardened children)
-* Can generate millions of new Bitcoin wallet seed words and master keys
+* Can generate millions of new mnemonic seed words and master keys
 * Can generate millions of new passwords from a single master root key
 (as an extended private key (xprv)
 and a short derivation path.
@@ -57,7 +57,7 @@ General secrets keychain with semantic derivation paths
 
 # How does it work?
 
-The root of your BIP-85 password tree is a standard Bitcoin master private key (xprv).
+The root of your BIP-85 password tree is an extended master private key (xprv).
 
 > In general, you _should not use a wallet seed with funds in it_.
 > In any case, fresh seeds are free and easy to generate with bipsea.
@@ -172,7 +172,6 @@ You can even load the input from a file.
 ```
 bipsea seed -f str -u "$(cat example.txt)"
 ```
-
 
 If you are now thinking, _I could use any string to derive a master key_,
 then you're ready to learn about BIP-85 with `bipsea entropy`.
