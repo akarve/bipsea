@@ -19,6 +19,8 @@ from bipsea.bip39 import (
 )
 from bipsea.util import LOGGER
 
+MNEMONIC_12 = "noodle life devote warm sponsor truck ship safe race noble royal proof"
+
 logger = logging.getLogger(LOGGER)
 
 
@@ -35,8 +37,6 @@ def test_vectors(language, vectors):
         assert computed_seed != to_master_seed(expected_words, passphrase="TREZOr")
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
         assert str(computed_xprv) == xprv
-        if language == "english":
-            assert verify_seed_words(language, expected_words)
 
 
 def test_meta():
@@ -49,11 +49,7 @@ def test_meta():
 
 
 def test_verify_checksum():
-    correct = (
-        "noodle life devote warm sponsor truck ship safe race noble royal proof".split(
-            " "
-        )
-    )
+    correct = MNEMONIC_12.split(" ")
     assert verify_seed_words("english", correct)
     assert not verify_seed_words("english", correct[:-1])
     assert not verify_seed_words("english", correct[:-1] + ["mix"])
@@ -76,7 +72,7 @@ def test_seed_word_generation(language, vectors):
             assert expected_words == computed_words
             assert verify_seed_words("english", computed_words)
         else:
-            pytest.skip(f"{language} not supported")
+            pytest.skip(f"{language} generation not supported")
 
 
 @pytest.mark.network
