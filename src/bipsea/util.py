@@ -10,7 +10,7 @@ from hashlib import pbkdf2_hmac
 from typing import List, Sequence
 from unicodedata import normalize as unicode_normalize
 
-__version__ = "0.2.1"
+__version__ = "0.2.5"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__

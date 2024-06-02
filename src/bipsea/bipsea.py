@@ -127,9 +127,11 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
             if implied < MIN_REL_ENTROPY:
                 click.secho(
                     (
-                        f"Warning: Low heuristic relative entropy ({implied:.2f})."
-                        " Consider more complex --input?"
-                    )
+                        f"Warning: Relative entropy of input seems low ({implied:.2f})."
+                        " Consider more complex --input."
+                    ),
+                    fg="yellow",
+                    err=True,
                 )
             entropy = to_master_seed(words, passphrase)
         else:  # from_ == "rand":
@@ -201,7 +203,9 @@ def bip85_cmd(application, number, index, special, input):
     if not input:
         stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
-            prv = sys.stdin.readline().strip()
+            lines = sys.stdin.readlines()
+            prv = lines[-1].strip()
+            logger.error(prv)
         else:
             no_prv()
     else:
