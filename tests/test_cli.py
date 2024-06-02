@@ -114,9 +114,9 @@ def test_seed_command_from_str(runner):
 
 def gen_custom_seed_words(length: int, seed: int):
     """non bip-39 seeds"""
-    rng = random.Random(seed)
+    random.seed(seed)
     custom = "".join(
-        rng.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
+        random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
     )
 
     return custom
