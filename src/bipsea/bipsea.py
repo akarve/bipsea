@@ -204,8 +204,10 @@ def bip85_cmd(application, number, index, special, input):
         stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
             lines = sys.stdin.readlines()
-            prv = lines[-1].strip()
-            logger.error(prv)
+            if lines:
+                prv = lines[-1].strip()
+            else:
+                no_prv()
         else:
             no_prv()
     else:
