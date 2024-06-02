@@ -1,6 +1,5 @@
 import logging
 import random
-import string
 
 import pytest
 from click.testing import CliRunner
@@ -27,9 +26,8 @@ def runner():
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items())
 def test_seed_command_to_actual_seed(runner, language, vectors):
-    for vector in vectors:
+    for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
-
         for upper in (True, False):
             # prove that case doesn't matter
             mnemonic = mnemonic.upper() if upper else mnemonic
@@ -56,7 +54,7 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
 def test_seed_option_sensitivity(runner, language, vectors):
     """prove that meaningful passphrase mnemonic changes change the xprv
     (but white space after the mnemonic doesn't)"""
-    for vector in vectors[:1]:  # one vector per language for faster tests
+    for vector in vectors[:1]:  # one vector per language for speed
         _, mnemonic, _, xprv = vector
         strictness = ["--strict"] if language == "english" else ["--not-strict"]
         change_passphrase = runner.invoke(
@@ -117,7 +115,9 @@ def test_seed_command_from_str(runner):
 def gen_custom_seed_words(length: int, seed: int):
     """non bip-39 seeds"""
     random.seed(seed)
-    custom = "".join(random.choice("".join(ASCII_INPUTS)) for _ in range(length))
+    custom = "".join(
+        random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
+    )
 
     return custom
 
@@ -130,7 +130,7 @@ def test_seed_from_and_to_words(runner):
 
 
 def test_seed_bad_n(runner):
-    result = runner.invoke(cli, ["seed", "--from", "words", "-n", "45"])
+    result = runner.invoke(cli, ["seed", "--from", "words", "-n", "11"])
     assert result.exit_code != 0
     assert "--number" in result.output
 
