@@ -128,8 +128,8 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                 pass
                 click.secho(
                     (
-                        f"Warning: Low relative input entropy ({implied:.2f})."
-                        " Try more varied input."
+                        f"Warning: Low heuristic relative entropy ({implied:.2f})."
+                        " Maybe try more varied input?"
                     )
                 )
             entropy = to_master_seed(words, passphrase)
