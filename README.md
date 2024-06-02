@@ -165,7 +165,14 @@ bipsea seed -f str -u "123456123456123456"
 ```
 
     Warning: Relative entropy of input seems low (0.18). Consider more complex --input.
-    xprv9s21ZrQH143K2Sxhvzbx2vvjLxPB2tJyfh5hm7ags5UWbKRHbm7x1wyCnqN4sdGTqxbq5tJJc3vV4vd51er6WgUiUC7ma1nKtfYRNTYaCeE
+    xprv9s21ZrQH143K34TY441MbRNwzpXPfkXenXeh9VgnC74Asy19YMC1uwvxCBb1z339w8DC1P7GD5GzJPsRXMwsMcygYaG7wZwVstpVhhZR6gK
+
+You can even load the input from a file.
+
+```
+ -u "$(cat example.pgn)"
+bipsea seed -f str -u "$(cat example.txt)"
+
 
 If you are now thinking, _I could use any string to derive a master key_,
 then you're ready to learn about BIP-85 with `bipsea entropy`.
@@ -216,7 +223,7 @@ bipsea seed -f str -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
 Increment the child index for a unique fresh secret.
 
 ```
-bipsea seed -f words -i "123456123456123456" | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f str -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
 ```
 
     JP!jWK@S14
@@ -287,12 +294,14 @@ See [Makefile](./Makefile) for more commands.
 
 # References
 
-1. [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
-hierarchical deterministic wallets
-1. [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
-generalized cryptographic entropy
+1. [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) hierarchical deterministic wallets
+
+1. [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic seed words
+
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
+
+1. [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki) generalized cryptographic entropy
 
 
 # TODO
