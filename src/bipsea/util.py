@@ -14,7 +14,7 @@ __version__ = "0.2.1"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__
-MIN_REL_ENTROPY = 0.33
+MIN_REL_ENTROPY = 0.51  # somewhat magic heuristic
 
 ASCII_INPUTS = set(string.printable.lower())
 FORMAT = "utf-8"

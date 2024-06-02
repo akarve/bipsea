@@ -125,11 +125,10 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
             # TODO: this is not the right universe?
             implied = relative_entropy(words, ASCII_INPUTS)
             if implied < MIN_REL_ENTROPY:
-                pass
                 click.secho(
                     (
                         f"Warning: Low heuristic relative entropy ({implied:.2f})."
-                        " Maybe try more varied input?"
+                        " Consider more complex --input?"
                     )
                 )
             entropy = to_master_seed(words, passphrase)

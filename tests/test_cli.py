@@ -101,9 +101,7 @@ def test_seed_command_from_str(runner):
     lengths = {"short": 5, "enough": 42}
     base = ["seed", "-t", "xprv"]
     for k, v in lengths.items():
-        logger.debug(k)
         cmd = base + ["-f", "str", "-u", gen_custom_seed_words(v, 0)]
-        logger.debug(cmd)
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         if k == "short":
