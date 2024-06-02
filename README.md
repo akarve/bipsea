@@ -208,6 +208,10 @@ bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used 
 
 Append `-i 1` (the next index above the default of `-i 0`) for new words.
 
+```
+bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
+```
+
     run sea prison modify december any pottery melody aspect hero loan gown
 
 And so on for millions of possible child indexes.
