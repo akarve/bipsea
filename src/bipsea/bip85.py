@@ -39,16 +39,16 @@ PURPOSE_CODES = {"BIP-85": "83696968'"}
 
 HMAC_KEY = b"bip-entropy-from-k"
 
-LANGUAGE_CODES = {
-    "English": "0'",
-    "Japanese": "1'",
-    "Korean": "2'",
-    "Spanish": "3'",
-    "Chinese (Simplified)": "4'",
-    "Chinese (Traditional)": "5'",
-    "French": "6'",
-    "Italian": "7'",
-    "Czech": "8'",
+INDEX_TO_LANGUAGE = {
+    "0'": "English",
+    "1'": "Japanese",
+    "2'": "Korean",
+    "3'": "Spanish",
+    "4'": "Chinese (Simplified)",
+    "5'": "Chinese (Traditional)",
+    "6'": "French",
+    "7'": "Italian",
+    "8'": "Czech",
 }
 
 
@@ -67,18 +67,21 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     entropy = to_entropy(derived_key.data[1:])
 
     if app == APPLICATIONS["words"]:
-        language, n_words = indexes[:2]
+        language_index, n_words = indexes[:2]
         n_words = int(n_words[:-1])  # chop the ' from hardened derivation
-        if not language == LANGUAGE_CODES["English"]:
-            raise ValueError(f"Only English BIP-39 words from BIP-85 are supported.")
+        language = INDEX_TO_LANGUAGE[language_index].lower()
+        if language != "english":
+            raise ValueError(f"Unsupported language: {language}.")
         if not n_words in N_WORDS_META.keys():
-            raise ValueError(f"Expected word codes {N_WORDS_META.keys()}")
+            raise ValueError(f"Unsupported number of words: {n_words}.")
         n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
         words = entropy_to_words(n_words, trimmed_entropy)
+        assert verify_seed_words("english", words)
+
         return {
             "entropy": trimmed_entropy,
-            "application": " ".join(entropy_to_words(n_words, trimmed_entropy)),
+            "application": " ".join(words),
         }
     elif app == APPLICATIONS["wif"]:
         # https://en.bitcoin.it/wiki/Wallet_import_format

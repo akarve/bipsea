@@ -130,7 +130,7 @@ bipsea --help
 ### New seed words
 
 ```sh
-bipsea seed -n 12 --pretty
+bipsea seed -t words -n 12 --pretty
 ```
     1) crumble
     2) shallow
@@ -149,7 +149,7 @@ bipsea seed -n 12 --pretty
 ### xprv from existing seed words
 
 ```
-bipsea seed -f words -i "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" --strict
+bipsea seed -f words -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
 ```
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
@@ -161,9 +161,10 @@ a valid checksum.
 ## xprv from dice rolls (or any string)
 
 ```
-bipsea seed -f words -i "123456123456123456"
+bipsea seed -f str -u "123456123456123456"
 ```
 
+    Warning: Relative entropy of input seems low (0.18). Consider more complex --input.
     xprv9s21ZrQH143K2Sxhvzbx2vvjLxPB2tJyfh5hm7ags5UWbKRHbm7x1wyCnqN4sdGTqxbq5tJJc3vV4vd51er6WgUiUC7ma1nKtfYRNTYaCeE
 
 If you are now thinking, _I could use any string to derive a master key_,
@@ -194,11 +195,11 @@ Of course the above is not reproducible (because `bipsea seed` defaults to a ran
 seed), but you can provide a fixed master secret for consistent derivations.
 
 ```
-bipsea seed -f words -i "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
+bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
 ```
     medal air cube edit offer pair source promote wrap pretty rare when
 
-Append `-i 1` (the next index above the default of `-i 0`) for new words:
+Append `-i 1` (the next index above the default of `-i 0`) for new words.
 
     run sea prison modify december any pottery melody aspect hero loan gown
 
@@ -208,9 +209,9 @@ And so on for millions of possible child indexes.
 ### base64 password
 
 ```
-bipsea seed -f words -i "123456123456123456" | bipsea entropy -a base85 -n 10
+bipsea seed -f str -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
 ```
-    #uMALO}U2+
+    &TP4v7gJrH
 
 Increment the child index for a unique fresh secret.
 
@@ -218,10 +219,15 @@ Increment the child index for a unique fresh secret.
 bipsea seed -f words -i "123456123456123456" | bipsea entropy -a base85 -n 10 -i 1
 ```
 
-    (!Ee#u@e4Z
+    JP!jWK@S14
 
-You can either pipe in an existing xprv (`echo "$XPRV" | bipsea entropy`)
-or provide it via `--input`:
+You can pipe in an existing xprv.
+
+```
+echo "$XPRV" | bipsea entropy -a base85 -n 10
+```
+
+Or you can use `--input`.
 
 ```
 bipsea entropy -a base85 -n 10 --input "$XPRV"

@@ -63,11 +63,11 @@ def entropy_to_words(n_words: int, user_entropy: bytes):
     )
     int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum  # shift CS bits in
 
-    dictionary = bip39_english_words()  # get bip39 words from disk
+    dictionary = bip39_english_words()
     swords = []
-    mask11 = N_MNEMONICS - 1  # mask lowest 11 bits
+    mask_11 = N_MNEMONICS - 1
     for _ in range(n_words):
-        idx = int_entropy_cs & mask11
+        idx = int_entropy_cs & mask_11
         swords.append(dictionary[idx])
         int_entropy_cs >>= N_WORD_BITS
 
@@ -119,13 +119,19 @@ def bip39_english_words(file_name=WORDS_FILE_NAME) -> List[str]:
     return dictionary
 
 
+def normalize_str(input: str, lower=False):
+    return normalize("NFKD", input.lower() if lower else input)
+
+
+def normalize_list(words: List[str], lower=False):
+    """lower() then nfkd()"""
+    return [normalize_str(w, lower) for w in words]
+
+
 def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
     """converts english mnemonics to all lower case"""
-    mnemonic = [m.lower() for m in mnemonic]
-    mnemonic_nfkd = normalize("NFKD", " ".join(m.lower() for m in mnemonic)).encode(
-        "utf-8"
-    )
-    salt_nfkd = normalize("NFKD", "mnemonic" + passphrase).encode("utf-8")
+    mnemonic_nfkd = " ".join(normalize_list(mnemonic, lower=True)).encode("utf-8")
+    salt_nfkd = normalize_str("mnemonic" + passphrase).encode("utf-8")
 
     return pbkdf2_hmac(
         hash_name="sha512",

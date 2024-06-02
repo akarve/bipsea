@@ -1,19 +1,22 @@
 """CLI"""
 
 import logging
-import math
 import re
 import select
-import string
 import sys
-import threading
-from collections import Counter
 
 import click
 
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
-from .bip39 import N_WORDS_ALLOWED, entropy_to_words, to_master_seed, verify_seed_words
+from .bip39 import (
+    N_WORDS_ALLOWED,
+    entropy_to_words,
+    normalize_list,
+    normalize_str,
+    to_master_seed,
+    verify_seed_words,
+)
 from .bip85 import (
     APPLICATIONS,
     DRNG,
@@ -23,11 +26,19 @@ from .bip85 import (
     derive,
     to_entropy,
 )
-from .util import LOGGER, __app_name__, __version__, to_hex_string
+from .util import (
+    ASCII_INPUTS,
+    LOGGER,
+    MIN_REL_ENTROPY,
+    __app_name__,
+    __version__,
+    relative_entropy,
+    to_hex_string,
+)
 
-MIN_ENTROPY = 256
 SEED_FROM_VALUES = [
     "rand",
+    "str",
     "words",
 ]
 SEED_TO_VALUES = [
@@ -42,7 +53,6 @@ N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
-logger.setLevel(logging.DEBUG)
 
 
 @click.group()
@@ -63,7 +73,7 @@ def cli():
     help="|".join(SEED_FROM_VALUES),
     default="rand",
 )
-@click.option("-i", "--input", help="String in the format specified by --from")
+@click.option("-u", "--input", help="String in the format specified by --from")
 @click.option(
     "-t",
     "--to",
@@ -83,10 +93,10 @@ def cli():
     "--pretty", is_flag=True, default=False, help="Number and separate seed words"
 )
 @click.option(
-    "--strict",
+    "--strict/--not-strict",
     is_flag=True,
-    default=False,
-    help="Allow only checksummed BIP-39 English words",
+    default=True,
+    help="Require BIP-39 English words & valid checksum from `--input`",
 )
 def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     if input:
@@ -95,35 +105,38 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
+            message="`--from words|str` requires `--input STRING`, `--from rand` forbids `--input`",
         )
     if from_ == "words":
-        words = re.split(r"\s+", input)
-        n_words = len(words)
-        if strict:
-            if not verify_seed_words("english", words):
-                raise click.BadOptionUsage(
-                    option_name="--input",
-                    message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
-                )
-        else:
-            implied = implied_entropy(input)
-            if implied < MIN_ENTROPY:
+        words = normalize_list(re.split(r"\s+", input), lower=True)
+        if strict and not verify_seed_words("english", words):
+            raise click.BadOptionUsage(
+                option_name="--input",
+                message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
+            )
+    elif from_ in ("str", "rand"):
+        if not strict:
+            raise click.BadOptionUsage(
+                option_name="--not-strict",
+                message=f"`--not-strict` requires `--from rand|str`",
+            )
+        if from_ == "str":
+            words = normalize_list(list(input), lower=True)
+            # TODO: this is not the right universe?
+            implied = relative_entropy(words, ASCII_INPUTS)
+            if implied < MIN_REL_ENTROPY:
                 click.secho(
                     (
-                        f"Warning: {implied} bits of implied entropy is less than the"
-                        f"recommended {MIN_ENTROPY} bits."
-                    )
+                        f"Warning: Relative entropy of input seems low ({implied:.2f})."
+                        " Consider more complex --input."
+                    ),
+                    fg="yellow",
+                    err=True,
                 )
-        entropy = to_master_seed(words, passphrase)
-    else:  # from_ == "rand"
-        entropy = None
-        if strict:
-            raise click.BadOptionUsage(
-                option_name="--strict",
-                message="`--strict` requires `--from words`",
-            )
-        words = entropy_to_words(n_words=number, user_entropy=entropy)
+            entropy = to_master_seed(words, passphrase)
+        else:  # from_ == "rand":
+            entropy = None
+            words = entropy_to_words(n_words=number, user_entropy=entropy)
     if to == "words":
         if from_ == "words":
             raise click.BadOptionUsage(
@@ -182,7 +195,7 @@ cli.add_command(bip39_cmd)
     help="Additional integer (e.g. for 'dice' sides)",
 )
 @click.option(
-    "-p",
+    "-u",
     "--input",
     help="`--input xprv123...` can be used instead of an input pipe `bipsea seed | bipsea entropy`",
 )
@@ -190,7 +203,11 @@ def bip85_cmd(application, number, index, special, input):
     if not input:
         stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
-            prv = sys.stdin.readline().strip()
+            lines = sys.stdin.readlines()
+            if lines:
+                prv = lines[-1].strip()
+            else:
+                no_prv()
         else:
             no_prv()
     else:
@@ -265,10 +282,6 @@ def no_prv():
         option_name="[incoming pipe]",
         message="Bad input. Need xprv or tprv. Try `bipsea seed` | bipsea entropy`",
     )
-
-
-def implied_entropy(s):
-    return math.floor(math.log(len(s) ** len(string.printable), 2))
 
 
 if __name__ == "__main__":
