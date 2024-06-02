@@ -27,8 +27,9 @@ from .bip85 import (
     to_entropy,
 )
 from .util import (
+    ASCII_INPUTS,
     LOGGER,
-    MIN_ENTROPY,
+    MIN_REL_ENTROPY,
     __app_name__,
     __version__,
     relative_entropy,
@@ -52,7 +53,6 @@ N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
-logger.setLevel(logging.DEBUG)
 
 
 @click.group()
@@ -121,13 +121,15 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                 message=f"`--not-strict` requires `--from rand|str`",
             )
         if from_ == "str":
-            words = normalize_str(input, lower=True)
-            implied = relative_entropy(words)
-            if implied < MIN_ENTROPY:
+            words = normalize_list(list(input), lower=True)
+            # TODO: this is not the right universe?
+            implied = relative_entropy(words, ASCII_INPUTS)
+            if implied < MIN_REL_ENTROPY:
+                pass
                 click.secho(
                     (
-                        f"Warning: {implied} bits of entropy, less than the recommended"
-                        " {MIN_ENTROPY} bits. Input more entropy."
+                        f"Warning: Low relative input entropy ({implied:.2f})."
+                        " Try more varied input."
                     )
                 )
             entropy = to_master_seed(words, passphrase)

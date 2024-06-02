@@ -5,10 +5,10 @@ import string
 import pytest
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
-from data.bip85_vectors import BIP39, HEX, PWD_BASE64, PWD_BASE85, WIF
+from data.bip85_vectors import BIP39, HEX, PWD_BASE85, WIF
 
 from bipsea.bipsea import N_WORDS_ALLOWED, cli
-from bipsea.util import LOGGER
+from bipsea.util import ASCII_INPUTS, LOGGER
 
 logger = logging.getLogger(LOGGER)
 
@@ -98,10 +98,12 @@ def test_seed_command_from_rand(runner, n):
 
 
 def test_seed_command_from_str(runner):
-    lengths = {"short": 41, "enough": 42}
+    lengths = {"short": 5, "enough": 42}
     base = ["seed", "-t", "xprv"]
     for k, v in lengths.items():
+        logger.debug(k)
         cmd = base + ["-f", "str", "-u", gen_custom_seed_words(v, 0)]
+        logger.debug(cmd)
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         if k == "short":
@@ -117,7 +119,9 @@ def test_seed_command_from_str(runner):
 def gen_custom_seed_words(length: int, seed: int):
     """non bip-39 seeds"""
     random.seed(seed)
-    return "".join(random.choice(string.printable) for _ in range(length))
+    custom = "".join(random.choice("".join(ASCII_INPUTS)) for _ in range(length))
+
+    return custom
 
 
 def test_seed_from_and_to_words(runner):
