@@ -154,14 +154,14 @@ bipsea seed -f words -u "airport letter idea forget broccoli prefer panda food d
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
 
-`--strict` ensures that the input words are from the BIP-39 list and have
-a valid checksum.
+The default switch `--strict` ensures that the input words are from the BIP-39
+list and have a valid checksum.
 
 
 ## xprv from dice rolls (or any string)
 
 ```
-bipsea seed -f str -u "123456123456123456"
+bipsea seed -f words -u "123456123456123456" --not-strict
 ```
 
     Warning: Relative entropy of input seems low (0.18). Consider more complex --input.
@@ -170,7 +170,7 @@ bipsea seed -f str -u "123456123456123456"
 You can even load the input from a file.
 
 ```
-bipsea seed -f str -u "$(cat example.txt)"
+bipsea seed -f words -u "$(cat README.md)" --not-strict
 ```
 
 If you are now thinking, _I could use any string to derive a master key_,
@@ -219,17 +219,16 @@ And so on for millions of possible child indexes.
 ### base64 password
 
 ```
-bipsea seed -f str -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
+bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10
 ```
-    &TP4v7gJrH
+    pdHd=DQk9z
 
 Increment the child index for a unique fresh secret.
 
 ```
-bipsea seed -f str -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10 -i 1
 ```
-
-    JP!jWK@S14
+    W>SGVF(=V6
 
 You can pipe in an existing xprv.
 

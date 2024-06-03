@@ -89,7 +89,10 @@ def cli():
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
-    "--pretty", is_flag=True, default=False, help="Number and separate seed words"
+    "--pretty/--not-pretty",
+    is_flag=True,
+    default=False,
+    help="Number and newline seed words",
 )
 @click.option(
     "--strict/--not-strict",
@@ -119,6 +122,8 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                     message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
                 )
         else:
+            # TODO bipsea seed -f words -u "$(cat README.md)" --not-strict
+            # has negative entropy :(
             implied = relative_entropy(normalize_str(input, lower=True), ASCII_INPUTS)
             if implied < MIN_REL_ENTROPY:
                 click.secho(
@@ -132,18 +137,26 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     else:  # from_ == rand
         entropy = None
         words = entropy_to_words(number, entropy)
+
     if to == "words":
-        output = " ".join(entropy_to_words(number, entropy))
         if pretty:
-            output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(output))
+            output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+        else:
+            output = " ".join(words)
 
         click.echo(output)
-    else:  # to == "tprv" or to == "xprv")
+    else:  # to == xprv | tprv
         if pretty:
             raise click.BadOptionUsage(
                 option_name="pretty",
                 message="`--pretty` has no effect with `--to xprv`",
             )
+        # TODO: we do the entropy measure for not-strict against the string
+        # but that's not what we pass in here. here we pass in split on \s+
+        # for compatibility with foreign languages but is it really what we should
+        # do for the general case of arbitrary secrets?
+        # if so then not space is not that significant... :/
+        logger.error(words)
         seed = to_master_seed(words, passphrase)
         prv = to_master_key(seed, mainnet=to == "xprv", private=True)
 

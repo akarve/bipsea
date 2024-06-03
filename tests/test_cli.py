@@ -28,8 +28,6 @@ def runner():
 def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
-        logger.debug(language)
-        logger.debug(vector)
         for upper in (True, False):
             # prove that case doesn't matter
             mnemonic = mnemonic.upper() if upper else mnemonic
@@ -96,10 +94,16 @@ def test_seed_option_sensitivity(runner, language, vectors):
 
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
 def test_seed_command_from_rand(runner, n):
-    cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
-    result = runner.invoke(cli, cmd)
-    assert len(result.output.split()) == int(n)
-    assert result.exit_code == 0
+    for style in ("--not-pretty", "--pretty"):
+        cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
+        cmd.append(style)
+        result = runner.invoke(cli, cmd)
+        output = result.output.strip()
+        logger.debug(style)
+        logger.debug(output.split(" "))
+        split_on = "\n" if style == "--pretty" else " "
+        assert len(output.split(split_on)) == int(n)
+        assert result.exit_code == 0
 
 
 def test_seed_command_from_str(runner):
