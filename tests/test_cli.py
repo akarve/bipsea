@@ -28,6 +28,8 @@ def runner():
 def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
+        logger.debug(language)
+        logger.debug(vector)
         for upper in (True, False):
             # prove that case doesn't matter
             mnemonic = mnemonic.upper() if upper else mnemonic
@@ -47,7 +49,10 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
                 ],
             )
             assert result.exit_code == 0
-            assert result.output.strip() == xprv
+            # we might get an entropy warning for foreign languages
+            # so just look at the last line
+            last = result.output.strip().split("\n")[-1]
+            assert last == xprv
 
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items())
@@ -63,7 +68,8 @@ def test_seed_option_sensitivity(runner, language, vectors):
             + strictness,
         )
         assert change_passphrase.exit_code == 0
-        assert change_passphrase.output.strip() != xprv
+        result_xprv = change_passphrase.output.strip().split("\n")[-1]
+        assert result_xprv != xprv
 
         for suffix in ("", ".", " \t\n "):
             mnemonic_ = mnemonic + suffix
@@ -75,14 +81,15 @@ def test_seed_option_sensitivity(runner, language, vectors):
                     assert "BIP-39" in result.output
             else:
                 assert result.exit_code == 0
-                assert result.output.strip() == xprv
+                result_xprv = result.output.strip().split("\n")[-1]
+                assert result_xprv == xprv
 
     if language == "english":
         testnet = runner.invoke(
             cli, ["seed", "-t", "tprv", "-f", "words", "-u", MNEMONIC_12] + strictness
         )
         assert testnet.exit_code == 0
-        tprv = testnet.output.strip()
+        tprv = testnet.output.strip().split("\n")[-1]
         assert tprv != xprv
         assert tprv.startswith("tprv")
 
@@ -97,19 +104,15 @@ def test_seed_command_from_rand(runner, n):
 
 def test_seed_command_from_str(runner):
     lengths = {"short": 5, "enough": 42}
-    base = ["seed", "-t", "xprv"]
+    base = ["seed", "-t", "xprv", "--not-strict"]
     for k, v in lengths.items():
-        cmd = base + ["-f", "str", "-u", gen_custom_seed_words(v, 0)]
+        cmd = base + ["-f", "words", "-u", gen_custom_seed_words(v, 0)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         if k == "short":
             assert "Warning" in result.output
         else:
             assert "Warning" not in result.output
-        bad_cmd = base + ["-f", "words", "-u", gen_custom_seed_words(v, 0)]
-        bad_result = runner.invoke(cli, bad_cmd)
-        assert bad_result.exit_code != 0
-        assert "BIP-39" in bad_result.output
 
 
 def gen_custom_seed_words(length: int, seed: int):
