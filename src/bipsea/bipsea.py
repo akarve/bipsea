@@ -122,9 +122,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                     param_hint="--input",
                 )
         else:
-            # TODO bipsea seed -f words -u "$(cat README.md)" --not-strict
-            # has negative entropy :(
-            implied = relative_entropy(normalize_str(input, lower=True), ASCII_INPUTS)
+            implied = relative_entropy(normalize_str(input, lower=True))
             if implied < MIN_REL_ENTROPY:
                 click.secho(
                     (
