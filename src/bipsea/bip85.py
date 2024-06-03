@@ -11,7 +11,7 @@ from ecdsa import SECP256k1
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
 from .bip32 import hmac_sha512
-from .bip39 import N_WORDS_META, entropy_to_words, verify_seed_words
+from .bip39 import LANGUAGES, N_WORDS_META, entropy_to_words, verify_seed_words
 from .util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
@@ -40,16 +40,19 @@ PURPOSE_CODES = {"BIP-85": "83696968'"}
 HMAC_KEY = b"bip-entropy-from-k"
 
 INDEX_TO_LANGUAGE = {
-    "0'": "English",
-    "1'": "Japanese",
-    "2'": "Korean",
-    "3'": "Spanish",
-    "4'": "Chinese (Simplified)",
-    "5'": "Chinese (Traditional)",
-    "6'": "French",
-    "7'": "Italian",
-    "8'": "Czech",
+    "0'": "english",
+    "1'": "japanese",
+    "2'": "korean",
+    "3'": "spanish",
+    "4'": "chinese_simplified",
+    "5'": "chinese_traditional",
+    "6'": "french",
+    "7'": "italian",
+    "8'": "czech",
+    "9'": "portuguese",  # not in BIP-85 but in BIP-39 test vectors
 }
+
+assert set(INDEX_TO_LANGUAGE.values()) == set(LANGUAGES.keys())
 
 
 def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]]:
@@ -69,11 +72,9 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     if app == APPLICATIONS["words"]:
         language_index, n_words = indexes[:2]
         n_words = int(n_words[:-1])  # chop the ' from hardened derivation
-        language = INDEX_TO_LANGUAGE[language_index].lower()
-        if language != "english":
-            raise ValueError(f"Unsupported language: {language}.")
         if not n_words in N_WORDS_META.keys():
             raise ValueError(f"Unsupported number of words: {n_words}.")
+        language = INDEX_TO_LANGUAGE[language_index]
         n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
         words = entropy_to_words(n_words, trimmed_entropy, language)
@@ -92,8 +93,8 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         hash1 = hashlib.sha256(extended).digest()
         hash2 = hashlib.sha256(hash1).digest()
         checksum = hash2[:4]
-        # TODO: question this application because it should be using the WIF
-        # checksum but instead we do one ourselves :/
+        # TODO: question this application and file to BIP-85 because it should be
+        # using the WIF checksum but instead we do one ourselves :/
         return {
             "entropy": trimmed_entropy,
             "application": base58.b58encode(extended + checksum).decode("utf-8"),

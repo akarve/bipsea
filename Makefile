@@ -13,7 +13,7 @@ check:
 	isort . --check
 
 install:
-	pip install -r requirements.txt -r test-requirements.txt
+	pip install -r requirements.txt -r tst-requirements.txt
 
 install-dev: uninstall-dev
 	pip install -e .

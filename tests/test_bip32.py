@@ -18,19 +18,16 @@ logger = logging.getLogger(LOGGER)
         f"Vector-{i + 1}-{', '.join(e['chain'].keys())}" for i, e in enumerate(VECTORS)
     ],
 )
-def test_vectors(vector):
+def test_vectors_and_parse_ext_key(vector):
     seed = bytes.fromhex(vector["seed_hex"])
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
             assert type_ in ("ext pub", "ext prv")
             master = to_master_key(seed, mainnet=True, private=True)
             derived = derive(master, ch, private=type_ == "ext prv")
-            if not str(derived) == expected:
-                logger.error("derived:")
-                logger.error(repr(derived))
-                logger.error("expected:")
-                logger.error(repr(parse_ext_key(expected)))
             assert str(derived) == expected
+        if ch == "m":
+            assert expected == str(parse_ext_key(expected))
 
 
 @pytest.mark.parametrize(
@@ -41,3 +38,8 @@ def test_vectors(vector):
 def test_invalid_keys(key, reason):
     with pytest.raises((AssertionError, ValueError)):
         parse_ext_key(key)
+
+
+@pytest.mark.parametrize("vector", VECTORS)
+def test_parse_ext_key(vector):
+    pass
