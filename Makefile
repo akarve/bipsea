@@ -1,5 +1,5 @@
 .PHONY: all build check clean git-branch git-unsaved install install-dev install-go
-.PHONY: lint publish push test test-network uninstall-dev
+.PHONY: lint publish push readme-cmds test test-network uninstall-dev
 
 build: clean check test
 	python -m build
@@ -40,7 +40,7 @@ push: lint check test git-branch git-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-test:
+test: readme-cmds
 	pytest tests -m "not network" -sx
 
 test-network:
@@ -65,3 +65,17 @@ git-unsaved:
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
 	fi
+
+
+readme-cmds:
+	bipsea seed -t words -n 12 --pretty
+	bipsea seed -f words -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
+	bipsea seed -f words -u "123456123456123456" --not-strict
+	bipsea seed -f words -u "$$(cat README.md)" --not-strict
+	bipsea seed | bipsea entropy
+	bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
+	bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
+	bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10
+	bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10 -i 1
+	bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
+	bipsea seed -t xprv | bipsea entropy -a drng -n 10
