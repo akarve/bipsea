@@ -119,7 +119,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
             if not verify_seed_words("english", words):
                 raise click.BadParameter(
                     f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
-                    param_hint="--input"
+                    param_hint="--input",
                 )
         else:
             # TODO bipsea seed -f words -u "$(cat README.md)" --not-strict
