@@ -5,14 +5,15 @@ import logging
 import math
 import random
 import string
+import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__
-MIN_REL_ENTROPY = 0.51  # somewhat magic heuristic
+MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 
 ASCII_INPUTS = set(string.printable.lower())
 FORMAT = "utf-8"
@@ -29,7 +30,7 @@ def to_hex_string(data: bytes) -> str:
     return binascii.hexlify(data).decode("utf-8")
 
 
-def shannon_entropy(input: List[str], cardinality: int) -> float:
+def shannon_entropy(input: List[str]) -> float:
     counts = Counter(input)
     total = sum(counts.values())
     probs = {char: count / total for char, count in counts.items()}
@@ -37,12 +38,23 @@ def shannon_entropy(input: List[str], cardinality: int) -> float:
     return -sum(prob * math.log(prob, 2) for prob in probs.values())
 
 
-def relative_entropy(input: Sequence, universe: set) -> float:
-    # TODO: check if characters out of universe
-    ideal = math.log(len(universe), 2)
-    actual = shannon_entropy(input, len(universe))
+def relative_entropy(input: Sequence, universe: set = ASCII_INPUTS) -> float:
+    input_set = set(list(input))
+    warn = False
+    if not input_set <= universe:
+        warnings.warn(
+            f"Unexpected input characters {input_set - universe}, expect bad entropy"
+        )
+        warn = True
 
-    return actual / ideal
+    ideal = math.log(len(universe), 2)
+    actual = shannon_entropy(input)
+    ratio = actual / ideal
+
+    if not warn:
+        assert 0 < ratio <= 1.001
+
+    return ratio
 
 
 def contains_only_ascii(lst: List[str]):

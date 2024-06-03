@@ -18,17 +18,15 @@ logger = logging.getLogger(LOGGER)
 
 def test_absolute_entropy():
     universe = set(list(ASCII_INPUTS))
-    assert math.isclose(
-        shannon_entropy(universe, len(universe)), math.log(len(universe), 2)
-    )
+    assert math.isclose(shannon_entropy(universe), math.log(len(universe), 2))
 
 
 def test_relative_entropy():
     deck = deck_52()
     shuffled = shuffle(list(deck))
     # order doesn't matter and the deck's relative entropy is close to 1
-    assert math.isclose(relative_entropy(shuffled, deck), 1)
-    assert math.isclose(1, relative_entropy(deck, deck))
+    assert math.isclose(relative_entropy(shuffled, set(deck)), 1)
+    assert math.isclose(1, relative_entropy(deck, set(deck)))
 
 
 def test_contains_only_ascii():

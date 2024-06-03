@@ -76,7 +76,7 @@ def test_seed_word_generation(language, vectors):
 
 
 @pytest.mark.network
-def test_words_against_github():
+def test_our_words_vs_github_network_request():
     """make sure we match github"""
     url = "https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt"
     response = requests.get(url)

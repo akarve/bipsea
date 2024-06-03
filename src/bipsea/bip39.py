@@ -130,8 +130,6 @@ def normalize_list(words: List[str], lower=False):
 
 def to_master_seed(mnemonic: List[str], passphrase, iterations=2048):
     """apply pbkdf2"""
-    # TODO: it's not just english
-    # TODO always lower really?
     mnemonic_nfkd = " ".join(normalize_list(mnemonic, lower=True)).encode("utf-8")
     salt_nfkd = normalize_str("mnemonic" + passphrase).encode("utf-8")
 

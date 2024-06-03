@@ -1,5 +1,6 @@
 import logging
 import random
+import warnings
 
 import pytest
 from click.testing import CliRunner
@@ -28,29 +29,33 @@ def runner():
 def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
-        for upper in (True, False):
-            # prove that case doesn't matter
-            mnemonic = mnemonic.upper() if upper else mnemonic
-            result = runner.invoke(
-                cli,
-                [
-                    "seed",
-                    "-t",
-                    "xprv",
-                    "-f",
-                    "words",
-                    "--input",
-                    mnemonic,
-                    "-p",
-                    "TREZOR",
-                    "--strict" if language == "english" else "--not-strict",
-                ],
-            )
-            assert result.exit_code == 0
-            # we might get an entropy warning for foreign languages
-            # so just look at the last line
-            last = result.output.strip().split("\n")[-1]
-            assert last == xprv
+        with warnings.catch_warnings():
+            if language != "english":
+                # currently entropy function will warn for foreign languages
+                warnings.simplefilter("ignore")
+            for upper in (True, False):
+                # prove that case doesn't matter
+                mnemonic = mnemonic.upper() if upper else mnemonic
+                result = runner.invoke(
+                    cli,
+                    [
+                        "seed",
+                        "-t",
+                        "xprv",
+                        "-f",
+                        "words",
+                        "--input",
+                        mnemonic,
+                        "-p",
+                        "TREZOR",
+                        "--strict" if language == "english" else "--not-strict",
+                    ],
+                )
+                assert result.exit_code == 0
+                # we might get an entropy warning for foreign languages
+                # so just look at the last line
+                last = result.output.strip().split("\n")[-1]
+                assert last == xprv
 
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items())
@@ -58,29 +63,41 @@ def test_seed_option_sensitivity(runner, language, vectors):
     """prove that meaningful passphrase mnemonic changes change the xprv
     (but white space after the mnemonic doesn't)"""
     for vector in vectors[:1]:  # one vector per language for speed
-        _, mnemonic, _, xprv = vector
-        strictness = ["--strict"] if language == "english" else ["--not-strict"]
-        change_passphrase = runner.invoke(
-            cli,
-            ["seed", "-t", "xprv", "-f", "words", "-u", mnemonic, "-p", "TrEZOR"]
-            + strictness,
-        )
-        assert change_passphrase.exit_code == 0
-        result_xprv = change_passphrase.output.strip().split("\n")[-1]
-        assert result_xprv != xprv
+        with warnings.catch_warnings():
+            if language != "english":
+                # currently entropy function will warn for foreign languages
+                warnings.simplefilter("ignore")
+            _, mnemonic, _, xprv = vector
+            strictness = ["--strict"] if language == "english" else ["--not-strict"]
+            change_passphrase = runner.invoke(
+                cli,
+                ["seed", "-t", "xprv", "-f", "words", "-u", mnemonic, "-p", "TrEZOR"]
+                + strictness,
+            )
+            assert change_passphrase.exit_code == 0
+            result_xprv = change_passphrase.output.strip().split("\n")[-1]
+            assert result_xprv != xprv
 
-        for suffix in ("", ".", " \t\n "):
-            mnemonic_ = mnemonic + suffix
-            cmd = ["seed", "-f", "words", "-u", mnemonic_, "-p", "TREZOR"] + strictness
-            result = runner.invoke(cli, cmd)
-            if suffix == ".":
-                if language == "english":
-                    assert result.exit_code != 0
-                    assert "BIP-39" in result.output
-            else:
-                assert result.exit_code == 0
-                result_xprv = result.output.strip().split("\n")[-1]
-                assert result_xprv == xprv
+            for suffix in ("", ".", " \t\n "):
+                mnemonic_ = mnemonic + suffix
+                cmd = [
+                    "seed",
+                    "-f",
+                    "words",
+                    "-u",
+                    mnemonic_,
+                    "-p",
+                    "TREZOR",
+                ] + strictness
+                result = runner.invoke(cli, cmd)
+                if suffix == ".":
+                    if language == "english":
+                        assert result.exit_code != 0
+                        assert "BIP-39" in result.output
+                else:
+                    assert result.exit_code == 0
+                    result_xprv = result.output.strip().split("\n")[-1]
+                    assert result_xprv == xprv
 
     if language == "english":
         testnet = runner.invoke(
