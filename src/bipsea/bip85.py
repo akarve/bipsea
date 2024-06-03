@@ -76,8 +76,8 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             raise ValueError(f"Unsupported number of words: {n_words}.")
         n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
-        words = entropy_to_words(n_words, trimmed_entropy)
-        assert verify_seed_words("english", words)
+        words = entropy_to_words(n_words, trimmed_entropy, language)
+        assert verify_seed_words(words, language)
 
         return {
             "entropy": trimmed_entropy,

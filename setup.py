@@ -8,9 +8,10 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={
-        __app_name__: ["english.txt"],
+        f"{__app_name__}": ["wordlists/*.txt"],
     },
-    description="Python implementation of BIP 85 (and BIP 32)",
+    include_package_data=True,
+    description="Python implementation of BIP-32, BIP-39, BIP-85",
     author="Aneesh Karve",
     author_email="bonded_metals_0u@icloud.com",
     classifiers=[

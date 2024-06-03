@@ -41,10 +41,7 @@ push: lint check test git-branch git-unsaved
 	git push origin $$branch
 
 test: readme-cmds
-	pytest tests -m "not network" -sx
-
-test-network:
-	pytest tests
+	pytest -vsx
 
 git-branch:
 	@branch=$$(git symbolic-ref --short HEAD); \
