@@ -38,7 +38,6 @@ from .util import (
 
 SEED_FROM_VALUES = [
     "rand",
-    "str",
     "words",
 ]
 SEED_TO_VALUES = [
@@ -90,7 +89,10 @@ def cli():
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
-    "--pretty", is_flag=True, default=False, help="Number and separate seed words"
+    "--pretty/--not-pretty",
+    is_flag=True,
+    default=False,
+    help="Number and newline seed words",
 )
 @click.option(
     "--strict/--not-strict",
@@ -99,31 +101,30 @@ def cli():
     help="Require BIP-39 English words & valid checksum from `--input`",
 )
 def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
-    if input:
-        input = input.strip()
     number = int(number)
+    input = input.strip() if input else input
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
             message="`--from words|str` requires `--input STRING`, `--from rand` forbids `--input`",
         )
     if from_ == "words":
+        if to == "words":
+            raise click.BadOptionUsage(
+                option_name="--to",
+                message="`--to words` incompatible with `--from words`",
+            )
         words = normalize_list(re.split(r"\s+", input), lower=True)
-        if strict and not verify_seed_words("english", words):
-            raise click.BadOptionUsage(
-                option_name="--input",
-                message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
-            )
-    elif from_ in ("str", "rand"):
-        if not strict:
-            raise click.BadOptionUsage(
-                option_name="--not-strict",
-                message=f"`--not-strict` requires `--from rand|str`",
-            )
-        if from_ == "str":
-            words = normalize_list(list(input), lower=True)
-            # TODO: this is not the right universe?
-            implied = relative_entropy(words, ASCII_INPUTS)
+        if strict:
+            if not verify_seed_words("english", words):
+                raise click.BadOptionUsage(
+                    option_name="--input",
+                    message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
+                )
+        else:
+            # TODO bipsea seed -f words -u "$(cat README.md)" --not-strict
+            # has negative entropy :(
+            implied = relative_entropy(normalize_str(input, lower=True), ASCII_INPUTS)
             if implied < MIN_REL_ENTROPY:
                 click.secho(
                     (
@@ -133,33 +134,33 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                     fg="yellow",
                     err=True,
                 )
-            entropy = to_master_seed(words, passphrase)
-        else:  # from_ == "rand":
-            entropy = None
-            words = entropy_to_words(n_words=number, user_entropy=entropy)
+    else:  # from_ == rand
+        entropy = None
+        words = entropy_to_words(number, entropy)
+
     if to == "words":
-        if from_ == "words":
-            raise click.BadOptionUsage(
-                option_name="--to",
-                message="`--to words` incompatible with `--from words`",
-            )
-        output = " ".join(words)
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+        else:
+            output = " ".join(words)
 
         click.echo(output)
-
-    elif to in ("tprv", "xprv"):
+    else:  # to == xprv | tprv
         if pretty:
             raise click.BadOptionUsage(
                 option_name="pretty",
                 message="`--pretty` has no effect with `--to xprv`",
             )
-        mainnet = to == "xprv"
+        # TODO: we do the entropy measure for not-strict against the string
+        # but that's not what we pass in here. here we pass in split on \s+
+        # for compatibility with foreign languages but is it really what we should
+        # do for the general case of arbitrary secrets?
+        # if so then not space is not that significant... :/
+        logger.error(words)
         seed = to_master_seed(words, passphrase)
-        kprv = to_master_key(seed, mainnet=mainnet, private=True)
+        prv = to_master_key(seed, mainnet=to == "xprv", private=True)
 
-        click.echo(kprv)
+        click.echo(prv)
 
 
 cli.add_command(bip39_cmd)
@@ -205,6 +206,7 @@ def bip85_cmd(application, number, index, special, input):
         if stdin:
             lines = sys.stdin.readlines()
             if lines:
+                # get just the last line because there might be a warning above
                 prv = lines[-1].strip()
             else:
                 no_prv()
