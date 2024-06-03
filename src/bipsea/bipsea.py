@@ -106,7 +106,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="`--from words|str` requires `--input STRING`, `--from rand` forbids `--input`",
+            message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
         )
     if from_ == "words":
         if to == "words":
@@ -117,9 +117,9 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
         words = normalize_list(re.split(r"\s+", input), lower=True)
         if strict:
             if not verify_seed_words("english", words):
-                raise click.BadOptionUsage(
-                    option_name="--input",
-                    message=f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
+                raise click.BadParameter(
+                    f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
+                    param_hint="--input"
                 )
         else:
             # TODO bipsea seed -f words -u "$(cat README.md)" --not-strict
@@ -156,7 +156,6 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
         # for compatibility with foreign languages but is it really what we should
         # do for the general case of arbitrary secrets?
         # if so then not space is not that significant... :/
-        logger.error(words)
         seed = to_master_seed(words, passphrase)
         prv = to_master_key(seed, mainnet=to == "xprv", private=True)
 

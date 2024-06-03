@@ -99,8 +99,6 @@ def test_seed_command_from_rand(runner, n):
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()
-        logger.debug(style)
-        logger.debug(output.split(" "))
         split_on = "\n" if style == "--pretty" else " "
         assert len(output.split(split_on)) == int(n)
         assert result.exit_code == 0

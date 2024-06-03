@@ -26,11 +26,9 @@ def test_absolute_entropy():
 def test_relative_entropy():
     deck = deck_52()
     shuffled = shuffle(list(deck))
-    # order doesn't matter
-    assert math.isclose(relative_entropy(shuffled, deck), relative_entropy(deck, deck))
-    # cutting universe in half yields a relative entropy of about 1/2
-    assert math.isclose(relative_entropy(deck[:26], set(deck)), 0.5)
-    assert math.isclose(relative_entropy(deck[:13], set(deck)), 0.25)
+    # order doesn't matter and the deck's relative entropy is close to 1
+    assert math.isclose(relative_entropy(shuffled, deck), 1)
+    assert math.isclose(1, relative_entropy(deck, deck))
 
 
 def test_contains_only_ascii():

@@ -6,7 +6,7 @@ import math
 import random
 import string
 from collections import Counter
-from typing import List
+from typing import List, Sequence
 
 __version__ = "0.3.0"
 __app_name__ = "bipsea"
@@ -31,12 +31,14 @@ def to_hex_string(data: bytes) -> str:
 
 def shannon_entropy(input: List[str], cardinality: int) -> float:
     counts = Counter(input)
-    probs = {char: count / cardinality for char, count in counts.items()}
+    total = sum(counts.values())
+    probs = {char: count / total for char, count in counts.items()}
 
     return -sum(prob * math.log(prob, 2) for prob in probs.values())
 
 
-def relative_entropy(input: List[str], universe: set):
+def relative_entropy(input: Sequence, universe: set) -> float:
+    # TODO: check if characters out of universe
     ideal = math.log(len(universe), 2)
     actual = shannon_entropy(input, len(universe))
 
