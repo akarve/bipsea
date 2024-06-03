@@ -8,7 +8,7 @@ import string
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__
