@@ -16,14 +16,7 @@ from data.bip85_vectors import (
 
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip39 import LANGUAGES, verify_seed_words
-from bipsea.bip85 import (
-    DRNG,
-    INDEX_TO_LANGUAGE,
-    apply_85,
-    derive,
-    to_entropy,
-    to_hex_string,
-)
+from bipsea.bip85 import DRNG, INDEX_TO_LANGUAGE, apply_85, derive, to_entropy
 from bipsea.util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)

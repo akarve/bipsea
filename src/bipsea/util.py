@@ -9,7 +9,7 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__

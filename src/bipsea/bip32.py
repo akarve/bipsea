@@ -6,7 +6,6 @@ https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki HDW
 import hashlib
 import hmac
 import logging
-import warnings
 from typing import List
 
 from ecdsa import SECP256k1, SigningKey, VerifyingKey

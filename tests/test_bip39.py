@@ -1,11 +1,8 @@
-import hashlib
 import logging
 import re
 import warnings
-from unicodedata import is_normalized
 
 import pytest
-import requests
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
