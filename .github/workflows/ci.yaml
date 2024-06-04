@@ -1,4 +1,4 @@
-name: Test Python package
+name: Python API & CLI on 3.8 - 3.12
 
 on: [pull_request]
 
