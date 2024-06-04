@@ -18,9 +18,9 @@ bipsea does not rely on third-party libraries from any wallet vendor.
 
 You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
 and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
-never has network access, and disables
+has networking disabled, and disables
 [Intel Management Engine](https://support.system76.com/articles/intel-me/)
-and other possible backdoors.
+and other possible hardware backdoors.
 
 # How is this useful?
 
