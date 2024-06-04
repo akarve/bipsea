@@ -5,12 +5,14 @@ import logging
 import secrets
 import warnings
 from hashlib import pbkdf2_hmac
-from importlib import resources
-from pathlib import Path
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files  # for Python 3.8
+
 from typing import List
 from unicodedata import normalize
-
-import click
 
 from .util import LOGGER, __app_name__
 
@@ -151,7 +153,7 @@ def bip39_words(language) -> List[str]:
         raise ValueError(f"Unexpected language: {language}")
     file_name = LANGUAGES[language]["file"]
     """Returns a list of BIP39 English words."""
-    list_path = resources.files(__app_name__) / "wordlists" / file_name
+    list_path = files(__app_name__) / "wordlists" / file_name
     with list_path.open("r") as f:
         raw = f.read()
     file_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
