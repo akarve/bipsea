@@ -57,7 +57,14 @@ class ExtendedKey(
             + self.chain_code
             + self.data
         )
-        return base58.b58encode_check(key_, alphabet=base58.BITCOIN_ALPHABET).decode()
+
+        encoded = base58.b58encode_check(
+            key_, alphabet=base58.BITCOIN_ALPHABET
+        ).decode()
+        # https://github.com/bitcoin/bips/pull/1584
+        assert len(encoded) == 111
+
+        return encoded
 
     def __new__(
         cls,

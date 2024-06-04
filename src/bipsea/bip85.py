@@ -146,7 +146,7 @@ def to_entropy(data: bytes) -> bytes:
     return hmac_sha512(key=HMAC_KEY, data=data)
 
 
-def derive(master: ExtendedKey, path: str, private: bool = True):
+def derive(master: ExtendedKey, path: str, private: bool = True) -> ExtendedKey:
     if not master.is_private():
         raise ValueError("Derivations should begin with a private master key")
 
