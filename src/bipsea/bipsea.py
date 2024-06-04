@@ -48,6 +48,7 @@ SEED_TO_VALUES = [
 TIMEOUT = 0.1
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
+N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)

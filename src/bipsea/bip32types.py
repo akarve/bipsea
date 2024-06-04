@@ -50,12 +50,12 @@ class ExtendedKey(
     def __str__(self) -> str:
         # return super().__str__()
         key_ = (
-            self.version
-            + self.depth
-            + self.finger
-            + self.child_number
-            + self.chain_code
-            + self.data
+            self.version +
+            self.depth +
+            self.finger +
+            self.child_number +
+            self.chain_code +
+            self.data
         )
         return base58.b58encode_check(key_, alphabet=base58.BITCOIN_ALPHABET).decode()
 
