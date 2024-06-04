@@ -1,7 +1,7 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
 .PHONY: install-go lint publish push readme-cmds test test-network uninstall-dev
 
-build: clean check test download-wordlists
+build: clean download-wordlists check test
 	python3 -m build
 
 clean:
