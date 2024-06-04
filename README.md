@@ -1,3 +1,5 @@
+[![Tests](https://github.com/akarve/bipsea/actions/workflows/ci.yaml/badge.svg)](https://github.com/akarve/bipsea/actions)
+
 # `bipsea`: secure entropy for Bitcoin seeds, general passwords, and other secrets
 
 > _One Seed to rule them all,  
