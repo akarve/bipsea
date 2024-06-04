@@ -106,7 +106,7 @@ private key are exposed, the parent private key remains secure.
 
 ## How do I know the bipsea implementation is correct?
 
-bipsea passes all BIP-32, BIP-39 and BIP-85 test vectors in all BIP-39 languages
+bipsea passes all BIP-32, BIP-39, and BIP-85 test vectors in all BIP-39 languages
 and further passes its own unit tests.
 
 There is a single BIP-85 vector, part of which xfails.
