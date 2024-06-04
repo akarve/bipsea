@@ -12,9 +12,8 @@ bipsea offers a command-line interface and an API.
 **bipsea is currently for experimental purposes only.**
 
 bipsea relies on cryptographic primitives from Python
-and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module.
-bipsea is therefore also
-[vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
+and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module, which
+is [vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
 bipsea does not rely on third-party libraries from any wallet vendor.
 
 You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
