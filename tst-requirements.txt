@@ -1,5 +1,6 @@
 black>=24.4.2
 build>=1.2.1
+flake8>=7.0.0
 isort>=5.13.2
 pytest>=8.2.1
 requests>=2.32.2

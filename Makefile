@@ -29,6 +29,7 @@ uninstall-dev:
 lint:
 	isort .
 	black .
+	flake8 . --ignore=E501,W503
 	actionlint
 	checkmake Makefile
 
