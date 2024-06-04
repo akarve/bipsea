@@ -39,7 +39,7 @@ def to_master_key(seed: bytes, mainnet: bool, private: bool) -> ExtendedKey:
     )
 
 
-def derive_key(master: ExtendedKey, path: List[str], private: bool):
+def derive_key(master: ExtendedKey, path: List[str], private: bool) -> ExtendedKey:
     indexes = [segment_to_index(s) for s in path[1:]]
     key_chain = [
         (
