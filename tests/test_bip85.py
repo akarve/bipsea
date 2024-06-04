@@ -4,7 +4,7 @@ from hashlib import sha256
 import base58
 import pytest
 from data.bip85_vectors import (
-    BIP39,
+    BIP_39,
     DICE,
     EXT_KEY_TO_ENTROPY,
     HEX,
@@ -37,7 +37,7 @@ logger = logging.getLogger(LOGGER)
 def test_entropy(vector):
     master = parse_ext_key(vector["master"])
     derived_key = derive(master, vector["path"])
-    secret = derived_key.data[1:]  # chop the BIP32 byte prefix
+    secret = derived_key.data[1:]  # chop the BIP-32 1-byte prefix
     assert to_hex_string(secret) == vector["derived_key"]
     entropy = to_entropy(secret)
     assert to_hex_string(entropy) == vector["derived_entropy"]
@@ -46,7 +46,7 @@ def test_entropy(vector):
         assert to_hex_string(output) == vector["drng"]
 
 
-@pytest.mark.parametrize("vector", PWD_BASE64)
+@pytest.mark.parametrize("vector", PWD_BASE64, ids=["PWD_BASE64"])
 def test_pwd_base64(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -59,8 +59,8 @@ def test_pwd_base64(vector):
     )
 
 
-@pytest.mark.parametrize("vector", PWD_BASE64)
-@pytest.mark.xfail(reason="wut!? correct password, bad entropy; file to BIP-85")
+@pytest.mark.parametrize("vector", PWD_BASE64, ids=["PWD_BASE64"])
+@pytest.mark.xfail(reason="wut!? correct password, bad entropy; filed to BIP-85")
 def test_pwd_base64_entropy(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -68,7 +68,7 @@ def test_pwd_base64_entropy(vector):
     assert vector["derived_entropy"] == to_hex_string(output["entropy"])
 
 
-@pytest.mark.parametrize("vector", PWD_BASE85)
+@pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
 def test_pwd_base85(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -77,7 +77,11 @@ def test_pwd_base85(vector):
     assert vector["derived_entropy"] == to_hex_string(output["entropy"])
 
 
-@pytest.mark.parametrize("vector", BIP39)
+@pytest.mark.parametrize(
+    "vector",
+    BIP_39,
+    ids=[f"Vector-{i}" for i, e in enumerate(BIP_39)],
+)
 def test_bip39_application(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -90,7 +94,11 @@ def test_bip39_application(vector):
 
 
 @pytest.mark.filterwarnings("ignore:.*184 bits")
-@pytest.mark.parametrize("vector", BIP39)
+@pytest.mark.parametrize(
+    "vector",
+    BIP_39,
+    ids=[f"Vector-{i}" for i, e in enumerate(BIP_39)],
+)
 def test_bip39_application_languages(vector):
     for lang in LANGUAGES:
         n_words = vector["mnemonic_length"]
@@ -103,7 +111,7 @@ def test_bip39_application_languages(vector):
         assert verify_seed_words(words, lang)
 
 
-@pytest.mark.parametrize("vector", HEX)
+@pytest.mark.parametrize("vector", HEX, ids=["HEX"])
 def test_hex(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -111,17 +119,17 @@ def test_hex(vector):
     assert vector["derived_entropy"] == output["application"]
 
 
-@pytest.mark.parametrize("vector", XPRV)
+@pytest.mark.parametrize("vector", XPRV, ids=["XPRV"])
+@pytest.mark.xfail(reason="RSA application not implemented", raises=NotImplementedError)
 def test_rsa_unsupported(vector):
     """currently no support for RSA application.
     path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
     rsa_path = "m/83696968'/828365'/1024'/0'"
     master = parse_ext_key(vector["master"])
-    with pytest.raises(ValueError):
-        apply_85(derive(master, rsa_path), rsa_path)
+    apply_85(derive(master, rsa_path), rsa_path)
 
 
-@pytest.mark.parametrize("vector", WIF)
+@pytest.mark.parametrize("vector", WIF, ids=["WIF"])
 def test_wif(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -130,7 +138,7 @@ def test_wif(vector):
     assert output["application"] == vector["derived_wif"]
 
 
-@pytest.mark.parametrize("vector", XPRV)
+@pytest.mark.parametrize("vector", XPRV, ids=["XPRV"])
 def test_xprv(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
@@ -140,20 +148,23 @@ def test_xprv(vector):
 
 
 def test_private_key_to_wif():
+    """follow the procedure from
+    https://en.bitcoin.it/wiki/Wallet_import_format"""
     pkey_hex = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D"
     pkey = bytes.fromhex(pkey_hex)
     extended = b"\x80" + pkey
     hash1 = sha256(extended).digest()
     hash2 = sha256(hash1).digest()
     checksum = hash2[:4]
-    # they say "Base58Check encoding" but that doesn't mean
-    # b58encode_check because we already have a checksum apparently
+
     wif = base58.b58encode(extended + checksum)
     assert wif.decode("utf-8") == "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
+    # make sure our checksum is the same
+    assert wif == base58.b58encode_check(extended)
 
 
-@pytest.mark.parametrize("vector", DICE)
-def test_rsa_unsupported(vector):
+@pytest.mark.parametrize("vector", DICE, ids=["DICE"])
+def test_dice(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
     output = apply_85(derive(master, path), path)

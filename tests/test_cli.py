@@ -5,7 +5,7 @@ import warnings
 import pytest
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
-from data.bip85_vectors import BIP39, HEX, PWD_BASE85, WIF
+from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
 from bipsea.bipsea import N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
@@ -188,7 +188,7 @@ def test_entropy_n_out_of_range(runner, vector):
             assert "Error" in result.output
 
 
-@pytest.mark.parametrize("vector", BIP39)
+@pytest.mark.parametrize("vector", BIP_39)
 def test_entropy_bip39(runner, vector):
     xprv = vector["master"]
     n_words = vector["mnemonic_length"]

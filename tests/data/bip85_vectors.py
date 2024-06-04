@@ -21,7 +21,7 @@ EXT_KEY_TO_ENTROPY = [
     },
 ]
 
-BIP39 = [
+BIP_39 = [
     {
         "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
         "path": "m/83696968'/39'/0'/12'/0'",

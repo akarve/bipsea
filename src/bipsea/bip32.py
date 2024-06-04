@@ -192,6 +192,7 @@ def CKDpub(
         ).to_string("compressed")
     except MalformedPointError as mal:
         # TODO: Is this in fact how to detect the point at infinity?
+        # or do we get None back?
         raise ValueError(
             f"Invalid key (point at infinity?). Try next child index: {child_number} + 1."
         ) from mal

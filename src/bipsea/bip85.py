@@ -85,19 +85,14 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": " ".join(words),
         }
     elif app == APPLICATIONS["wif"]:
-        # https://en.bitcoin.it/wiki/Wallet_import_format
         trimmed_entropy = entropy[: 256 // 8]
         prefix = b"\x80" if derived_key.get_network() == "mainnet" else b"\xef"
-        suffix = b"\x01"  # use with compressed public keys because BIP32
+        suffix = b"\x01"  # use with compressed public keys because BIP-32
         extended = prefix + trimmed_entropy + suffix
-        hash1 = hashlib.sha256(extended).digest()
-        hash2 = hashlib.sha256(hash1).digest()
-        checksum = hash2[:4]
-        # TODO: question this application and file to BIP-85 because it should be
-        # using the WIF checksum but instead we do one ourselves :/
+
         return {
             "entropy": trimmed_entropy,
-            "application": base58.b58encode(extended + checksum).decode("utf-8"),
+            "application": base58.b58encode_check(extended).decode("utf-8"),
         }
     elif app == APPLICATIONS["xprv"]:
         derived_key = ExtendedKey(
@@ -144,7 +139,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": do_rolls(entropy, sides, rolls, index),
         }
     else:
-        raise ValueError(f"Unsupported application {app}")
+        raise NotImplementedError(f"Unsupported BIP-85 application {app}")
 
 
 def to_entropy(data: bytes) -> bytes:
