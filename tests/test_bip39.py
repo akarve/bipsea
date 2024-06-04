@@ -10,9 +10,7 @@ from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
 from bipsea.bip39 import (
-    N_MNEMONICS,
     N_WORDS_META,
-    WORDS_FILE_HASH,
     entropy_to_words,
     to_master_seed,
     verify_seed_words,
@@ -75,7 +73,7 @@ def test_vectors(language, vectors):
 
 def test_meta():
     """Computed BIP-39 table with ENT, CS, ENT+CS"""
-    for k, v in N_WORDS_META.items():
+    for v in N_WORDS_META.values():
         assert (v["entropy_bits"] % 32) == 0, "Entropy bits must be a multiple of 32"
         assert (
             v["checksum_bits"] == v["entropy_bits"] // 32
@@ -89,7 +87,7 @@ def test_verify_checksum():
     assert not verify_seed_words(correct[:-1] + ["mix"], "english")
 
 
-def test_tprv():
+def test_test_main_pub_prv():
     for net in (True, False):
         for vis in (True, False):
             expected_type = {

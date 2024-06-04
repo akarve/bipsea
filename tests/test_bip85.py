@@ -80,7 +80,7 @@ def test_pwd_base85(vector):
 @pytest.mark.parametrize(
     "vector",
     BIP_39,
-    ids=[f"Vector-{i}" for i, e in enumerate(BIP_39)],
+    ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
 )
 def test_bip39_application(vector):
     master = parse_ext_key(vector["master"])
@@ -94,21 +94,21 @@ def test_bip39_application(vector):
 
 
 @pytest.mark.filterwarnings("ignore:.*184 bits")
+@pytest.mark.parametrize("lang", LANGUAGES, ids=[lang for lang in LANGUAGES])
 @pytest.mark.parametrize(
     "vector",
     BIP_39,
-    ids=[f"Vector-{i}" for i, e in enumerate(BIP_39)],
+    ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
 )
-def test_bip39_application_languages(vector):
-    for lang in LANGUAGES:
-        n_words = vector["mnemonic_length"]
-        master = parse_ext_key(vector["master"])
-        codes = [k for k, v in INDEX_TO_LANGUAGE.items() if v == lang]
-        assert len(codes) == 1
-        path = f"m/83696968'/39'/{codes[0]}/{n_words}'"
-        output = apply_85(derive(master, path), path)
-        words = output["application"].split(" ")
-        assert verify_seed_words(words, lang)
+def test_bip39_application_languages(vector, lang):
+    n_words = vector["mnemonic_length"]
+    master = parse_ext_key(vector["master"])
+    codes = [k for k, v in INDEX_TO_LANGUAGE.items() if v == lang]
+    assert len(codes) == 1
+    path = f"m/83696968'/39'/{codes[0]}/{n_words}'"
+    output = apply_85(derive(master, path), path)
+    words = output["application"].split(" ")
+    assert verify_seed_words(words, lang)
 
 
 @pytest.mark.parametrize("vector", HEX, ids=["HEX"])
