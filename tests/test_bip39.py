@@ -19,7 +19,27 @@ from bipsea.bip39 import (
 )
 from bipsea.util import LOGGER
 
-MNEMONIC_12 = "noodle life devote warm sponsor truck ship safe race noble royal proof"
+MNEMONIC_12 = {
+    "words": [
+        "noodle",
+        "life",
+        "devote",
+        "warm",
+        "sponsor",
+        "truck",
+        "ship",
+        "safe",
+        "race",
+        "noble",
+        "royal",
+        "proof",
+    ],
+    "xprv": "xprv9s21ZrQH143K4CVjMYaXgM1o5Xi1EkZcUpckwUMbjHhpsmu8kAPVsM43S2J6FQw6kzd6noZTcFDtxXhQj7SZ6ix1t81itPJMdNfePGu9JCT",
+    "tprv": "tprv8ZgxMBicQKsPf1jG27S2qzdnPf8DUGbcpNXsotn4DGCJfNeDjXjFP6RVMCTkFnKR8S9snuBDmbohRPF9rKnVunDcQmE2Yk2QYUR4q3gMjaR",
+    "xpub": "xpub661MyMwAqRbcGgaCTa7Y3UxXdZYVeDHTr3YMjrmDHdEokaEHHhhkR9NXHHQ7Jjq9HK3xxpey7Jnsjx649ydXvTbXp2eyBzzz8HromKbw1PR",
+    "tpub": "tpubD6NzVbkrYhZ4YUm3um6dFQHtxge9dbnXPg8f6QpMdXzhVrtzMvYqZb3MXKUtqEnP5DasaQAqeQcvS8afYqUmou3psdQGsXfDiFTDXJYhpKp",
+}
+
 
 logger = logging.getLogger(LOGGER)
 
@@ -29,14 +49,28 @@ logger = logging.getLogger(LOGGER)
 )
 def test_vectors(language, vectors):
     for vector in vectors:
-        _, mnemonic, seed, xprv = vector
+        entropy_str, mnemonic, seed, xprv = vector
+        expected_words = re.split(r"\s+", mnemonic)
         expected_seed = bytes.fromhex(seed)
-        expected_words = re.split(r"\s", mnemonic)
+
         computed_seed = to_master_seed(expected_words, passphrase="TREZOR")
         assert expected_seed == computed_seed
+        # changing passphrase changes seed
         assert computed_seed != to_master_seed(expected_words, passphrase="TREZOr")
+
+        entropy_bytes = bytes.fromhex(entropy_str)
         computed_xprv = to_master_key(expected_seed, mainnet=True, private=True)
         assert str(computed_xprv) == xprv
+
+        with warnings.catch_warnings():
+            # some test vectors are all 0 which we consider weak entropy
+            if all(b == 0 for b in entropy_bytes):
+                warnings.simplefilter("ignore")
+            computed_words = entropy_to_words(
+                len(expected_words), entropy_bytes, language
+            )
+        assert expected_words == computed_words
+        assert verify_seed_words(computed_words, language)
 
 
 def test_meta():
@@ -49,41 +83,22 @@ def test_meta():
 
 
 def test_verify_checksum():
-    correct = MNEMONIC_12.split(" ")
-    assert verify_seed_words("english", correct)
-    assert not verify_seed_words("english", correct[:-1])
-    assert not verify_seed_words("english", correct[:-1] + ["mix"])
+    correct = MNEMONIC_12["words"]
+    assert verify_seed_words(correct, "english")
+    assert not verify_seed_words(correct[:-1], "english")
+    assert not verify_seed_words(correct[:-1] + ["mix"], "english")
 
 
-@pytest.mark.parametrize(
-    "language, vectors", VECTORS.items(), ids=[l for l in VECTORS.keys()]
-)
-def test_seed_word_generation(language, vectors):
-    for vector in vectors:
-        entropy_str, mnemonic = vector[:2]
-        if language == "english":
-            expected_words = re.split(r"\s", mnemonic)
-            entropy_bytes = bytes.fromhex(entropy_str)
-            if all(b == 0 for b in entropy_bytes):
-                warnings.simplefilter("ignore")
-            computed_words = entropy_to_words(
-                len(expected_words), user_entropy=entropy_bytes
-            )
-            assert expected_words == computed_words
-            assert verify_seed_words("english", computed_words)
-        else:
-            pytest.skip(f"{language} generation not supported")
-
-
-@pytest.mark.network
-def test_our_words_vs_github_network_request():
-    """make sure we match github"""
-    url = "https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt"
-    response = requests.get(url)
-    wordlist = response.text.split()
-    assert all(is_normalized("NFKD", w) for w in wordlist)
-    assert len(wordlist) == N_MNEMONICS
-    response_hash = hashlib.sha256(response.content).hexdigest()
-    assert (
-        response_hash == WORDS_FILE_HASH
-    ), f"Hash mismatch: {response_hash} != {WORDS_FILE_HASH}"
+def test_tprv():
+    for net in (True, False):
+        for vis in (True, False):
+            expected_type = {
+                (True, True): "xprv",
+                (True, False): "xpub",
+                (False, True): "tprv",
+                (False, False): "tpub",
+            }[(net, vis)]
+            seed = to_master_seed(MNEMONIC_12["words"], "")
+            prv = str(to_master_key(seed, mainnet=net, private=vis))
+            assert prv == MNEMONIC_12[expected_type]
+            assert prv.startswith(expected_type)

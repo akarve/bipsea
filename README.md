@@ -12,16 +12,15 @@ bipsea offers a command-line interface and an API.
 **bipsea is currently for experimental purposes only.**
 
 bipsea relies on cryptographic primitives from Python
-and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module.
-bipsea is therefore also
-[vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
+and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module, which
+is [vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
 bipsea does not rely on third-party libraries from any wallet vendor.
 
 You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
 and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
-never has network access, and disables
+has networking disabled, and disables
 [Intel Management Engine](https://support.system76.com/articles/intel-me/)
-and other possible backdoors.
+and other possible hardware backdoors.
 
 # How is this useful?
 
@@ -107,11 +106,11 @@ private key are exposed, the parent private key remains secure.
 
 ## How do I know the bipsea implementation is correct?
 
-bipsea passes all BIP-32, BIP-39 and BIP-85 test vectors plus its own unit tests
-with the following provisos:
-* Only generates and checks BIP-39 seed phrases in the English language
-* A [mistake in one BIP-85 test vector](https://github.com/bitcoin/bips/pull/1600)
-that xfails.
+bipsea passes all BIP-32, BIP-39, and BIP-85 test vectors in all BIP-39 languages
+and further passes its own unit tests.
+
+There is a single BIP-85 vector, part of which xfails.
+We have filed this issue to BIP-85 [here](https://github.com/bitcoin/bips/pull/1600).
 
 Run `make test` for details.
 

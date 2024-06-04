@@ -10,6 +10,7 @@ import click
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key
 from .bip39 import (
+    LANGUAGES,
     N_WORDS_ALLOWED,
     entropy_to_words,
     normalize_list,
@@ -27,7 +28,6 @@ from .bip85 import (
     to_entropy,
 )
 from .util import (
-    ASCII_INPUTS,
     LOGGER,
     MIN_REL_ENTROPY,
     __app_name__,
@@ -48,7 +48,6 @@ SEED_TO_VALUES = [
 TIMEOUT = 0.1
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
-N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
 
 
 logger = logging.getLogger(LOGGER)
@@ -86,6 +85,7 @@ def cli():
     "--number",
     default="24",
     type=click.Choice(N_WORDS_ALLOWED_STR),
+    help="|".join(N_WORDS_ALLOWED_STR),
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
@@ -100,7 +100,14 @@ def cli():
     default=True,
     help="Require BIP-39 English words & valid checksum from `--input`",
 )
-def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
+@click.option(
+    "-l",
+    "--language",
+    default="english",
+    type=click.Choice([str(k) for k in LANGUAGES.keys()]),
+    help="|".join(LANGUAGES.keys()),
+)
+def bip39_cmd(from_, input, to, number, passphrase, pretty, strict, language):
     number = int(number)
     input = input.strip() if input else input
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
@@ -116,7 +123,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
             )
         words = normalize_list(re.split(r"\s+", input), lower=True)
         if strict:
-            if not verify_seed_words("english", words):
+            if not verify_seed_words(words, language):
                 raise click.BadParameter(
                     f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
                     param_hint="--input",
@@ -134,7 +141,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
                 )
     else:  # from_ == rand
         entropy = None
-        words = entropy_to_words(number, entropy)
+        words = entropy_to_words(number, entropy, language)
 
     if to == "words":
         if pretty:
@@ -154,6 +161,8 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict):
         # for compatibility with foreign languages but is it really what we should
         # do for the general case of arbitrary secrets?
         # if so then not space is not that significant... :/
+        # TODO: probably right thing to do is give the higher of the space or strgin
+        # score
         seed = to_master_seed(words, passphrase)
         prv = to_master_key(seed, mainnet=to == "xprv", private=True)
 

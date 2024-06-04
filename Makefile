@@ -1,8 +1,8 @@
-.PHONY: all build check clean git-branch git-unsaved install install-dev install-go
-.PHONY: lint publish push readme-cmds test test-network uninstall-dev
+.PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
+.PHONY: install-go lint publish push readme-cmds test test-network uninstall-dev
 
-build: clean check test
-	python -m build
+build: clean check test download-wordlists
+	python3 -m build
 
 clean:
 	find . -type d -name '__pycache__' -exec rm -rf {} +
@@ -13,7 +13,7 @@ check:
 	isort . --check
 
 install:
-	pip install -r requirements.txt -r test-requirements.txt
+	pip install -r requirements.txt -r tst-requirements.txt
 
 install-dev: uninstall-dev
 	pip install -e .
@@ -32,40 +32,36 @@ lint:
 	actionlint
 	checkmake Makefile
 
-publish: build git-unsaved git-main
+publish: build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
-push: lint check test git-branch git-unsaved
+push: lint check test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
 test: readme-cmds
-	pytest tests -m "not network" -sx
+	pytest -vsx
 
-test-network:
-	pytest tests
-
-git-branch:
+git-off-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" = "main" ]; then \
 		echo "Cowardly refusing push from main."; \
 		exit 1; \
 	fi
 
-git-main:
+git-on-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" != "main" ]; then \
 		echo "Must be on main branch."; \
 		exit 1; \
 	fi
 
-git-unsaved:
+git-no-unsaved:
 	@if ! git diff --quiet; then \
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
 	fi
-
 
 readme-cmds:
 	bipsea seed -t words -n 12 --pretty
@@ -79,3 +75,10 @@ readme-cmds:
 	bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10 -i 1
 	bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
 	bipsea seed -t xprv | bipsea entropy -a drng -n 10
+
+GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
+FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \
+         french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt
+
+download-wordlists:
+	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)

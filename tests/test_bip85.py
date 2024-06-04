@@ -15,7 +15,15 @@ from data.bip85_vectors import (
 )
 
 from bipsea.bip32types import parse_ext_key
-from bipsea.bip85 import DRNG, apply_85, derive, to_entropy, to_hex_string
+from bipsea.bip39 import LANGUAGES, verify_seed_words
+from bipsea.bip85 import (
+    DRNG,
+    INDEX_TO_LANGUAGE,
+    apply_85,
+    derive,
+    to_entropy,
+    to_hex_string,
+)
 from bipsea.util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
@@ -70,13 +78,29 @@ def test_pwd_base85(vector):
 
 
 @pytest.mark.parametrize("vector", BIP39)
-def test_bip39(vector):
+def test_bip39_application(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    assert len(output["application"].split(" ")) == vector["mnemonic_length"]
+    words = output["application"].split(" ")
+    assert len(words) == vector["mnemonic_length"]
     assert output["application"] == vector["derived_mnemonic"]
+    assert verify_seed_words(words, "english")
+
+
+@pytest.mark.filterwarnings("ignore:.*184 bits")
+@pytest.mark.parametrize("vector", BIP39)
+def test_bip39_application_languages(vector):
+    for lang in LANGUAGES:
+        n_words = vector["mnemonic_length"]
+        master = parse_ext_key(vector["master"])
+        codes = [k for k, v in INDEX_TO_LANGUAGE.items() if v == lang]
+        assert len(codes) == 1
+        path = f"m/83696968'/39'/{codes[0]}/{n_words}'"
+        output = apply_85(derive(master, path), path)
+        words = output["application"].split(" ")
+        assert verify_seed_words(words, lang)
 
 
 @pytest.mark.parametrize("vector", HEX)
@@ -113,10 +137,6 @@ def test_xprv(vector):
     output = apply_85(derive(master, path), path)
     assert vector["derived_key"] == output["application"]
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-
-
-def test_private_key_to_wif():
-    """https://en.bitcoin.it/wiki/Wallet_import_format"""
 
 
 def test_private_key_to_wif():

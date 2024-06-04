@@ -5,19 +5,64 @@ import logging
 import secrets
 import warnings
 from hashlib import pbkdf2_hmac
-from importlib import resources
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files  # for Python 3.8
+
 from typing import List
 from unicodedata import normalize
 
-import click
-
-from .util import LOGGER
+from .util import LOGGER, __app_name__
 
 logger = logging.getLogger(LOGGER)
 
 
-# https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
-WORDS_FILE_NAME = "english.txt"
+# https://github.com/bitcoin/bips/tree/master/bip-0039
+LANGUAGES = {
+    "chinese_simplified": {
+        "file": "chinese_simplified.txt",
+        "hash": "5c5942792bd8340cb8b27cd592f1015edf56a8c5b26276ee18a482428e7c5726",
+    },
+    "chinese_traditional": {
+        "file": "chinese_traditional.txt",
+        "hash": "417b26b3d8500a4ae3d59717d7011952db6fc2fb84b807f3f94ac734e89c1b5f",
+    },
+    "czech": {
+        "file": "czech.txt",
+        "hash": "7e80e161c3e93d9554c2efb78d4e3cebf8fc727e9c52e03b83b94406bdcc95fc",
+    },
+    "english": {
+        "file": "english.txt",
+        "hash": "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda",
+    },
+    "french": {
+        "file": "french.txt",
+        "hash": "ebc3959ab7801a1df6bac4fa7d970652f1df76b683cd2f4003c941c63d517e59",
+    },
+    "italian": {
+        "file": "italian.txt",
+        "hash": "d392c49fdb700a24cd1fceb237c1f65dcc128f6b34a8aacb58b59384b5c648c2",
+    },
+    "japanese": {
+        "file": "japanese.txt",
+        "hash": "2eed0aef492291e061633d7ad8117f1a2b03eb80a29d0e4e3117ac2528d05ffd",
+    },
+    "korean": {
+        "file": "korean.txt",
+        "hash": "9e95f86c167de88f450f0aaf89e87f6624a57f973c67b516e338e8e8b8897f60",
+    },
+    "portuguese": {
+        "file": "portuguese.txt",
+        "hash": "2685e9c194c82ae67e10ba59d9ea5345a23dc093e92276fc5361f6667d79cd3f",
+    },
+    "spanish": {
+        "file": "spanish.txt",
+        "hash": "46846a5a0139d1e3cb77293e521c2865f7bcdb82c44e8d0a06a2cd0ecba48c0b",
+    },
+}
+
 WORDS_FILE_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
 
 N_MNEMONICS = 2048
@@ -33,7 +78,7 @@ N_WORDS_META = {
 }
 
 
-def entropy_to_words(n_words: int, user_entropy: bytes):
+def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
     """If caller does not provide entropy use secrets.randbits
     * Only produces seed words in English"""
     if n_words not in N_WORDS_ALLOWED:
@@ -63,7 +108,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes):
     )
     int_entropy_cs = (int_entropy << n_checksum_bits) + int_checksum  # shift CS bits in
 
-    dictionary = bip39_english_words()
+    dictionary = bip39_words(language)
     swords = []
     mask_11 = N_MNEMONICS - 1
     for _ in range(n_words):
@@ -77,16 +122,14 @@ def entropy_to_words(n_words: int, user_entropy: bytes):
     return swords
 
 
-def verify_seed_words(language, words: List[str]) -> bool:
+def verify_seed_words(words: List[str], language: str) -> bool:
     """verify the seed words are in the english bip-39 dict and have the right checksum"""
-    if language != "english":
-        raise NotImplementedError(f"{language} not supported")
     n_words = len(words)
 
     if n_words not in N_WORDS_ALLOWED:
         return False
 
-    universe = bip39_english_words()
+    universe = bip39_words(language)
     if not all(w in universe for w in words):
         return False
 
@@ -105,18 +148,24 @@ def verify_seed_words(language, words: List[str]) -> bool:
     return checksum == int_checksum
 
 
-def bip39_english_words(file_name=WORDS_FILE_NAME) -> List[str]:
+def bip39_words(language) -> List[str]:
+    if language not in LANGUAGES:
+        raise ValueError(f"Unexpected language: {language}")
+    file_name = LANGUAGES[language]["file"]
     """Returns a list of BIP39 English words."""
-    with resources.open_text("bipsea", file_name) as f:
+    list_path = files(__app_name__) / "wordlists" / file_name
+    with list_path.open("r") as f:
         raw = f.read()
     file_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
-    assert file_hash == WORDS_FILE_HASH, f"unexpected contents in {file_name}"
-    dictionary = raw.splitlines()
     assert (
-        len(dictionary) == N_MNEMONICS == len(set(dictionary))
+        file_hash == LANGUAGES[language]["hash"]
+    ), f"unexpected contents in {file_name}"
+    word_list = raw.splitlines()
+    assert (
+        len(word_list) == N_MNEMONICS == len(set(word_list))
     ), "expected {} unique words".format(N_MNEMONICS)
 
-    return dictionary
+    return word_list
 
 
 def normalize_str(input: str, lower=False):
