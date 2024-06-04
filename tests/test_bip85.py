@@ -32,7 +32,7 @@ logger = logging.getLogger(LOGGER)
 @pytest.mark.parametrize(
     "vector",
     EXT_KEY_TO_ENTROPY,
-    ids=[f"Vector-{i + 1}" for i, e in enumerate(EXT_KEY_TO_ENTROPY)],
+    ids=[f"ext_ent-{i}" for i in range(len(EXT_KEY_TO_ENTROPY))],
 )
 def test_entropy(vector):
     master = parse_ext_key(vector["master"])
@@ -80,7 +80,7 @@ def test_pwd_base85(vector):
 @pytest.mark.parametrize(
     "vector",
     BIP_39,
-    ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
+    ids=[f"BIP_39-{v['mnemonic_length']}" for v in BIP_39],
 )
 def test_bip39_application(vector):
     master = parse_ext_key(vector["master"])
@@ -98,7 +98,7 @@ def test_bip39_application(vector):
 @pytest.mark.parametrize(
     "vector",
     BIP_39,
-    ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
+    ids=[f"BIP_39-{v['mnemonic_length']}" for v in BIP_39],
 )
 def test_bip39_application_languages(vector, lang):
     n_words = vector["mnemonic_length"]
@@ -121,7 +121,7 @@ def test_hex(vector):
 
 @pytest.mark.parametrize("vector", XPRV, ids=["XPRV"])
 @pytest.mark.xfail(reason="RSA application not implemented", raises=NotImplementedError)
-def test_rsa_unsupported(vector):
+def test_rsa_unimplemented(vector):
     """currently no support for RSA application.
     path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
     rsa_path = "m/83696968'/828365'/1024'/0'"

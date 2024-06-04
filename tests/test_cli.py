@@ -17,7 +17,7 @@ MNEMONIC_12 = {
     "xprv": (
         "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF"
         "2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
-    )
+    ),
 }
 
 
@@ -83,7 +83,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
                 assert result_xprv == xprv
 
 
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED)
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
 def test_seed_command_from_rand(runner, n):
     for style in ("--not-pretty", "--pretty"):
         cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
@@ -145,7 +145,8 @@ def test_seed_bad_to(runner):
 
 def test_bipsea_integration(runner):
     result_seed = runner.invoke(
-        cli, ["seed", "-f", "words", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"]
+        cli,
+        ["seed", "-f", "words", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"],
     )
     xprv = result_seed.output.strip()
     assert xprv == MNEMONIC_12["xprv"]

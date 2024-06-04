@@ -14,9 +14,7 @@ logger = logging.getLogger(LOGGER)
 @pytest.mark.parametrize(
     "vector",
     VECTORS,
-    ids=[
-        f"Vector-{i + 1}-{', '.join(e['chain'].keys())}" for i, e in enumerate(VECTORS)
-    ],
+    ids=lambda v: f"Vector-{VECTORS.index(v) + 1}-{' '.join(v['chain'].keys())}",
 )
 def test_vectors_and_parse_ext_key(vector):
     seed = bytes.fromhex(vector["seed_hex"])

@@ -42,9 +42,7 @@ MNEMONIC_12 = {
 logger = logging.getLogger(LOGGER)
 
 
-@pytest.mark.parametrize(
-    "language, vectors", VECTORS.items(), ids=[l for l in VECTORS.keys()]
-)
+@pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
 def test_vectors(language, vectors):
     for vector in vectors:
         entropy_str, mnemonic, seed, xprv = vector
