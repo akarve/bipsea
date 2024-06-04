@@ -1,11 +1,10 @@
 import logging
 import random
-import warnings
 
 import pytest
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
-from data.bip85_vectors import BIP39, HEX, PWD_BASE85, WIF
+from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
 from bipsea.bipsea import N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
@@ -13,11 +12,13 @@ from bipsea.util import ASCII_INPUTS, LOGGER
 logger = logging.getLogger(LOGGER)
 
 
-MNEMONIC_12 = "punch man spread gap size struggle clean crouch cloth swear erode fan"
-MNEMONIC_12_XPRV = (
-    "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF"
-    "2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
-)
+MNEMONIC_12 = {
+    "words": "punch man spread gap size struggle clean crouch cloth swear erode fan",
+    "xprv": (
+        "xprv9s21ZrQH143K417dJYmPr6Qmy2t61xrKtDCCL3Cec4NMFFFRZTF"
+        "2jSbtqSXpuCz8UqgsuyrPC5wngx3dk5Gt8zQnbnHVAsMyb7bWtHZ95Jk"
+    ),
+}
 
 
 @pytest.fixture
@@ -25,7 +26,7 @@ def runner():
     return CliRunner()
 
 
-@pytest.mark.parametrize("language, vectors", VECTORS.items())
+@pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
 def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
@@ -56,7 +57,7 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
             assert last == xprv
 
 
-@pytest.mark.parametrize("language, vectors", VECTORS.items())
+@pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
 def test_seed_option_sensitivity(runner, language, vectors):
     """prove that meaningful passphrase mnemonic changes change the xprv
     (but white space after the mnemonic doesn't)"""
@@ -82,7 +83,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
                 assert result_xprv == xprv
 
 
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED)
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
 def test_seed_command_from_rand(runner, n):
     for style in ("--not-pretty", "--pretty"):
         cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
@@ -94,7 +95,7 @@ def test_seed_command_from_rand(runner, n):
         assert result.exit_code == 0
 
 
-def test_seed_command_from_str(runner):
+def test_seed_command_from_custom_words(runner):
     lengths = {"short": 5, "enough": 42}
     base = ["seed", "-t", "xprv", "--not-strict"]
     for k, v in lengths.items():
@@ -144,10 +145,11 @@ def test_seed_bad_to(runner):
 
 def test_bipsea_integration(runner):
     result_seed = runner.invoke(
-        cli, ["seed", "-f", "words", "-u", MNEMONIC_12, "-n", "12", "-t", "xprv"]
+        cli,
+        ["seed", "-f", "words", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"],
     )
     xprv = result_seed.output.strip()
-    assert xprv == MNEMONIC_12_XPRV
+    assert xprv == MNEMONIC_12["xprv"]
     assert result_seed.exit_code == 0
     result_entropy = runner.invoke(
         cli, ["entropy", "-a", "base64", "-n", "20", "--input", xprv]
@@ -158,7 +160,7 @@ def test_bipsea_integration(runner):
     assert len(pwd64) == 20
 
 
-@pytest.mark.parametrize("vector", PWD_BASE85)
+@pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
 def test_entropy_n(runner, vector):
     xprv = vector["master"]
     for app in ("base64", "base85", "hex", "drng"):
@@ -174,7 +176,7 @@ def test_entropy_n(runner, vector):
             assert length == n
 
 
-@pytest.mark.parametrize("vector", PWD_BASE85)
+@pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
 def test_entropy_n_out_of_range(runner, vector):
     xprv = vector["master"]
     for app in ("base64", "base85", "hex", "drng"):
@@ -188,7 +190,11 @@ def test_entropy_n_out_of_range(runner, vector):
             assert "Error" in result.output
 
 
-@pytest.mark.parametrize("vector", BIP39)
+@pytest.mark.parametrize(
+    "vector",
+    BIP_39,
+    ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
+)
 def test_entropy_bip39(runner, vector):
     xprv = vector["master"]
     n_words = vector["mnemonic_length"]
@@ -199,7 +205,7 @@ def test_entropy_bip39(runner, vector):
     assert result.output.strip() == vector["derived_mnemonic"]
 
 
-@pytest.mark.parametrize("vector", HEX)
+@pytest.mark.parametrize("vector", HEX, ids=["HEX"])
 def test_entropy_hex(runner, vector):
     xprv = vector["master"]
     result = runner.invoke(cli, ["entropy", "-a", "hex", "--input", xprv, "-n", 64])
@@ -207,7 +213,7 @@ def test_entropy_hex(runner, vector):
     assert result.output.strip() == vector["derived_entropy"]
 
 
-@pytest.mark.parametrize("vector", WIF)
+@pytest.mark.parametrize("vector", WIF, ids=["WIF"])
 def test_entropy_wif(runner, vector):
     xprv = vector["master"]
     result = runner.invoke(cli, ["entropy", "-a", "wif", "--input", xprv])

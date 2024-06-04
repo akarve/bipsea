@@ -161,7 +161,7 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict, language):
         # for compatibility with foreign languages but is it really what we should
         # do for the general case of arbitrary secrets?
         # if so then not space is not that significant... :/
-        # TODO: probably right thing to do is give the higher of the space or strgin
+        # * probably right thing to do is give the higher of the space or string
         # score
         seed = to_master_seed(words, passphrase)
         prv = to_master_key(seed, mainnet=to == "xprv", private=True)
