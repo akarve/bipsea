@@ -178,18 +178,16 @@ def test_entropy_n(runner, vector):
             assert length == n
 
 
+@pytest.mark.parametrize("app", ["base64", "base85", "hex", "drng"])
 @pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
-def test_entropy_n_out_of_range(runner, vector):
+def test_entropy_n_out_of_range(runner, vector, app):
     xprv = vector["master"]
-    for app in ("base64", "base85", "hex", "drng"):
-        for n in (-1, 0, 1025):
-            if n == 1025 and app == "drng":
-                break
-            result = runner.invoke(
-                cli, ["entropy", "-a", app, "-n", n, "--input", xprv]
-            )
-            assert result.exit_code != 0
-            assert "Error" in result.output
+    for n in (-1, 0, 1025):
+        if n == 1025 and app == "drng":
+            break
+        result = runner.invoke(cli, ["entropy", "-a", app, "-n", n, "--input", xprv])
+        assert result.exit_code != 0
+        assert "Error" in result.output
 
 
 @pytest.mark.parametrize(
@@ -204,7 +202,19 @@ def test_entropy_bip39(runner, vector):
         cli, ["entropy", "-a", "words", "--input", xprv, "-n", n_words]
     )
     assert result.exit_code == 0
-    assert result.output.strip() == vector["derived_mnemonic"]
+    words = result.output.strip()
+    assert words == vector["derived_mnemonic"]
+
+
+@pytest.mark.parametrize("iso", [v["code"] for v in LANGUAGES.values()])
+def test_entropy_bip39_languages(runner, iso):
+    xprv = MNEMONIC_12["xprv"]
+    result = runner.invoke(
+        cli, ["entropy", "-a", "words", "--input", xprv, "-n", 12, "-t", iso]
+    )
+    assert result.exit_code == 0
+    words = result.output.strip()
+    assert verify_seed_words(words.split(" "), ISO_TO_LANGUAGE[iso])
 
 
 @pytest.mark.parametrize("vector", HEX, ids=["HEX"])
