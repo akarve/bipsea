@@ -131,7 +131,7 @@ bipsea --help
 ### New seed words
 
 ```sh
-bipsea seed -t words -n 12 --pretty
+bipsea seed -t eng -n 12 --pretty
 ```
     1) crumble
     2) shallow
@@ -150,7 +150,7 @@ bipsea seed -t words -n 12 --pretty
 ### xprv from existing seed words
 
 ```
-bipsea seed -f words -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
+bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
 ```
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
@@ -162,7 +162,7 @@ list and have a valid checksum.
 ## xprv from dice rolls (or any string)
 
 ```
-bipsea seed -f words -u "123456123456123456" --not-strict
+bipsea seed -f any -u "123456123456123456"
 ```
 
     Warning: Relative entropy of input seems low (0.18). Consider more complex --input.
@@ -171,7 +171,7 @@ bipsea seed -f words -u "123456123456123456" --not-strict
 You can even load the input from a file.
 
 ```
-bipsea seed -f words -u "$(cat README.md)" --not-strict
+bipsea seed -f any -u "$$(cat README.md)"
 ```
 
 If you are now thinking, _I could use any string to derive a master key_,
@@ -202,14 +202,14 @@ Of course the above is not reproducible (because `bipsea seed` defaults to a ran
 seed), but you can provide a fixed master secret for consistent derivations.
 
 ```
-bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
+bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
 ```
     medal air cube edit offer pair source promote wrap pretty rare when
 
 Append `-i 1` (the next index above the default of `-i 0`) for new words.
 
 ```
-bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
+bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
 ```
 
     run sea prison modify december any pottery melody aspect hero loan gown
@@ -220,14 +220,14 @@ And so on for millions of possible child indexes.
 ### base64 password
 
 ```
-bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10
+bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
 ```
     pdHd=DQk9z
 
 Increment the child index for a unique fresh secret.
 
 ```
-bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10 -i 1
+bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
 ```
     W>SGVF(=V6
 

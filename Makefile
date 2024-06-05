@@ -65,17 +65,20 @@ git-no-unsaved:
 	fi
 
 readme-cmds:
-	bipsea seed -t words -n 12 --pretty
-	bipsea seed -f words -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
-	bipsea seed -f words -u "123456123456123456" --not-strict
-	bipsea seed -f words -u "$$(cat README.md)" --not-strict
+	bipsea --help
+	bipsea seed --help
+	bipsea entropy --help
+	bipsea seed -t eng -n 12 --pretty
+	bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
+	bipsea seed -f any -u "123456123456123456"
+	bipsea seed -f any -u "$$(cat README.md)"
 	bipsea seed | bipsea entropy
-	bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
-	bipsea seed -f words -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
-	bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10
-	bipsea seed -f words -u "satoshi nakamoto" --not-strict | bipsea entropy -a base85 -n 10 -i 1
+	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
+	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
+	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
+	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
 	bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
-	bipsea seed -t xprv | bipsea entropy -a drng -n 10
+	bipsea seed -t xprv | bipsea entropy -a drng -n 100
 
 GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
 FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \
