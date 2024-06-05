@@ -83,7 +83,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
 def test_seed_command_from_rand(runner, n, code):
     for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", code, "-n", str(n), "-f", "rand"]
+        cmd = ["seed", "-t", code, "-n", str(n), "-f", "random"]
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()

@@ -39,10 +39,9 @@ from .util import (
 
 ISO_TO_LANGUAGE = {v["code"]: k for k, v in LANGUAGES.items()}
 
-
 SEED_FROM_VALUES = [
     "any",
-    "rand",
+    "random",
 ] + list(ISO_TO_LANGUAGE.keys())
 
 
@@ -68,41 +67,50 @@ def cli():
     pass
 
 
-@click.command(name="seed", help="Generates BIP-32 extended private keys or BIP-39 mnemonics.")
+@click.command(
+    name="seed", help="Generates a BIP-32 extended private key or a BIP-39 mnemonic."
+)
 @click.option(
     "-f",
     "--from",
     "from_",
     type=click.Choice(SEED_FROM_VALUES),
-    help="Mnemonic input format. 'any' skips validation, 'rand' makes a fresh phrase, language validates against the BIP-39 wordlist.",
-    default="rand",
+    help=(
+        "Mnemonic input format. 'any' skips validation, 'random' makes a fresh phrase, "
+        "'ISO_CODE' validates `--input` against a BIP-39 wordlist."
+    ),
+    default="random",
 )
 @click.option(
     "-t",
     "--to",
     type=click.Choice(SEED_TO_VALUES),
     default="xprv",
-    help="Output format. 'tprv', 'xprv', or mnemonic language.",
+    help="Output format. 'tprv', 'xprv', or 'ISO_CODE' for the mnemonic.",
 )
-@click.option("-u", "--input", help="Mnemonic phrase, usually space-separated, in the language given by --from.")
+@click.option(
+    "-u",
+    "--input",
+    help="Mnemonic phrase, usually space-separated, in the format specified by --from.",
+)
 @click.option(
     "-n",
     "--number",
     default="24",
     type=click.Choice(N_WORDS_ALLOWED_STR),
-    help="Number of words.",
+    help="Number of mnemonic words.",
 )
-@click.option("-p", "--passphrase", default="")
+@click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option(
     "--pretty/--not-pretty",
     is_flag=True,
     default=False,
-    help="Number mnemonic words, each on its own lines.",
+    help="Print a number before, and a newline after, each mnemonic word.",
 )
 def bip39_cmd(from_, to, input, number, passphrase, pretty):
     input = input.strip() if input else input
     number = int(number)
-    if (from_ == "rand" and input) or (from_ != "rand" and not input):
+    if (from_ == "random" and input) or (from_ != "random" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
             message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
@@ -164,7 +172,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
 cli.add_command(bip39_cmd)
 
 
-@click.command(name="entropy", help="Derives secrets according to BIP-85.")
+@click.command(name="entropy", help="Derives a secret according to BIP-85.")
 @click.option(
     "-a",
     "--application",
@@ -201,7 +209,7 @@ cli.add_command(bip39_cmd)
     "-t",
     "--to",
     type=click.Choice(ENTROPY_TO_VALUES),
-    help="Output language for `--application words`.",
+    help="Mnemonic language for `--application words`.",
 )
 def bip85_cmd(application, number, index, special, input, to):
     if not input:
@@ -287,14 +295,14 @@ def check_range(number: int, application: str):
     if not (min <= number <= max):
         raise click.BadOptionUsage(
             option_name="--number",
-            message=f"out of range; try [{min}, {max}] for {application}",
+            message=f"--number out of range. Try [{min}, {max}] for {application}.",
         )
 
 
 def no_prv():
     raise click.BadOptionUsage(
         option_name="--input",
-        message="Missing xprv or tprv from pipe or --input. Try `bipsea seed | bipsea entropy`",
+        message="Missing xprv or tprv from pipe or --input. Try `bipsea seed | bipsea entropy`.",
     )
 
 
