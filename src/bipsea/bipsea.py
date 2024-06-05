@@ -137,7 +137,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
 
     if to in ISO_TO_LANGUAGE.keys():
         if pretty:
-            output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
+            output = "\n".join(f"{i + 1}) {w}" for i, w in enumerate(words))
         else:
             output = " ".join(words)
 
