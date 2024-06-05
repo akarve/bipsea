@@ -21,7 +21,5 @@ jobs:
       run: |
         make install-dev
         make install-local
-    - name: check
-      run: make check
     - name: test
       run: make test

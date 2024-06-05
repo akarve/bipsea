@@ -72,7 +72,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
             result = runner.invoke(cli, cmd)
             if suffix == ".":
                 assert result.exit_code != 0
-                assert "Unexpected" in result.output
+                assert lang_code in result.output
             else:
                 assert result.exit_code == 0
                 result_xprv = result.output.strip().split("\n")[-1]
@@ -83,7 +83,7 @@ def test_seed_option_sensitivity(runner, language, vectors):
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
 def test_seed_command_from_rand(runner, n, code):
     for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", code, "-n", str(n), "-f", "rand"]
+        cmd = ["seed", "-t", code, "-n", str(n), "-f", "random"]
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()
@@ -199,7 +199,7 @@ def test_entropy_bip39(runner, vector):
     xprv = vector["master"]
     n_words = vector["mnemonic_length"]
     result = runner.invoke(
-        cli, ["entropy", "-a", "words", "--input", xprv, "-n", n_words]
+        cli, ["entropy", "-a", "mnemonic", "--input", xprv, "-n", n_words]
     )
     assert result.exit_code == 0
     words = result.output.strip()
@@ -210,7 +210,7 @@ def test_entropy_bip39(runner, vector):
 def test_entropy_bip39_languages(runner, iso):
     xprv = MNEMONIC_12["xprv"]
     result = runner.invoke(
-        cli, ["entropy", "-a", "words", "--input", xprv, "-n", 12, "-t", iso]
+        cli, ["entropy", "-a", "mnemonic", "--input", xprv, "-n", 12, "-t", iso]
     )
     assert result.exit_code == 0
     words = result.output.strip()
