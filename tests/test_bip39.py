@@ -1,18 +1,27 @@
+import hashlib
 import logging
 import re
 import warnings
 
 import pytest
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files  # for Python 3.8
+
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
 from bipsea.bip39 import (
+    LANGUAGES,
+    N_MNEMONICS,
     N_WORDS_META,
     entropy_to_words,
     to_master_seed,
     verify_seed_words,
 )
-from bipsea.util import LOGGER
+from bipsea.util import LOGGER, __app_name__
 
 MNEMONIC_12 = {
     "words": [
@@ -95,3 +104,19 @@ def test_test_main_pub_prv():
             prv = str(to_master_key(seed, mainnet=net, private=vis))
             assert prv == MNEMONIC_12[expected_type]
             assert prv.startswith(expected_type)
+
+
+@pytest.mark.parametrize("language", LANGUAGES.keys())
+def test_wordlists(language):
+    file_name = LANGUAGES[language]["file"]
+    list_path = files(__app_name__) / "wordlists" / file_name
+    with list_path.open("r") as f:
+        raw = f.read()
+    file_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    assert (
+        file_hash == LANGUAGES[language]["hash"]
+    ), f"unexpected contents in {file_name}"
+    word_list = raw.splitlines()
+    assert (
+        len(word_list) == N_MNEMONICS == len(set(word_list))
+    ), f"expected {N_MNEMONICS} unique words"
