@@ -72,7 +72,7 @@ readme-cmds:
 	bipsea seed -t jpn -n 15
 	bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
 	bipsea seed -f any -u "123456123456123456"
-	bipsea seed -f any -u "$$(cat README.md)"
+	bipsea seed -f any -u "$$(cat input.txt)"
 	bipsea seed | bipsea entropy
 	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
 	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1

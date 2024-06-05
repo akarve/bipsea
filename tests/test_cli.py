@@ -7,7 +7,7 @@ from data.bip39_vectors import VECTORS
 from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
 from bipsea.bip39 import LANGUAGES, verify_seed_words
-from bipsea.bipsea import CODE_TO_LANG, N_WORDS_ALLOWED, cli
+from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
 
 logger = logging.getLogger(LOGGER)
@@ -92,7 +92,7 @@ def test_seed_command_from_rand(runner, n, code):
         assert len(words) == int(n)
         assert result.exit_code == 0
         if style != "--pretty":
-            assert verify_seed_words(words, CODE_TO_LANG[code])
+            assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
 
 
 def test_seed_command_from_custom_words(runner):
@@ -125,7 +125,7 @@ def test_seed_from_and_to_words(runner):
     assert "--from rand" in result.output
 
 
-@pytest.mark.parametrize("n", [-1, 11, 13, 0])
+@pytest.mark.parametrize("n", [-1, 11, 13, 0, 25])
 def test_seed_bad_n(runner, n):
     result = runner.invoke(cli, ["seed", "--from", "eng", "-n", n])
     assert result.exit_code != 0

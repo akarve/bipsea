@@ -21,6 +21,7 @@ from .bip39 import (
 from .bip85 import (
     APPLICATIONS,
     DRNG,
+    INDEX_TO_LANGUAGE,
     PURPOSE_CODES,
     RANGES,
     apply_85,
@@ -36,24 +37,26 @@ from .util import (
     to_hex_string,
 )
 
-CODE_TO_LANG = {v["code"]: k for k, v in LANGUAGES.items()}
+ISO_TO_LANGUAGE = {v["code"]: k for k, v in LANGUAGES.items()}
 
 
 SEED_FROM_VALUES = [
     "any",
     "rand",
-] + list(CODE_TO_LANG.keys())
+] + list(ISO_TO_LANGUAGE.keys())
 
 
 SEED_TO_VALUES = [
     "tprv",
     "xprv",
-] + [code for code in CODE_TO_LANG.keys()]
+] + list(ISO_TO_LANGUAGE.keys())
 
-TIMEOUT = 0.1
+
+ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
-N_WORDS_ALLOWED_HELP = "|".join(N_WORDS_ALLOWED_STR)
+
+TIMEOUT = 0.1
 
 
 logger = logging.getLogger(LOGGER)
@@ -70,14 +73,14 @@ def cli():
     "-f",
     "--from",
     "from_",
-    type=click.Choice(SEED_FROM_VALUES, case_sensitive=True),
+    type=click.Choice(SEED_FROM_VALUES),
     help="Input format.",
     default="rand",
 )
 @click.option(
     "-t",
     "--to",
-    type=click.Choice(SEED_TO_VALUES, case_sensitive=True),
+    type=click.Choice(SEED_TO_VALUES),
     default="xprv",
     help="Output format.",
 )
@@ -104,7 +107,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
             option_name="--from",
             message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
         )
-    language = CODE_TO_LANG.get(from_)
+    language = ISO_TO_LANGUAGE.get(from_)
     if language or from_ == "any":
         if to == "words":
             raise click.BadOptionUsage(
@@ -130,9 +133,9 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
                 )
     else:  # from_ == rand
         entropy = None
-        words = entropy_to_words(number, entropy, CODE_TO_LANG.get(to, "english"))
+        words = entropy_to_words(number, entropy, ISO_TO_LANGUAGE.get(to, "english"))
 
-    if to in CODE_TO_LANG.keys():
+    if to in ISO_TO_LANGUAGE.keys():
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
         else:
@@ -167,7 +170,7 @@ cli.add_command(bip39_cmd)
     "--application",
     default="words",
     required=True,
-    type=click.Choice(APPLICATIONS.keys(), case_sensitive=True),
+    type=click.Choice(APPLICATIONS.keys()),
 )
 @click.option(
     "-n",
@@ -192,9 +195,15 @@ cli.add_command(bip39_cmd)
 @click.option(
     "-u",
     "--input",
-    help="`--input xprv123...` can be used instead of an input pipe `bipsea seed | bipsea entropy`",
+    help="alternative to a unix input pipe",
 )
-def bip85_cmd(application, number, index, special, input):
+@click.option(
+    "-t",
+    "--to",
+    type=click.Choice(ENTROPY_TO_VALUES),
+    help="output language",
+)
+def bip85_cmd(application, number, index, special, input, to):
     if not input:
         stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
@@ -222,20 +231,22 @@ def bip85_cmd(application, number, index, special, input):
             )
     else:
         number = 24
+
     if not prv[:4] in ("tprv", "xprv"):
         no_prv()
+
     master = parse_ext_key(prv)
 
     path = f"m/{PURPOSE_CODES['BIP-85']}"
     app_code = APPLICATIONS[application]
     path += f"/{app_code}"
+
     if application == "words":
-        if number not in N_WORDS_ALLOWED:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message=f"`--application wif` requires `--number NUMBER` in {N_WORDS_ALLOWED_HELP}",
-            )
-        path += f"/0'/{number}'/{index}'"
+        if not to:
+            to = "eng"
+        language = ISO_TO_LANGUAGE[to]
+        code_85 = next(i for i, l in INDEX_TO_LANGUAGE.items() if l == language)
+        path += f"/{code_85}/{number}'/{index}'"
     elif application in ("wif", "xprv"):
         path += f"/{index}'"
     elif application in ("base64", "base85", "hex"):

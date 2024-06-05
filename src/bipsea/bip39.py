@@ -91,8 +91,7 @@ N_WORDS_META = {
 
 
 def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
-    """If caller does not provide entropy use secrets.randbits
-    * Only produces seed words in English"""
+    """If caller does not provide entropy use secrets.randbits"""
     if n_words not in N_WORDS_ALLOWED:
         raise ValueError(f"n_words must be one of {N_WORDS_ALLOWED}")
 
