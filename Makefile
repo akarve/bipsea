@@ -42,7 +42,7 @@ push: lint check test git-off-main git-no-unsaved
 	git push origin $$branch
 
 test: readme-cmds
-	pytest -vsx
+	pytest -sx
 
 git-off-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
@@ -69,6 +69,7 @@ readme-cmds:
 	bipsea seed --help
 	bipsea entropy --help
 	bipsea seed -t eng -n 12 --pretty
+	bipsea seed -t jpn -n 15
 	bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
 	bipsea seed -f any -u "123456123456123456"
 	bipsea seed -f any -u "$$(cat README.md)"
