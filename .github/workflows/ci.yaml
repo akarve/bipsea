@@ -23,7 +23,5 @@ jobs:
         make install-local
     - name: check
       run: make check
-    - name: lint
-      run: make lint
     - name: test
       run: make test

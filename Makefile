@@ -11,6 +11,7 @@ clean:
 check:
 	black . --check
 	isort . --check
+	flake8 . --ignore=E501,W503
 
 install:
 	pip install -U bipsea
@@ -32,8 +33,8 @@ uninstall:
 lint:
 	isort .
 	black .
-	flake8 . --ignore=E501,W503
 	actionlint
+	flake8 . --ignore=E501,W503
 	checkmake Makefile
 
 publish: install-local check test readme-cmds build git-no-unsaved git-on-main
