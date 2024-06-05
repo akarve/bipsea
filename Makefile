@@ -37,7 +37,7 @@ lint:
 	flake8 . --ignore=E501,W503
 	checkmake Makefile
 
-publish: install-local check test readme-cmds build git-no-unsaved git-on-main
+publish: install-local lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
