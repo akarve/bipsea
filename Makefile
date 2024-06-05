@@ -41,7 +41,7 @@ publish: install-local lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
-push: lint test git-off-main git-no-unsaved
+push: lint git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
