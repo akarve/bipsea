@@ -106,15 +106,14 @@ private key are exposed, the parent private key remains secure.
 
 ![](imgs/derivation.png)
 
-## How do I know the bipsea implementation is correct?
+## Is the bipsea implementation correct?
 
 bipsea passes all BIP-32, BIP-39, and BIP-85 test vectors in all BIP-39 languages
-and further passes its own unit tests.
+and its own unit tests. Run `make test` for details.
 
-There is a single BIP-85 vector, part of which xfails.
-We have filed this issue to BIP-85 [here](https://github.com/bitcoin/bips/pull/1600).
+There is a single BIP-85 vector which we believe to be incorrect marked as an xfail
+and [filed to BIP-85](https://github.com/bitcoin/bips/pull/1600).
 
-Run `make test` for details.
 
 # Usage
 
