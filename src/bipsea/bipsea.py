@@ -68,13 +68,13 @@ def cli():
     pass
 
 
-@click.command(name="seed", help="Generate a BIP-32 extended private key.")
+@click.command(name="seed", help="Generates BIP-32 extended private keys or BIP-39 mnemonics.")
 @click.option(
     "-f",
     "--from",
     "from_",
     type=click.Choice(SEED_FROM_VALUES),
-    help="Input format.",
+    help="Mnemonic input format. 'any' skips validation, 'rand' makes a fresh phrase, language validates against the BIP-39 wordlist.",
     default="rand",
 )
 @click.option(
@@ -82,9 +82,9 @@ def cli():
     "--to",
     type=click.Choice(SEED_TO_VALUES),
     default="xprv",
-    help="Output format.",
+    help="Output format. 'tprv', 'xprv', or mnemonic language.",
 )
-@click.option("-u", "--input", help="Text as specified by --from")
+@click.option("-u", "--input", help="Mnemonic phrase, usually space-separated, in the language given by --from.")
 @click.option(
     "-n",
     "--number",
@@ -97,7 +97,7 @@ def cli():
     "--pretty/--not-pretty",
     is_flag=True,
     default=False,
-    help="Number and newline between words.",
+    help="Number mnemonic words, each on its own lines.",
 )
 def bip39_cmd(from_, to, input, number, passphrase, pretty):
     input = input.strip() if input else input
@@ -164,7 +164,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
 cli.add_command(bip39_cmd)
 
 
-@click.command(name="entropy", help="Derive secrets according to BIP-85")
+@click.command(name="entropy", help="Derives secrets according to BIP-85.")
 @click.option(
     "-a",
     "--application",
@@ -176,32 +176,32 @@ cli.add_command(bip39_cmd)
     "-n",
     "--number",
     type=int,
-    help="length of output (bytes, chars, or words)",
+    help="Length of output in bytes, chars, or words, depending on the application.",
 )
 @click.option(
     "-i",
     "--index",
     type=click.IntRange(0, 2**31 - 1),
     default=0,
-    help="child index",
+    help="Child index. Increment for fresh secrets.",
 )
 @click.option(
     "-s",
     "--special",
     default=10,
     type=click.IntRange(min=2),
-    help="additional int (e.g. for 'dice' sides)",
+    help="Number of sides for `--application dice`.",
 )
 @click.option(
     "-u",
     "--input",
-    help="alternative to a unix input pipe",
+    help="An xprv. Alternatively  you can `echo $XPRV | bipsea entropy`.",
 )
 @click.option(
     "-t",
     "--to",
     type=click.Choice(ENTROPY_TO_VALUES),
-    help="output language",
+    help="Output language for `--application words`.",
 )
 def bip85_cmd(application, number, index, special, input, to):
     if not input:
