@@ -1,7 +1,7 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
-.PHONY: install-go lint publish push readme-cmds test test-network uninstall-dev
+.PHONY: install-go install-local lint publish push readme-cmds test uninstall
 
-build: clean download-wordlists check test
+build: clean download-wordlists
 	python3 -m build
 
 clean:
@@ -11,38 +11,44 @@ clean:
 check:
 	black . --check
 	isort . --check
+	flake8 . --ignore=E501,W503
 
 install:
-	pip install -r requirements.txt -r tst-requirements.txt
+	pip install -U bipsea
 
-install-dev: uninstall-dev
+install-local:
 	pip install -e .
+
+install-dev:
+	pip install -r requirements.txt -r tst-requirements.txt
 
 install-go:
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
-uninstall-dev:
+uninstall:
 	pip uninstall -y bipsea
 
 lint:
 	isort .
 	black .
-	flake8 . --ignore=E501,W503
 	actionlint
+	flake8 . --ignore=E501,W503
 	checkmake Makefile
 
-publish: build git-no-unsaved git-on-main
+publish: install-local lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
-push: lint check test git-off-main git-no-unsaved
+push: lint test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
 test: readme-cmds
 	pytest -sx
+
+test-publish: uninstall install readme-cmds
 
 git-off-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
@@ -72,7 +78,7 @@ readme-cmds:
 	bipsea seed -t jpn -n 15
 	bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
 	bipsea seed -f any -u "123456123456123456"
-	bipsea seed -f any -u "$$(cat README.md)"
+	bipsea seed -f any -u "$$(cat input.txt)"
 	bipsea seed | bipsea entropy
 	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
 	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1

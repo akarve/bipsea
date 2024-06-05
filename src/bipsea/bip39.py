@@ -91,8 +91,7 @@ N_WORDS_META = {
 
 
 def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
-    """If caller does not provide entropy use secrets.randbits
-    * Only produces seed words in English"""
+    """If caller does not provide entropy use secrets.randbits"""
     if n_words not in N_WORDS_ALLOWED:
         raise ValueError(f"n_words must be one of {N_WORDS_ALLOWED}")
 
@@ -110,7 +109,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
     elif user_entropy and (difference <= -8):
         warnings.warn(
             (
-                f"Warning: {difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."
+                f"{difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."
                 " Input more entropy?"
             )
         )

@@ -71,7 +71,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
 
     if app == APPLICATIONS["words"]:
         language_index, n_words = indexes[:2]
-        n_words = int(n_words[:-1])  # chop the ' from hardened derivation
+        n_words = int(n_words[:-1])  # chop ' from hardened derivation
         if n_words not in N_WORDS_META.keys():
             raise ValueError(f"Unsupported number of words: {n_words}.")
         language = INDEX_TO_LANGUAGE[language_index]

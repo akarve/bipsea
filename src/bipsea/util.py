@@ -9,7 +9,7 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__
@@ -40,18 +40,17 @@ def shannon_entropy(input: List[str]) -> float:
 
 def relative_entropy(input: Sequence, universe: set = ASCII_INPUTS) -> float:
     input_set = set(list(input))
-    warn = False
-    if not input_set <= universe:
-        warnings.warn(
-            f"Unexpected input characters {input_set - universe}, expect bad entropy"
-        )
-        warn = True
+    overage = input_set - universe
 
     ideal = math.log(len(universe), 2)
     actual = shannon_entropy(input)
     ratio = actual / ideal
 
-    if not warn:
+    if overage:
+        warnings.warn(
+            f"Some inputs outside (ASCII) universe: {overage}, can't estimate entropy"
+        )
+    else:
         assert 0 < ratio <= 1.001
 
     return ratio
