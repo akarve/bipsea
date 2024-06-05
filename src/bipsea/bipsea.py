@@ -36,15 +36,20 @@ from .util import (
     to_hex_string,
 )
 
+CODE_TO_LANG = {v["code"]: k for k, v in LANGUAGES.items()}
+
+
 SEED_FROM_VALUES = [
+    "any",
     "rand",
-    "words",
-]
+] + list(CODE_TO_LANG.keys())
+
+
 SEED_TO_VALUES = [
-    "words",
     "tprv",
     "xprv",
-]
+] + [code for code in CODE_TO_LANG.keys()]
+
 TIMEOUT = 0.1
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
@@ -60,76 +65,59 @@ def cli():
     pass
 
 
-@click.command(
-    name="seed", help="Generate an extended master private key (BIP-32, BIP-39)"
-)
+@click.command(name="seed", help="Generate a BIP-32 extended private key.")
 @click.option(
     "-f",
     "--from",
     "from_",
     type=click.Choice(SEED_FROM_VALUES, case_sensitive=True),
-    required=True,
-    help="|".join(SEED_FROM_VALUES),
+    help="Input format.",
     default="rand",
 )
-@click.option("-u", "--input", help="String in the format specified by --from")
 @click.option(
     "-t",
     "--to",
     type=click.Choice(SEED_TO_VALUES, case_sensitive=True),
     default="xprv",
-    help="|".join(SEED_TO_VALUES),
-    required=True,
+    help="Output format.",
 )
+@click.option("-u", "--input", help="Text as specified by --from")
 @click.option(
     "-n",
     "--number",
     default="24",
     type=click.Choice(N_WORDS_ALLOWED_STR),
-    help="|".join(N_WORDS_ALLOWED_STR),
+    help="Number of words.",
 )
 @click.option("-p", "--passphrase", default="")
 @click.option(
     "--pretty/--not-pretty",
     is_flag=True,
     default=False,
-    help="Number and newline seed words",
+    help="Number and newline between words.",
 )
-@click.option(
-    "--strict/--not-strict",
-    is_flag=True,
-    default=True,
-    help="Require BIP-39 English words & valid checksum from `--input`",
-)
-@click.option(
-    "-l",
-    "--language",
-    default="english",
-    type=click.Choice([str(k) for k in LANGUAGES.keys()]),
-    help="|".join(LANGUAGES.keys()),
-)
-def bip39_cmd(from_, input, to, number, passphrase, pretty, strict, language):
-    number = int(number)
+def bip39_cmd(from_, to, input, number, passphrase, pretty):
     input = input.strip() if input else input
+    number = int(number)
     if (from_ == "rand" and input) or (from_ != "rand" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
             message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
         )
-    if from_ == "words":
+    language = CODE_TO_LANG.get(from_)
+    if language or from_ == "any":
         if to == "words":
             raise click.BadOptionUsage(
                 option_name="--to",
-                message="`--to words` incompatible with `--from words`",
+                message="`--to words` incompatible with `--from LANGUAGE`",
             )
         words = normalize_list(re.split(r"\s+", input), lower=True)
-        if strict:
-            if not verify_seed_words(words, language):
-                raise click.BadParameter(
-                    f"Non BIP-39 words from `--input` ({' '.join(words)}) or bad BIP-39 checksum",
-                    param_hint="--input",
-                )
-        else:
+        if language and not verify_seed_words(words, language):
+            raise click.BadParameter(
+                f"Unexpected {language} words from `--input` ({' '.join(words)}) or bad checksum.",
+                param_hint="--input",
+            )
+        if from_ == "any":
             implied = relative_entropy(normalize_str(input, lower=True))
             if implied < MIN_REL_ENTROPY:
                 click.secho(
@@ -142,9 +130,9 @@ def bip39_cmd(from_, input, to, number, passphrase, pretty, strict, language):
                 )
     else:  # from_ == rand
         entropy = None
-        words = entropy_to_words(number, entropy, language)
+        words = entropy_to_words(number, entropy, CODE_TO_LANG.get(to, "english"))
 
-    if to == "words":
+    if to in CODE_TO_LANG.keys():
         if pretty:
             output = "\n".join(f"{i+1}) {w}" for i, w in enumerate(words))
         else:
@@ -179,14 +167,13 @@ cli.add_command(bip39_cmd)
     "--application",
     default="words",
     required=True,
-    help="|".join(APPLICATIONS.keys()),
     type=click.Choice(APPLICATIONS.keys(), case_sensitive=True),
 )
 @click.option(
     "-n",
     "--number",
     type=int,
-    help="desired length for derived entropy (bytes, chars, or words)",
+    help="length of output (bytes, chars, or words)",
 )
 @click.option(
     "-i",
@@ -200,7 +187,7 @@ cli.add_command(bip39_cmd)
     "--special",
     default=10,
     type=int,
-    help="Additional integer (e.g. for 'dice' sides)",
+    help="additional int (e.g. for 'dice' sides)",
 )
 @click.option(
     "-u",

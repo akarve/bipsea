@@ -6,7 +6,8 @@ from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
 from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
-from bipsea.bipsea import N_WORDS_ALLOWED, cli
+from bipsea.bip39 import LANGUAGES, verify_seed_words
+from bipsea.bipsea import CODE_TO_LANG, N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
 
 logger = logging.getLogger(LOGGER)
@@ -31,7 +32,6 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
     for vector in vectors[:1]:  # for speed since test_bip39 already covers all
         _, mnemonic, _, xprv = vector
         for upper in (True, False):
-            # prove that case doesn't matter
             mnemonic = mnemonic.upper() if upper else mnemonic
             result = runner.invoke(
                 cli,
@@ -40,19 +40,14 @@ def test_seed_command_to_actual_seed(runner, language, vectors):
                     "-t",
                     "xprv",
                     "-f",
-                    "words",
+                    LANGUAGES[language]["code"],
                     "--input",
                     mnemonic,
                     "-p",
                     "TREZOR",
-                    "--strict",
-                    "--language",
-                    language,
                 ],
             )
             assert result.exit_code == 0
-            # we might get an entropy warning for foreign languages
-            # so just look at the last line
             last = result.output.strip().split("\n")[-1]
             assert last == xprv
 
@@ -63,7 +58,8 @@ def test_seed_option_sensitivity(runner, language, vectors):
     (but white space after the mnemonic doesn't)"""
     for vector in vectors[:1]:  # one vector per language for speed
         _, mnemonic, _, xprv = vector
-        base_cmd = ["seed", "-t", "xprv", "-f", "words", "--language", language]
+        lang_code = LANGUAGES[language]["code"]
+        base_cmd = ["seed", "-t", "xprv", "-f", lang_code]
         change_passphrase = runner.invoke(
             cli, base_cmd + ["-u", mnemonic, "-p", "TREZoR"]
         )
@@ -76,30 +72,34 @@ def test_seed_option_sensitivity(runner, language, vectors):
             result = runner.invoke(cli, cmd)
             if suffix == ".":
                 assert result.exit_code != 0
-                assert "BIP-39" in result.output
+                assert "Unexpected" in result.output
             else:
                 assert result.exit_code == 0
                 result_xprv = result.output.strip().split("\n")[-1]
                 assert result_xprv == xprv
 
 
+@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
 @pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
-def test_seed_command_from_rand(runner, n):
+def test_seed_command_from_rand(runner, n, code):
     for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", "words", "-n", str(n), "-f", "rand"]
+        cmd = ["seed", "-t", code, "-n", str(n), "-f", "rand"]
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()
         split_on = "\n" if style == "--pretty" else " "
-        assert len(output.split(split_on)) == int(n)
+        words = output.split(split_on)
+        assert len(words) == int(n)
         assert result.exit_code == 0
+        if style != "--pretty":
+            assert verify_seed_words(words, CODE_TO_LANG[code])
 
 
 def test_seed_command_from_custom_words(runner):
     lengths = {"short": 5, "enough": 42}
-    base = ["seed", "-t", "xprv", "--not-strict"]
+    base = ["seed", "-t", "xprv"]
     for k, v in lengths.items():
-        cmd = base + ["-f", "words", "-u", gen_custom_seed_words(v, 0)]
+        cmd = base + ["-f", "any", "-u", gen_custom_seed_words(v, 0)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         if k == "short":
@@ -109,7 +109,7 @@ def test_seed_command_from_custom_words(runner):
 
 
 def gen_custom_seed_words(length: int, seed: int):
-    """non bip-39 seeds"""
+    """non bip-39 seeds (--from "any")"""
     random.seed(seed)
     custom = "".join(
         random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
@@ -119,19 +119,21 @@ def gen_custom_seed_words(length: int, seed: int):
 
 
 def test_seed_from_and_to_words(runner):
-    result = runner.invoke(cli, ["seed", "--from", "words", "--to", "words"])
+    result = runner.invoke(cli, ["seed", "--from", "eng", "--to", "eng"])
     assert result.exit_code != 0
     assert "--input" in result.output
     assert "--from rand" in result.output
 
 
-def test_seed_bad_n(runner):
-    result = runner.invoke(cli, ["seed", "--from", "words", "-n", "11"])
+@pytest.mark.parametrize("n", [-1, 11, 13, 0])
+def test_seed_bad_n(runner, n):
+    result = runner.invoke(cli, ["seed", "--from", "eng", "-n", n])
     assert result.exit_code != 0
     assert "--number" in result.output
 
 
-def test_seed_bad_from(runner):
+@pytest.mark.parametrize("from_", ["baz", "zho", "free"])
+def test_seed_bad_from(runner, from_):
     result = runner.invoke(cli, ["seed", "--from", "baz"])
     assert result.exit_code != 0
     assert "not one of" in result.output
@@ -146,7 +148,7 @@ def test_seed_bad_to(runner):
 def test_bipsea_integration(runner):
     result_seed = runner.invoke(
         cli,
-        ["seed", "-f", "words", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"],
+        ["seed", "-f", "eng", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"],
     )
     xprv = result_seed.output.strip()
     assert xprv == MNEMONIC_12["xprv"]
