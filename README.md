@@ -128,7 +128,7 @@ bipsea --help
 ## `bipsea seed` (BIP-39)
 
 
-### New seed words
+### generate new seed words
 
 ```sh
 bipsea seed -t eng -n 12 --pretty
@@ -146,6 +146,10 @@ bipsea seed -t eng -n 12 --pretty
     11) orphan
     12) suggest
 
+```
+bipsea seed -t jpn -n 15
+```
+    うなじ なくす よそく ともる ほえる げざん でっぱ はちみつ つつむ ほしい ふんいき ていひょう ふんいき がいらい けむし
 
 ### xprv from existing seed words
 
@@ -155,11 +159,7 @@ bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food del
     xprv9s21ZrQH143K3YwuXcacSSghcUfrrEyj9hTHU3a2gmr6SzPBaxmuTgKGBWtFdnnCjwGYMkU7mLvxba8FFPGLQUMvyACZTEdSCJ8uBwh5Aqs
 
 
-The default switch `--strict` ensures that the input words are from the BIP-39
-list and have a valid checksum.
-
-
-## xprv from dice rolls (or any string)
+### xprv from dice rolls (or any string)
 
 ```
 bipsea seed -f any -u "123456123456123456"
@@ -191,7 +191,7 @@ This xprv input is your master secret from which BIP-85 derives all child secret
 with no danger of compromising the root (or any parent key in the derivation).
 
 
-### Derive new seed words
+### Derived seed words from a root xprv
 
 ```
 bipsea seed | bipsea entropy
