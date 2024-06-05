@@ -113,19 +113,19 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
     if (from_ == "random" and input) or (from_ != "random" and not input):
         raise click.BadOptionUsage(
             option_name="--from",
-            message="`--from words` requires `--input STRING`, `--from rand` forbids `--input`",
+            message="`--from [anything but 'rand']` requires `--input`, `--from rand` forbids `--input`",
         )
     language = ISO_TO_LANGUAGE.get(from_)
     if language or from_ == "any":
-        if to == "words":
+        if to == "mnemonic":
             raise click.BadOptionUsage(
                 option_name="--to",
-                message="`--to words` incompatible with `--from LANGUAGE`",
+                message="f`--to {from_}` incompatible with `--from [anything but 'rand']`",
             )
         words = normalize_list(re.split(r"\s+", input), lower=True)
         if language and not verify_seed_words(words, language):
             raise click.BadParameter(
-                f"Unexpected {language} words from `--input` ({' '.join(words)}) or bad checksum.",
+                f"--input mnemonic not in {from_} or has bad checksum.",
                 param_hint="--input",
             )
         if from_ == "any":
@@ -176,7 +176,7 @@ cli.add_command(bip39_cmd)
 @click.option(
     "-a",
     "--application",
-    default="words",
+    default="mnemonic",
     required=True,
     type=click.Choice(APPLICATIONS.keys()),
 )
@@ -184,7 +184,7 @@ cli.add_command(bip39_cmd)
     "-n",
     "--number",
     type=int,
-    help="Length of output in bytes, chars, or words, depending on the application.",
+    help="Length of output in bytes, chars, or words, depending on --application.",
 )
 @click.option(
     "-i",
@@ -209,7 +209,7 @@ cli.add_command(bip39_cmd)
     "-t",
     "--to",
     type=click.Choice(ENTROPY_TO_VALUES),
-    help="Mnemonic language for `--application words`.",
+    help="Output language for `--application mnemonic`.",
 )
 def bip85_cmd(application, number, index, special, input, to):
     if not input:
@@ -250,15 +250,15 @@ def bip85_cmd(application, number, index, special, input, to):
     path += f"/{app_code}"
 
     if to:
-        if application != "words":
+        if application != "mnemonic":
             raise click.BadOptionUsage(
                 option_name="--to",
-                message="--to requires `--application words`",
+                message="--to requires `--application mnemonic`",
             )
     else:
         to = "eng"
 
-    if application == "words":
+    if application == "mnemonic":
         language = ISO_TO_LANGUAGE[to]
         code_85 = next(i for i, l in INDEX_TO_LANGUAGE.items() if l == language)
         path += f"/{code_85}/{number}'/{index}'"

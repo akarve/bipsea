@@ -23,7 +23,7 @@ APPLICATIONS = {
     "dice": "89101'",
     "drng": "0'",
     "hex": "128169'",
-    "words": "39'",
+    "mnemonic": "39'",
     "wif": "2'",
     "xprv": "32'",
 }
@@ -69,7 +69,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
 
     entropy = to_entropy(derived_key.data[1:])
 
-    if app == APPLICATIONS["words"]:
+    if app == APPLICATIONS["mnemonic"]:
         language_index, n_words = indexes[:2]
         n_words = int(n_words[:-1])  # chop ' from hardened derivation
         if n_words not in N_WORDS_META.keys():
