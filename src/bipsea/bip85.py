@@ -71,7 +71,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
 
     if app == APPLICATIONS["mnemonic"]:
         language_index, n_words = indexes[:2]
-        n_words = int(n_words[:-1])  # chop ' from hardened derivation
+        n_words = int(n_words.rstrip("'"))
         if n_words not in N_WORDS_META.keys():
             raise ValueError(f"Unsupported number of words: {n_words}.")
         language = INDEX_TO_LANGUAGE[language_index]
@@ -109,13 +109,13 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": str(derived_key),
         }
     elif app == APPLICATIONS["hex"]:
-        num_bytes = int(indexes[0][:-1])
+        num_bytes = int(indexes[0].rstrip("'"))
         if not (16 <= num_bytes <= 64):
             raise ValueError(f"Expected num_bytes in [16, 64], got {num_bytes}")
 
         return {"entropy": entropy, "application": to_hex_string(entropy[:num_bytes])}
     elif app == APPLICATIONS["base64"]:
-        pwd_len = int(indexes[0][:-1])
+        pwd_len = int(indexes[0].rstrip("'"))
         if not (20 <= pwd_len <= 86):
             raise ValueError(f"Expected pwd_len in [20, 86], got {pwd_len}")
 
@@ -124,7 +124,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base64.b64encode(entropy).decode("utf-8")[:pwd_len],
         }
     elif app == APPLICATIONS["base85"]:
-        pwd_len = int(indexes[0][:-1])
+        pwd_len = int(indexes[0].rstrip("'"))
         if not (10 <= pwd_len <= 80):
             raise ValueError("Expected pwd_len in [10, 80], got {pwd_len}")
 
@@ -133,7 +133,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             "application": base64.b85encode(entropy).decode("utf-8")[:pwd_len],
         }
     elif app == APPLICATIONS["dice"]:
-        sides, rolls, index = (int(s[:-1]) for s in indexes[:3])
+        sides, rolls, index = (int(s.rstrip("'")) for s in indexes[:3])
         return {
             "entropy": entropy,
             "application": do_rolls(entropy, sides, rolls, index),
