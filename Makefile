@@ -71,6 +71,7 @@ git-no-unsaved:
 	fi
 
 readme-cmds:
+	bipsea --version
 	bipsea --help
 	bipsea seed --help
 	bipsea entropy --help
