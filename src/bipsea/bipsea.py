@@ -245,7 +245,7 @@ def bip85_cmd(application, number, index, special, input, to):
         if application != "words":
             raise click.BadOptionUsage(
                 option_name="--to",
-                message=f"--to requires `--application words`",
+                message="--to requires `--application words`",
             )
     else:
         to = "eng"
