@@ -189,7 +189,7 @@ cli.add_command(bip39_cmd)
     "-s",
     "--special",
     default=10,
-    type=int,
+    type=click.IntRange(min=2),
     help="additional int (e.g. for 'dice' sides)",
 )
 @click.option(
