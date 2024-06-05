@@ -110,7 +110,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
     elif user_entropy and (difference <= -8):
         warnings.warn(
             (
-                f"Warning: {difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."
+                f"{difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."
                 " Input more entropy?"
             )
         )
