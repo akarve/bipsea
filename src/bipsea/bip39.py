@@ -106,7 +106,8 @@ def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
     difference = int_entropy.bit_length() - n_entropy_bits
     if difference > 0:
         int_entropy >>= difference
-    elif difference <= -8:
+    # only warn if the user provided the entropy (always trust randbits)
+    elif user_entropy and (difference <= -8):
         warnings.warn(
             (
                 f"Warning: {difference + n_entropy_bits} bits in, {n_entropy_bits} bits out."

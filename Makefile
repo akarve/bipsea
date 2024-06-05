@@ -42,7 +42,7 @@ push: lint check test git-off-main git-no-unsaved
 	git push origin $$branch
 
 test: readme-cmds
-	pytest -vsx
+	pytest -sx
 
 git-off-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
