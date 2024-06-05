@@ -56,7 +56,7 @@ ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 
-TIMEOUT = 0.01
+TIMEOUT = 0.1
 
 
 logger = logging.getLogger(LOGGER)
@@ -294,7 +294,7 @@ def check_range(number: int, application: str):
 def no_prv():
     raise click.BadOptionUsage(
         option_name="--input",
-        message="Missing xprv or tprv from | or --input. Try `bipsea seed` | bipsea entropy`",
+        message="Missing xprv or tprv from pipe or --input. Try `bipsea seed | bipsea entropy`",
     )
 
 
