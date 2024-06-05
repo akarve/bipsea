@@ -1,7 +1,7 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
-.PHONY: install-go lint publish push readme-cmds test test-network uninstall-dev
+.PHONY: install-go install-local lint publish push readme-cmds test uninstall
 
-build: clean download-wordlists check test
+build: clean download-wordlists
 	python3 -m build
 
 clean:
@@ -13,17 +13,20 @@ check:
 	isort . --check
 
 install:
-	pip install -r requirements.txt -r tst-requirements.txt
+	pip install -U bipsea
 
-install-dev: uninstall-dev
+install-local:
 	pip install -e .
+
+install-dev:
+	pip install -r requirements.txt -r tst-requirements.txt
 
 install-go:
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
-uninstall-dev:
+uninstall:
 	pip uninstall -y bipsea
 
 lint:
@@ -33,7 +36,7 @@ lint:
 	actionlint
 	checkmake Makefile
 
-publish: build git-no-unsaved git-on-main
+publish: install-local check test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
@@ -41,8 +44,10 @@ push: lint check test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-test: install-dev readme-cmds
+test: readme-cmds
 	pytest -sx
+
+test-publish: uninstall install readme-cmds
 
 git-off-main:
 	@branch=$$(git symbolic-ref --short HEAD); \
