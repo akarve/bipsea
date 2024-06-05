@@ -241,9 +241,16 @@ def bip85_cmd(application, number, index, special, input, to):
     app_code = APPLICATIONS[application]
     path += f"/{app_code}"
 
+    if to:
+        if application != "words":
+            raise click.BadOptionUsage(
+                option_name="--to",
+                message=f"--to requires `--application words`",
+            )
+    else:
+        to = "eng"
+
     if application == "words":
-        if not to:
-            to = "eng"
         language = ISO_TO_LANGUAGE[to]
         code_85 = next(i for i, l in INDEX_TO_LANGUAGE.items() if l == language)
         path += f"/{code_85}/{number}'/{index}'"
