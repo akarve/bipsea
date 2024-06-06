@@ -296,11 +296,14 @@ See [Makefile](./Makefile) for more commands.
 
 # References
 
-1. [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) hierarchical deterministic wallets
-1. [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic seed words
+1. [BIP-32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
+hierarchical deterministic wallets
+1. [BIP-39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+mnemonic seed words
 1. [BIP-44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
 generalized BIP-32 paths
-1. [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki) generalized cryptographic entropy
+1. [BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
+generalized cryptographic entropy
 
 
 # TODO

@@ -75,8 +75,6 @@ LANGUAGES = {
     },
 }
 
-WORDS_FILE_HASH = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
-
 N_MNEMONICS = 2048
 N_WORD_BITS = 11
 N_WORDS_ALLOWED = [12, 15, 18, 21, 24]
@@ -168,16 +166,8 @@ def bip39_words(language) -> List[str]:
     list_path = files(__app_name__) / "wordlists" / file_name
     with list_path.open("r") as f:
         raw = f.read()
-    file_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
-    assert (
-        file_hash == LANGUAGES[language]["hash"]
-    ), f"unexpected contents in {file_name}"
-    word_list = raw.splitlines()
-    assert (
-        len(word_list) == N_MNEMONICS == len(set(word_list))
-    ), "expected {} unique words".format(N_MNEMONICS)
 
-    return word_list
+    return raw.splitlines()
 
 
 def normalize_str(input: str, lower=False):

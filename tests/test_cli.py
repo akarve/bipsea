@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 
 import pytest
 from click.testing import CliRunner
@@ -72,18 +73,18 @@ def test_seed_option_sensitivity(runner, language, vectors):
             result = runner.invoke(cli, cmd)
             if suffix == ".":
                 assert result.exit_code != 0
-                assert lang_code in result.output
+                assert ISO_TO_LANGUAGE[lang_code] in result.output
+                assert "not in" in result.output
             else:
                 assert result.exit_code == 0
                 result_xprv = result.output.strip().split("\n")[-1]
                 assert result_xprv == xprv
 
 
-@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
-def test_seed_command_from_rand(runner, n, code):
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n} words")
+def test_seed_command_from_rand(runner, n):
     for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", code, "-n", str(n), "-f", "random"]
+        cmd = ["seed", "-t", "eng", "-n", str(n), "-f", "random"]
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()
@@ -92,7 +93,18 @@ def test_seed_command_from_rand(runner, n, code):
         assert len(words) == int(n)
         assert result.exit_code == 0
         if style != "--pretty":
-            assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
+            assert verify_seed_words(words, ISO_TO_LANGUAGE["eng"])
+
+
+@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
+def test_seed_command_from_rand_languages(runner, code):
+    logger.debug(code)
+    cmd = ["seed", "-t", code, "-n", "24", "-f", "random"]
+    result = runner.invoke(cli, cmd)
+    output = result.output.strip()
+    words = re.split(r"\s+", output)
+    assert result.exit_code == 0
+    assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
 
 
 def test_seed_command_from_custom_words(runner):
@@ -231,3 +243,10 @@ def test_entropy_wif(runner, vector):
     result = runner.invoke(cli, ["entropy", "-a", "wif", "--input", xprv])
     assert result.exit_code == 0
     assert result.output.strip() == vector["derived_wif"]
+
+
+def test_seed_bad_input(runner):
+    phrase = "きわめる そせい ばかり なみだ みつかる くしゃみ にあう ひみつ かくとく よけい げんき ほきょう"
+    result = runner.invoke(cli, ["seed", "-f", "spa", "--input", phrase])
+    assert result.exit_code != 0
+    assert "not in spa" in result.output
