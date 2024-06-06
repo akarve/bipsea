@@ -55,7 +55,7 @@ ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 
-TIMEOUT = 0.1
+TIMEOUT = 0.08
 
 
 logger = logging.getLogger(LOGGER)
@@ -139,7 +139,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
             language = ISO_TO_LANGUAGE[from_]
             if not verify_seed_words(words, language):
                 raise click.BadParameter(
-                    f"--input mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
+                    f"mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
                     param_hint="--input",
                 )
     else:
