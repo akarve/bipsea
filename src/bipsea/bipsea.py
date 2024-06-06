@@ -55,7 +55,7 @@ ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
 
 N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 
-TIMEOUT = 0.1
+TIMEOUT = 0.08
 
 
 logger = logging.getLogger(LOGGER)
@@ -108,26 +108,22 @@ def cli():
     help="Print a number before, and a newline after, each mnemonic word.",
 )
 def bip39_cmd(from_, to, input, number, passphrase, pretty):
-    input = input.strip() if input else input
+    if input:
+        input = input.strip()
     number = int(number)
-    if (from_ == "random" and input) or (from_ != "random" and not input):
-        raise click.BadOptionUsage(
-            option_name="--from",
-            message="`--from [anything but 'rand']` requires `--input`, `--from rand` forbids `--input`",
-        )
-    language = ISO_TO_LANGUAGE.get(from_)
-    if language or from_ == "any":
-        if to == "mnemonic":
+
+    if from_ != "random":
+        if not input:
+            raise click.BadOptionUsage(
+                option_name="--from",
+                message="`--from [any|language]` requires `--input`",
+            )
+        if not to.endswith("prv"):
             raise click.BadOptionUsage(
                 option_name="--to",
-                message="f`--to {from_}` incompatible with `--from [anything but 'rand']`",
+                message=f"`--to {to}` requires `--from rand`",
             )
         words = normalize_list(re.split(r"\s+", input), lower=True)
-        if language and not verify_seed_words(words, language):
-            raise click.BadParameter(
-                f"--input mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
-                param_hint="--input",
-            )
         if from_ == "any":
             implied = relative_entropy(normalize_str(input, lower=True))
             if implied < MIN_REL_ENTROPY:
@@ -139,7 +135,19 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
                     fg="yellow",
                     err=True,
                 )
-    else:  # from_ == rand
+        else:
+            language = ISO_TO_LANGUAGE[from_]
+            if not verify_seed_words(words, language):
+                raise click.BadParameter(
+                    f"mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
+                    param_hint="--input",
+                )
+    else:
+        if input:
+            raise click.BadOptionUsage(
+                option_name="--from",
+                message="``--from rand` forbids `--input`",
+            )
         entropy = None
         words = entropy_to_words(number, entropy, ISO_TO_LANGUAGE.get(to, "english"))
 
