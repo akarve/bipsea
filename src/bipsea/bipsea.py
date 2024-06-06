@@ -125,7 +125,7 @@ def bip39_cmd(from_, to, input, number, passphrase, pretty):
         words = normalize_list(re.split(r"\s+", input), lower=True)
         if language and not verify_seed_words(words, language):
             raise click.BadParameter(
-                f"--input mnemonic not in {from_} or has bad checksum.",
+                f"--input mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
                 param_hint="--input",
             )
         if from_ == "any":

@@ -73,7 +73,8 @@ def test_seed_option_sensitivity(runner, language, vectors):
             result = runner.invoke(cli, cmd)
             if suffix == ".":
                 assert result.exit_code != 0
-                assert lang_code in result.output
+                assert ISO_TO_LANGUAGE[lang_code] in result.output
+                assert "not in" in result.output
             else:
                 assert result.exit_code == 0
                 result_xprv = result.output.strip().split("\n")[-1]
@@ -242,3 +243,10 @@ def test_entropy_wif(runner, vector):
     result = runner.invoke(cli, ["entropy", "-a", "wif", "--input", xprv])
     assert result.exit_code == 0
     assert result.output.strip() == vector["derived_wif"]
+
+
+def test_seed_bad_input(runner):
+    phrase = "きわめる そせい ばかり なみだ みつかる くしゃみ にあう ひみつ かくとく よけい げんき ほきょう"
+    result = runner.invoke(cli, ["seed", "-f", "spa", "--input", phrase])
+    assert result.exit_code != 0
+    assert "not in spa" in result.output
