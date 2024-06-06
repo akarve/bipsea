@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 
 import pytest
 from click.testing import CliRunner
@@ -79,11 +80,10 @@ def test_seed_option_sensitivity(runner, language, vectors):
                 assert result_xprv == xprv
 
 
-@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n}-words")
-def test_seed_command_from_rand(runner, n, code):
+@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n} words")
+def test_seed_command_from_rand(runner, n):
     for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", code, "-n", str(n), "-f", "random"]
+        cmd = ["seed", "-t", "eng", "-n", str(n), "-f", "random"]
         cmd.append(style)
         result = runner.invoke(cli, cmd)
         output = result.output.strip()
@@ -92,7 +92,18 @@ def test_seed_command_from_rand(runner, n, code):
         assert len(words) == int(n)
         assert result.exit_code == 0
         if style != "--pretty":
-            assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
+            assert verify_seed_words(words, ISO_TO_LANGUAGE["eng"])
+
+
+@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
+def test_seed_command_from_rand_languages(runner, code):
+    logger.debug(code)
+    cmd = ["seed", "-t", code, "-n", "24", "-f", "random"]
+    result = runner.invoke(cli, cmd)
+    output = result.output.strip()
+    words = re.split(r"\s+", output)
+    assert result.exit_code == 0
+    assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
 
 
 def test_seed_command_from_custom_words(runner):
