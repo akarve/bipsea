@@ -98,7 +98,6 @@ def test_seed_command_from_rand(runner, n):
 
 @pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
 def test_seed_command_from_rand_languages(runner, code):
-    logger.debug(code)
     cmd = ["seed", "-t", code, "-n", "24", "-f", "random"]
     result = runner.invoke(cli, cmd)
     output = result.output.strip()
@@ -133,8 +132,8 @@ def gen_custom_seed_words(length: int, seed: int):
 def test_seed_from_and_to_words(runner):
     result = runner.invoke(cli, ["seed", "--from", "eng", "--to", "eng"])
     assert result.exit_code != 0
+    assert "requires" in result.output
     assert "--input" in result.output
-    assert "--from rand" in result.output
 
 
 @pytest.mark.parametrize("n", [-1, 11, 13, 0, 25])

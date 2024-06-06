@@ -48,7 +48,7 @@ def relative_entropy(input: Sequence, universe: set = ASCII_INPUTS) -> float:
 
     if overage:
         warnings.warn(
-            f"Some inputs outside (ASCII) universe: {overage}, can't estimate entropy"
+            f"Some inputs outside universe ({universe}): {overage}, can't estimate entropy"
         )
     else:
         assert 0 < ratio <= 1.001
