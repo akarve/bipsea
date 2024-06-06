@@ -86,7 +86,7 @@ readme-cmds:
 	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
 	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
 	bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
-	bipsea seed -t xprv | bipsea entropy -a drng -n 100
+	bipsea seed | bipsea entropy -a drng -n 100
 
 GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
 FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \

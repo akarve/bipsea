@@ -246,7 +246,7 @@ bipsea entropy -a base85 -n 10 --input "$XPRV"
 ### DRNG, enter the matrix
 
 ```
-bipsea seed -t xprv | bipsea entropy -a drng -n 10000
+bipsea seed | bipsea entropy -a drng -n 10000
 ```
     <10K hex chars from the DRNG>
 
