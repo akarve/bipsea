@@ -49,7 +49,7 @@ class TestValidate:
         mnemonic = "きわめる そせい ばかり なみだ みつかる くしゃみ にあう ひみつ かくとく よけい げんき ほきょう"
         result = runner.invoke(cli, ["validate", "-f", "spa", "-m", mnemonic])
         assert result.exit_code != 0
-        assert "non-spanish" in result.output
+        assert "Non-spanish" in result.output
 
     def test_free_mnemonics(self, runner):
         lengths = {"short": 5, "enough": 42}

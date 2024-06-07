@@ -146,8 +146,8 @@ def validate(from_, mnemonic):
         language = ISO_TO_LANGUAGE[from_]
         if not validate_mnemonic_words(words, language):
             raise click.BadParameter(
-                f"One or more non-{ISO_TO_LANGUAGE[from_]} words, or bad checksum,"
-                f" or invalid number of words {len(words)}.",
+                f"Non-{ISO_TO_LANGUAGE[from_]} words (`--from {from_}`),"
+                f" or bad checksum, or invalid word count ({len(words)}).",
                 param_hint="--mnemonic",
             )
 
