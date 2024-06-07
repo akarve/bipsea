@@ -8,7 +8,7 @@ import sys
 import click
 
 from .bip32 import to_master_key
-from .bip32types import parse_ext_key
+from .bip32types import parse_ext_key, validate_prv
 from .bip39 import (
     LANGUAGES,
     N_WORDS_ALLOWED,
@@ -16,7 +16,7 @@ from .bip39 import (
     normalize_list,
     normalize_str,
     to_master_seed,
-    verify_seed_words,
+    validate_mnemonic_words,
 )
 from .bip85 import (
     APPLICATIONS,
@@ -38,6 +38,8 @@ from .util import (
 )
 
 ISO_TO_LANGUAGE = {v["code"]: k for k, v in LANGUAGES.items()}
+
+MNEMONIC_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
 
 SEED_FROM_VALUES = [
     "any",
@@ -61,37 +63,16 @@ TIMEOUT = 0.08
 logger = logging.getLogger(LOGGER)
 
 
-@click.group()
-@click.version_option(version=__version__, prog_name=__app_name__)
-def cli():
-    pass
-
-
 @click.command(
-    name="seed", help="Generates a BIP-32 extended private key or a BIP-39 mnemonic."
-)
-@click.option(
-    "-f",
-    "--from",
-    "from_",
-    type=click.Choice(SEED_FROM_VALUES),
-    help=(
-        "Mnemonic input format. 'any' skips validation, 'random' makes a fresh phrase, "
-        "'ISO_CODE' validates `--input` against a BIP-39 wordlist."
-    ),
-    default="random",
+    name="mnemonic", help="Generate a BIP-39 mnemonic from `secrets.randbits`."
 )
 @click.option(
     "-t",
     "--to",
-    type=click.Choice(SEED_TO_VALUES),
-    default="xprv",
-    help="Output format. 'tprv', 'xprv', or 'ISO_CODE' for the mnemonic.",
-)
-@click.option(
-    "-u",
-    "--input",
-    help="Mnemonic phrase, usually space-separated, in the format specified by --from.",
+    "to",
+    type=click.Choice(MNEMONIC_TO_VALUES),
+    help=("Mnemonic language 3-letter ISO code."),
+    default="eng",
 )
 @click.option(
     "-n",
@@ -100,98 +81,111 @@ def cli():
     type=click.Choice(N_WORDS_ALLOWED_STR),
     help="Number of mnemonic words.",
 )
-@click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option(
     "--pretty/--not-pretty",
     is_flag=True,
     default=False,
     help="Print a number before, and a newline after, each mnemonic word.",
 )
-def bip39_cmd(from_, to, input, number, passphrase, pretty):
-    if input:
-        input = input.strip()
+def mnemonic(to, number, pretty):
     number = int(number)
-
-    if from_ != "random":
-        if not input:
-            raise click.BadOptionUsage(
-                option_name="--from",
-                message="`--from [any|language]` requires `--input`",
-            )
-        if not to.endswith("prv"):
-            raise click.BadOptionUsage(
-                option_name="--to",
-                message=f"`--to {to}` requires `--from rand`",
-            )
-        words = normalize_list(re.split(r"\s+", input), lower=True)
-        if from_ == "any":
-            implied = relative_entropy(normalize_str(input, lower=True))
-            if implied < MIN_REL_ENTROPY:
-                click.secho(
-                    (
-                        f"Warning: Relative entropy of input seems low ({implied:.2f})."
-                        " Consider more complex --input."
-                    ),
-                    fg="yellow",
-                    err=True,
-                )
-        else:
-            language = ISO_TO_LANGUAGE[from_]
-            if not verify_seed_words(words, language):
-                raise click.BadParameter(
-                    f"mnemonic not in {ISO_TO_LANGUAGE[from_]} wordlist or has bad checksum.",
-                    param_hint="--input",
-                )
+    language = ISO_TO_LANGUAGE[to]
+    mnemonic = entropy_to_words(number, None, language)
+    if pretty:
+        output = "\n".join(f"{i + 1}) {w}" for i, w in enumerate(mnemonic))
     else:
-        if input:
-            raise click.BadOptionUsage(
-                option_name="--from",
-                message="``--from rand` forbids `--input`",
+        output = " ".join(mnemonic)
+
+    click.echo(output)
+
+
+@click.command(
+    name="validate",
+    help="Validate and normalize a BIP-39 mnemonic.",
+)
+@click.option(
+    "-f",
+    "--from",
+    "from_",
+    type=click.Choice(["free"] + MNEMONIC_TO_VALUES),
+    help=("Mnemonic language 3-letter ISO code, or 'free' for any string."),
+    default="eng",
+)
+@click.option(
+    "-m",
+    "--mnemonic",
+    "mnemonic",
+    help="String mnemonic in the format given by --from.",
+)
+def validate(from_, mnemonic):
+    if mnemonic:
+        mnemonic = mnemonic.strip()
+    else:
+        mnemonic = try_for_pipe_input()
+    no_empty_param("--mnemonic", mnemonic)
+
+    # TODO: add to spec we still normalize and split on space always!
+    words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
+
+    if from_ == "free":
+        implied = relative_entropy(normalize_str(mnemonic, lower=True))
+        if implied < MIN_REL_ENTROPY:
+            click.secho(
+                (
+                    f"Warning: Relative entropy of mnemonic seems low ({implied:.2f})."
+                    " Consider a more complex --mnemonic."
+                ),
+                fg="yellow",
+                err=True,
             )
-        entropy = None
-        words = entropy_to_words(number, entropy, ISO_TO_LANGUAGE.get(to, "english"))
-
-    if to in ISO_TO_LANGUAGE.keys():
-        if pretty:
-            output = "\n".join(f"{i + 1}) {w}" for i, w in enumerate(words))
-        else:
-            output = " ".join(words)
-
-        click.echo(output)
-    else:  # to == xprv | tprv
-        if pretty:
-            raise click.BadOptionUsage(
-                option_name="pretty",
-                message="`--pretty` has no effect with `--to xprv`",
+    else:
+        language = ISO_TO_LANGUAGE[from_]
+        if not validate_mnemonic_words(words, language):
+            raise click.BadParameter(
+                f"Non-{ISO_TO_LANGUAGE[from_]} words (`--from {from_}`),"
+                f" or bad checksum, or invalid word count ({len(words)}).",
+                param_hint="--mnemonic",
             )
-        # TODO: we do the entropy measure for not-strict against the string
-        # but that's not what we pass in here. here we pass in split on \s+
-        # for compatibility with foreign languages but is it really what we should
-        # do for the general case of arbitrary secrets?
-        # if so then not space is not that significant... :/
-        # * probably right thing to do is give the higher of the space or string
-        # score
-        seed = to_master_seed(words, passphrase)
-        prv = to_master_key(seed, mainnet=to == "xprv", private=True)
 
-        click.echo(prv)
+    click.echo(" ".join(words))
 
 
-cli.add_command(bip39_cmd)
+@click.command(
+    name="xprv",
+    help="Derive a BIP-32 XPRV from *any* string.",
+)
+@click.option(
+    "-m", "--mnemonic", help="Mnemonic. Pipe from `bipsea validate` as needed."
+)
+@click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
+@click.option("--mainnet/--testnet", is_flag=True, default=True)
+def xprv(mnemonic, passphrase, mainnet):
+    if mnemonic:
+        mnemonic = mnemonic.strip()
+    else:
+        mnemonic = try_for_pipe_input()
+    no_empty_param("--mnemonic", mnemonic)
+
+    mnemonic_list = re.split(r"\s+", mnemonic)
+    seed = to_master_seed(mnemonic_list, passphrase)
+    prv = to_master_key(seed, mainnet=mainnet, private=True)
+
+    click.echo(prv)
 
 
-@click.command(name="entropy", help="Derives a secret according to BIP-85.")
+@click.command(
+    name="derive", help="Derive a secret according to the BIP-85 `--application`."
+)
 @click.option(
     "-a",
     "--application",
-    default="mnemonic",
     required=True,
     type=click.Choice(APPLICATIONS.keys()),
 )
 @click.option(
     "-n",
     "--number",
-    type=int,
+    type=click.IntRange(min=1),
     help="Length of output in bytes, chars, or words, depending on --application.",
 )
 @click.option(
@@ -209,9 +203,9 @@ cli.add_command(bip39_cmd)
     help="Number of sides for `--application dice`.",
 )
 @click.option(
-    "-u",
-    "--input",
-    help="An xprv. Alternatively  you can `echo $XPRV | bipsea entropy`.",
+    "-x",
+    "--xprv",
+    help="Extended private master key from which all secrets are derived.",
 )
 @click.option(
     "-t",
@@ -219,39 +213,26 @@ cli.add_command(bip39_cmd)
     type=click.Choice(ENTROPY_TO_VALUES),
     help="Output language for `--application mnemonic`.",
 )
-def bip85_cmd(application, number, index, special, input, to):
-    if not input:
-        stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
-        if stdin:
-            lines = sys.stdin.readlines()
-            if lines:
-                # get just the last line because there might be a warning above
-                prv = lines[-1].strip()
-            else:
-                no_prv()
-        else:
-            no_prv()
+def derive_cli(application, number, index, special, xprv, to):
+    if not xprv:
+        xprv = try_for_pipe_input()
     else:
-        prv = input
+        xprv = xprv.strip()
+    no_empty_param("--xprv", xprv)
+
+    if not validate_prv(xprv, private=True):
+        raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
+
     if number is not None:
-        number = int(number)
         if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
                 message="`--number` has no effect when `--application wif|xprv`",
             )
-        elif number < 1:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message="must be a positive integer",
-            )
     else:
         number = 24
 
-    if not prv[:4] in ("tprv", "xprv"):
-        no_prv()
-
-    master = parse_ext_key(prv)
+    master = parse_ext_key(xprv)
 
     path = f"m/{PURPOSE_CODES['BIP-85']}"
     app_code = APPLICATIONS[application]
@@ -295,7 +276,16 @@ def bip85_cmd(application, number, index, special, input, to):
     click.echo(output)
 
 
-cli.add_command(bip85_cmd)
+@click.group()
+@click.version_option(version=__version__, prog_name=__app_name__)
+def cli():
+    pass
+
+
+cli.add_command(mnemonic)
+cli.add_command(validate)
+cli.add_command(xprv)
+cli.add_command(derive_cli)
 
 
 def check_range(number: int, application: str):
@@ -307,11 +297,19 @@ def check_range(number: int, application: str):
         )
 
 
-def no_prv():
-    raise click.BadOptionUsage(
-        option_name="--input",
-        message="Missing xprv or tprv from pipe or --input. Try `bipsea seed | bipsea entropy`.",
-    )
+def no_empty_param(name: str, val, msg="Must not be empty."):
+    logger.debug(val)
+    if not val:
+        raise click.BadParameter(msg, param_hint=name)
+
+
+def try_for_pipe_input():
+    stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
+    if stdin:
+        lines = sys.stdin.readlines()
+        if lines:
+            # get just the last line because there might be a warning above
+            return lines[-1].strip()
 
 
 if __name__ == "__main__":

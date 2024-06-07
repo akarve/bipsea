@@ -19,7 +19,7 @@ from bipsea.bip39 import (
     N_WORDS_META,
     entropy_to_words,
     to_master_seed,
-    verify_seed_words,
+    validate_mnemonic_words,
 )
 from bipsea.util import LOGGER, __app_name__
 
@@ -72,7 +72,7 @@ def test_vectors(language, vectors):
                 len(expected_words), entropy_bytes, language
             )
         assert expected_words == computed_words
-        assert verify_seed_words(computed_words, language)
+        assert validate_mnemonic_words(computed_words, language)
 
 
 def test_meta():
@@ -86,9 +86,9 @@ def test_meta():
 
 def test_verify_checksum():
     correct = MNEMONIC_12["words"]
-    assert verify_seed_words(correct, "english")
-    assert not verify_seed_words(correct[:-1], "english")
-    assert not verify_seed_words(correct[:-1] + ["mix"], "english")
+    assert validate_mnemonic_words(correct, "english")
+    assert not validate_mnemonic_words(correct[:-1], "english")
+    assert not validate_mnemonic_words(correct[:-1] + ["mix"], "english")
 
 
 def test_test_main_pub_prv():

@@ -9,7 +9,7 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "0.9.2"
+__version__ = "0.9.5"
 __app_name__ = "bipsea"
 
 LOGGER = __app_name__
@@ -51,7 +51,7 @@ def relative_entropy(input: Sequence, universe: set = ASCII_INPUTS) -> float:
             f"Some inputs outside universe ({universe}): {overage}, can't estimate entropy"
         )
     else:
-        assert 0 < ratio <= 1.001
+        assert 0 <= ratio <= 1.001
 
     return ratio
 

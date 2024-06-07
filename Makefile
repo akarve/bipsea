@@ -1,6 +1,14 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
 .PHONY: install-go install-local lint publish push readme-cmds test uninstall
 
+lint:
+	isort .
+	black .
+	actionlint
+	flake8 . --ignore=E501,W503
+	checkmake Makefile
+
+
 build: clean download-wordlists
 	python3 -m build
 
@@ -29,13 +37,6 @@ install-go:
 
 uninstall:
 	pip uninstall -y bipsea
-
-lint:
-	isort .
-	black .
-	actionlint
-	flake8 . --ignore=E501,W503
-	checkmake Makefile
 
 publish: install-local lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
@@ -70,23 +71,30 @@ git-no-unsaved:
 		exit 1; \
 	fi
 
+MNEMONIC := "elder major green sting survey canoe inmate funny bright jewel anchor volcano"
+
 readme-cmds:
-	bipsea --version
-	bipsea --help
-	bipsea seed --help
-	bipsea entropy --help
-	bipsea seed -t eng -n 12 --pretty
-	bipsea seed -t jpn -n 15
-	bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
-	bipsea seed -f any -u "123456123456123456"
-	bipsea seed -f any -u "$$(cat input.txt)"
-	bipsea seed | bipsea entropy
-	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
-	bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
-	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
-	bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
-	bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
-	bipsea seed -t xprv | bipsea entropy -a drng -n 100
+	@bipsea --version
+	@bipsea --help
+	@bipsea mnemonic --help
+	@bipsea validate --help
+	@bipsea xprv --help
+	@bipsea derive --help
+
+	@bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12
+	@bipsea mnemonic -t jpn -n 15
+	@bipsea mnemonic -t eng -n 12 --pretty
+	@bipsea mnemonic -t spa -n 12 | bipsea validate -f spa
+
+	@bipsea mnemonic | bipsea validate | bipsea xprv
+	@bipsea validate -f free -m "123456123456123456" | bipsea xprv
+	@bipsea validate -f free -m "$$(cat input.txt)"
+
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6
 
 GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
 FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \

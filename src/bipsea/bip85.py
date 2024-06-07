@@ -11,7 +11,7 @@ from ecdsa import SECP256k1
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
 from .bip32 import hmac_sha512
-from .bip39 import LANGUAGES, N_WORDS_META, entropy_to_words, verify_seed_words
+from .bip39 import LANGUAGES, N_WORDS_META, entropy_to_words, validate_mnemonic_words
 from .util import LOGGER, to_hex_string
 
 logger = logging.getLogger(LOGGER)
@@ -78,7 +78,7 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
         n_bytes = N_WORDS_META[n_words]["entropy_bits"] // 8
         trimmed_entropy = entropy[:n_bytes]
         words = entropy_to_words(n_words, trimmed_entropy, language)
-        assert verify_seed_words(words, language)
+        assert validate_mnemonic_words(words, language)
 
         return {
             "entropy": trimmed_entropy,

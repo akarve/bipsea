@@ -132,7 +132,7 @@ def entropy_to_words(n_words: int, user_entropy: bytes, language: str):
     return swords
 
 
-def verify_seed_words(words: List[str], language: str) -> bool:
+def validate_mnemonic_words(words: List[str], language: str) -> bool:
     """verify the seed words are in the english bip-39 dict and have the right checksum"""
     n_words = len(words)
 
