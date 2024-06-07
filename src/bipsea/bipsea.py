@@ -150,7 +150,7 @@ def validate(from_, mnemonic):
 
 @click.command(
     name="xprv",
-    help="Derive a BIP-32 XPRV from a string (does not validate).",
+    help="Derive a BIP-32 XPRV from ANY string (YOU must call `validate`).",
 )
 @click.option("-m", "--mnemonic", help="Quoted mnemonic.")
 @click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
