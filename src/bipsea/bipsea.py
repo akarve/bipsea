@@ -122,6 +122,8 @@ def validate(from_, mnemonic):
         mnemonic = mnemonic.strip()
     else:
         mnemonic = try_for_pipe_input()
+    no_empty_param("--mnemonic", mnemonic)
+
     # TODO: add to spec we still normalize and split on space always!
     words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
 
@@ -130,8 +132,8 @@ def validate(from_, mnemonic):
         if implied < MIN_REL_ENTROPY:
             click.secho(
                 (
-                    f"Warning: Relative entropy of input seems low ({implied:.2f})."
-                    " Consider more complex --input."
+                    f"Warning: Relative entropy of mnemonic seems low ({implied:.2f})."
+                    " Consider a more complex --mnemonic."
                 ),
                 fg="yellow",
                 err=True,
@@ -150,10 +152,10 @@ def validate(from_, mnemonic):
 
 @click.command(
     name="xprv",
-    help="Derive a BIP-32 XPRV from ANY string.",
+    help="Derive a BIP-32 XPRV from *any* string.",
 )
 @click.option(
-    "-m", "--mnemonic", help="Mnemonic (not validated). YOU must call `validate`."
+    "-m", "--mnemonic", help="Mnemonic. Pipe from `bipsea validate` as needed."
 )
 @click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
@@ -162,6 +164,7 @@ def xprv(mnemonic, passphrase, mainnet):
         mnemonic = mnemonic.strip()
     else:
         mnemonic = try_for_pipe_input()
+    no_empty_param("--mnemonic", mnemonic)
 
     mnemonic_list = re.split(r"\s+", mnemonic)
     seed = to_master_seed(mnemonic_list, passphrase)
@@ -215,6 +218,7 @@ def derive_cli(application, number, index, special, xprv, to):
         xprv = try_for_pipe_input()
     else:
         xprv = xprv.strip()
+    no_empty_param("--xprv", xprv)
 
     if not validate_prv(xprv, private=True):
         raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
@@ -291,6 +295,12 @@ def check_range(number: int, application: str):
             option_name="--number",
             message=f"--number out of range. Try [{min}, {max}] for {application}.",
         )
+
+
+def no_empty_param(name: str, val, msg="Must not be empty."):
+    logger.debug(val)
+    if not val:
+        raise click.BadParameter(msg, param_hint=name)
 
 
 def try_for_pipe_input():
