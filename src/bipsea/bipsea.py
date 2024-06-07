@@ -127,7 +127,7 @@ def validate(from_, mnemonic):
     if mnemonic:
         mnemonic = mnemonic.strip()
     else:
-        mnemonic = look_for_pipe()
+        mnemonic = try_for_pipe_input()
     # TODO: add to spec we still normalize and split on space always!
     words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
 
@@ -161,12 +161,11 @@ def validate(from_, mnemonic):
 @click.option("-m", "--mnemonic", help="Quoted mnemonic.")
 @click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
-# TODO: pipe mnemonic
 def xprv(mnemonic, passphrase, mainnet):
     if mnemonic:
         mnemonic = mnemonic.strip()
     else:
-        mnemonic = look_for_pipe()
+        mnemonic = try_for_pipe_input()
 
     mnemonic_list = re.split(r"\s+", mnemonic)
     seed = to_master_seed(mnemonic_list, passphrase)
@@ -215,7 +214,7 @@ def xprv(mnemonic, passphrase, mainnet):
 )
 def derive_cli(application, number, index, special, xprv, to):
     if not xprv:
-        xprv = look_for_pipe()
+        xprv = try_for_pipe_input()
     else:
         xprv = xprv.strip()
 
@@ -290,7 +289,7 @@ def check_range(number: int, application: str):
         )
 
 
-def look_for_pipe():
+def try_for_pipe_input():
     stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
     if stdin:
         lines = sys.stdin.readlines()
