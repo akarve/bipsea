@@ -126,6 +126,7 @@ cli.add_command(mnemonic)
     "mnemonic",
     help="String mnemonic in format given by --from.",
 )
+# TODO: pipe mnemonic
 def validate(from_, mnemonic):
     if mnemonic:
         mnemonic = mnemonic.strip()
@@ -165,6 +166,7 @@ cli.add_command(validate)
 @click.option("-m", "--mnemonic", help="Quoted mnemonic.")
 @click.option("-p", "--passphrase", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
+# TODO: pipe mnemonic
 def xprv(mnemonic, passphrase, mainnet):
     if mnemonic:
         mnemonic = mnemonic.strip()
@@ -179,7 +181,7 @@ def xprv(mnemonic, passphrase, mainnet):
 cli.add_command(xprv)
 
 
-@click.command(name="entropy", help="Derives a secret according to BIP-85.")
+@click.command(name="derive", help="Derives a secret according to BIP-85.")
 @click.option(
     "-a",
     "--application",
@@ -208,9 +210,9 @@ cli.add_command(xprv)
     help="Number of sides for `--application dice`.",
 )
 @click.option(
-    "-u",
-    "--input",
-    help="An xprv. Alternatively  you can `echo $XPRV | bipsea entropy`.",
+    "-x",
+    "--xprv",
+    help="Extended private master key from which all secrets are derived.",
 )
 @click.option(
     "-t",
@@ -218,20 +220,21 @@ cli.add_command(xprv)
     type=click.Choice(ENTROPY_TO_VALUES),
     help="Output language for `--application mnemonic`.",
 )
-def bip85_cmd(application, number, index, special, input, to):
-    if not input:
+def derive_cli(application, number, index, special, xprv, to):
+    if not xprv:
         stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
         if stdin:
             lines = sys.stdin.readlines()
             if lines:
                 # get just the last line because there might be a warning above
-                prv = lines[-1].strip()
+                xprv = lines[-1].strip()
             else:
                 no_prv()
         else:
             no_prv()
     else:
-        prv = input
+        xprv = xprv.strip()
+
     if number is not None:
         number = int(number)
         if application in ("wif", "xprv"):
@@ -247,10 +250,10 @@ def bip85_cmd(application, number, index, special, input, to):
     else:
         number = 24
 
-    if not prv[:4] in ("tprv", "xprv"):
+    if not xprv[:4] in ("tprv", "xprv"):
         no_prv()
 
-    master = parse_ext_key(prv)
+    master = parse_ext_key(xprv)
 
     path = f"m/{PURPOSE_CODES['BIP-85']}"
     app_code = APPLICATIONS[application]
@@ -294,7 +297,7 @@ def bip85_cmd(application, number, index, special, input, to):
     click.echo(output)
 
 
-cli.add_command(bip85_cmd)
+cli.add_command(derive_cli)
 
 
 def check_range(number: int, application: str):

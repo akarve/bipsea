@@ -35,7 +35,7 @@ class TestMnemonic:
         assert result.exit_code != 0
         assert "not one of" in result.output
 
-    @pytest.mark.parametrize("n", ("5", "-1", 0, 25, 5))
+    @pytest.mark.parametrize("n", [-1, 11, 13, 0, 25])
     def test_mnemonic_bad_number(self, runner, n):
         cmd = ["mnemonic", "-n", int(n)]
         result = runner.invoke(cli, cmd)
@@ -130,33 +130,62 @@ class TestMnemonicAndValidate:
             check_output = check_result.output.strip()
             assert check_output == output
 
+
+class TestDerive:
+    @pytest.mark.parametrize("vector", PWD_BASE85)
+    def test_pwd_base85(self, runner, vector):
+        xprv = vector["master"]
+        for app in ("base64", "base85", "hex", "drng"):
+            for n in (20, 50, 64):
+                result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "-x", xprv])
+                assert result.exit_code == 0
+                answer = result.output.strip()
+                length = len(answer)
+                if app in ("hex", "drng"):
+                    length = length // 2
+                assert length == n
+
+    @pytest.mark.parametrize("n", (20, 50, 64))
+    @pytest.mark.parametrize("app", ("base64", "base85", "hex", "drng"))
+    @pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
+    def test_n(self, runner, vector, app, n):
+        xprv = vector["master"]
+        result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "--xprv", xprv])
+        assert result.exit_code == 0
+        answer = result.output.strip()
+        length = len(answer)
+        if app in ("hex", "drng"):
+            length = length // 2
+        assert length == n
+
+    @pytest.mark.parametrize("n", (-1, 0, 1025))
+    @pytest.mark.parametrize("app", ["base64", "base85", "hex", "drng"])
+    @pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
+    def test_bad_n(self, runner, vector, app, n):
+        xprv = vector["master"]
+        if n == 1025 and app == "drng":
+            return
+        result = runner.invoke(cli, ["entropy", "-a", app, "-n", n, "--input", xprv])
+        assert result.exit_code != 0
+        assert "Error" in result.output
+
+    @pytest.mark.parametrize(
+        "vector",
+        BIP_39,
+        ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
+    )
+    def test_derive_app_39(self, runner, vector):
+        xprv = vector["master"]
+        n_words = vector["mnemonic_length"]
+        result = runner.invoke(
+            cli, ["derive", "-a", "mnemonic", "--xprv", xprv, "-n", n_words]
+        )
+        assert result.exit_code == 0
+        words = result.output.strip()
+        assert words == vector["derived_mnemonic"]
+
+
 # end new class(es)
-
-def test_seed_from_and_to_words(runner):
-    result = runner.invoke(cli, ["seed", "--from", "eng", "--to", "eng"])
-    assert result.exit_code != 0
-    assert "requires" in result.output
-    assert "--input" in result.output
-
-
-@pytest.mark.parametrize("n", [-1, 11, 13, 0, 25])
-def test_seed_bad_n(runner, n):
-    result = runner.invoke(cli, ["seed", "--from", "eng", "-n", n])
-    assert result.exit_code != 0
-    assert "--number" in result.output
-
-
-@pytest.mark.parametrize("from_", ["baz", "zho", "free"])
-def test_seed_bad_from(runner, from_):
-    result = runner.invoke(cli, ["seed", "--from", "baz"])
-    assert result.exit_code != 0
-    assert "not one of" in result.output
-
-
-def test_seed_bad_to(runner):
-    result = runner.invoke(cli, ["seed", "--to", "blah"])
-    assert result.exit_code != 0
-    assert "not one of" in result.output
 
 
 def test_bipsea_integration(runner):
@@ -175,33 +204,6 @@ def test_bipsea_integration(runner):
     assert pwd64 == "72zJIS7JhyR5r5NjkuE/"
     assert len(pwd64) == 20
 
-
-@pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
-def test_entropy_n(runner, vector):
-    xprv = vector["master"]
-    for app in ("base64", "base85", "hex", "drng"):
-        for n in (20, 50, 64):
-            result = runner.invoke(
-                cli, ["entropy", "-a", app, "-n", n, "--input", xprv]
-            )
-            assert result.exit_code == 0
-            answer = result.output.strip()
-            length = len(answer)
-            if app in ("hex", "drng"):
-                length = length // 2
-            assert length == n
-
-
-@pytest.mark.parametrize("app", ["base64", "base85", "hex", "drng"])
-@pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
-def test_entropy_n_out_of_range(runner, vector, app):
-    xprv = vector["master"]
-    for n in (-1, 0, 1025):
-        if n == 1025 and app == "drng":
-            break
-        result = runner.invoke(cli, ["entropy", "-a", app, "-n", n, "--input", xprv])
-        assert result.exit_code != 0
-        assert "Error" in result.output
 
 
 @pytest.mark.parametrize(
