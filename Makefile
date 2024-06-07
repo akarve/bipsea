@@ -1,5 +1,6 @@
-.PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
-.PHONY: install-go install-local lint publish push readme-cmds test uninstall
+.PHONY: all check clean cmd-env git-no-unsaved git-off-main git-on-main install
+.PHONY: install-dev install-go install-local lint publish push readme-cmds test
+.PHONY: test-publish uninstall
 
 lint:
 	isort .
@@ -71,34 +72,30 @@ git-no-unsaved:
 		exit 1; \
 	fi
 
-MNEMONIC := "elder major green sting survey canoe inmate funny bright jewel anchor volcano"
+cmd-env:
+	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
+	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
+	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
 
-readme-cmds:
+readme-cmds: cmd-env
 	@bipsea --version
 	@bipsea --help
 	@bipsea mnemonic --help
 	@bipsea validate --help
 	@bipsea xprv --help
 	@bipsea derive --help
-
 	@bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12
 	@bipsea mnemonic -t jpn -n 15
-	@bipsea mnemonic -t eng -n 12 --pretty
+	@bipsea mnemonic -t eng -n 12 --pretty > /dev/null
 	@bipsea mnemonic -t spa -n 12 | bipsea validate -f spa
-
 	@bipsea mnemonic | bipsea validate | bipsea xprv
 	@bipsea validate -f free -m "123456123456123456" | bipsea xprv
-	@bipsea validate -f free -m "$$(cat input.txt)"
-
+	@bipsea validate -f free -m @"$$(cat input.txt)"
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1
-	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000
+	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000 > /dev/null
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6
 
-GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
-FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \
-         french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt
-
-download-wordlists:
+download-wordlists: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)

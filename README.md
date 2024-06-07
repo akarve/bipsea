@@ -1,6 +1,6 @@
 [![Tests](https://github.com/akarve/bipsea/actions/workflows/ci.yaml/badge.svg)](https://github.com/akarve/bipsea/actions)
 
-# `bipsea`: deterministic entropy for Bitcoin seeds, general passwords, and other secrets
+# `bipsea`: secure entropy for mnemonics, passwords, PINs, and other secrets
 
 > _One Seed to rule them all,  
 > One Key to find them,  
@@ -62,7 +62,7 @@ bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 1
     rotate link six joy boss sock unveil achieve charge sweet hidden regular
 
 > Because `bipsea mnemonic` uses random bits from Python's secrets library,
-> your output will, with extremely high probability, differ from the above.
+> your output will, with extremely high probability, differ from the above output.
 
 The above generates a fresh mnemonic, validates it against the english word list, converts
 it to an xprv, and then derives a new secret according to BIP-85.
@@ -76,7 +76,7 @@ PINs, mnemonics, and passwords, from a single root secret. Thanks to BIP-85, bip
 enables you to create millions of secure and independent derived secrets.
 
 Even if a child secret were compromised, the parent and root secrets would remain
-secure due to the irreversibility of hardened children in hierarchical derivation.
+secure due to the irreversibility of hardened hierarchical derivation.
 You can read more on these topics
 [below](#how-are-bipsea-and-hierarchical-wallet-derivation-bip-85-useful).
 
@@ -112,7 +112,7 @@ bipsea mnemonic -n 12 --pretty
 ## `bipsea validate`
 
 BIP-39 mnemonics come from localized wordlists, have 12-24 words, and include a checksum.
-`validate` checks the integrity of a seed phrase, normalizes the input (NFKD),
+`validate` checks the integrity of a mnemonic phrase, normalizes the input (NFKD),
 then echoes the result so that you can pipe it to `bipsea xprv`.
 
 ```sh
@@ -129,7 +129,7 @@ bipsea mnemonic | bipsea validate | bipsea xprv
     xprv9s21ZrQH143K41bKPQ9XHbPoqfdCDmZLBorYHay5E273HTu5yAFm27sSWRoCpisgQNH9vfrL9yVvVg5rBEbMCk2UwQ8K7qCFnZAY7aXhuqV
 
 `bipsea xprv` converts a mnemonic into a master node (the root of your wallet
-chain) that is then serialized as an xprv or _extended private key_.
+chain) that serializes as an xprv or _extended private key_.
 
 
 
@@ -138,7 +138,7 @@ chain) that is then serialized as an xprv or _extended private key_.
 ```
 bipsea validate -f free -m "123456123456123456" | bipsea xprv
 ```
-    Warning: Relative entropy of input seems low (0.42). Consider more complex --input.
+    Warning: Relative entropy of input seems low (0.42). Consider a more complex --mnemonic.
     xprv9s21ZrQH143K2Sxhvzbx2vvjLxPB2tJyfh5hm7ags5UWbKRHbm7x1wyCnqN4sdGTqxbq5tJJc3vV4vd51er6WgUiUC7ma1nKtfYRNTYaCeE
 
 You can even load the input from a file.
@@ -150,10 +150,10 @@ bipsea validate -f free -m "$(cat input.txt)"
 If you are now thinking, _I could use any string to derive a master key_,
 then you're ready to learn about BIP-85 with `bipsea derive`.
 
-> **Do not get cute and derive valuable keys or secrets from short
-> strings**. You can only stretch entropy so far.
+> **Do not derive valuable keys or secrets from short, simple, or
+> predictable strings**. You can only stretch entropy so far.
 > **Weak entropy in, weak entropy out**.
-> Short, common strings are also susceptible to
+> Common phrases are further susceptible to
 [rainbow table attacks](https://en.wikipedia.org/wiki/Rainbow_table).
 
 
@@ -161,25 +161,25 @@ then you're ready to learn about BIP-85 with `bipsea derive`.
 
 It's important to use a fixed, trusted, and cold-stored mnemonic so that `derive`
 (or any BIP-85 implementation) produces repeatable results.
-_If the root xprv hanges, so do all of the child secrets._
+_If the root xprv changes, so do all of the child secrets._
 
-In the following examples we derive all secrets from the following mnemonic.
+In the following examples we derive all secrets from a single mnemonic.
 ```sh
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
 ```
 
-Now we can derive child secrets.
 Below are several applications.
 `bipsea derive --help` shows all available applications.
 
-### base64 passwords
+
+### base85 passwords
 ```
-bipsea validate -m $MNEMONIC | bipsea xprv | bipsea derive -a base64
+bipsea validate -m $MNEMONIC | bipsea xprv | bipsea derive -a base85
 ```
-    HGZ+SErexxn8YOdHlYYA
+    iu?42{I|2Ct{39IpEP5zBn=0
 
 `-a` or `--application` tells `derive` what to derive. In this case
-we get `-n 20` characters of a base64 password.
+we get `-n 20` characters of a base85 password.
 
 
 ### mnemonic phrases
@@ -231,9 +231,9 @@ The following benefits emerge:
 1. Offers the security of numerous independent passwords with the operational efficiency
 of a single master password. (The master secret can be multi-factor.)
 1. Uses Bitcoin's well-tested hierarchical deterministic wallet
-tree (including primitives like ECDSA and hardened children)
-1. Generates millions of new mnemonics and master keys
-1. Generates millions of new passwords and random streams from a single master key
+tree (including primitives like ECDSA and hardened children).
+1. Generates millions of new mnemonics and master keys.
+1. Generates millions of new passwords and random streams from a single master key.
 
 Unlike a password manager, which protects many secrets with one hot secret,
 BIP-85 _derives_ many secrets from one protected secret. Therefore you only need
@@ -256,11 +256,11 @@ The root of your BIP-85 password tree is an extended master private key (xprv).
 > In general, you _should not use a wallet seed with funds in it_.
 > In any case, fresh seeds are free and easy to generate with bipsea.
 
-The master key is then derived according to BIP-32 hierarchical deterministic
+Child keys are then derived according to BIP-32 hierarchical deterministic
 wallets with a clever twist:
 the derivation path includes a purpose code (`83696968'`) followed by an _application_
 code. In this way, each unique derivation path produces unique, independent,
-and secure _derived entropy_ as a pure function of the master private key and
+and secure _derived entropy namespace_ as a pure function of the master private key and
 derivation path.
 
 BIP-85 specifies a variety of application codes including the following:
@@ -281,7 +281,7 @@ BIP-85 but you could potentially use the DRNG for RSA and similar applications.
 
 ### Derivation
 
-Consider `m/83696968'/707764'/10'/0'`. It produces the password
+Consider `m/83696968'/707764'/10'/0'`. It produces a password such as
 `dKLoepugzd` according to the following logic:
 
 | path segment | description                               |
@@ -337,7 +337,8 @@ and has begun to roll out quantum-resistant changes to SSL.
 # Developer
 
 ```
-make install
+make install-dev
+make install-local
 make install-go
 make test
 ```
@@ -348,7 +349,7 @@ See [Makefile](./Makefile) for more commands.
 ## Is the bipsea implementation correct?
 
 bipsea passes all BIP-32, BIP-39, and BIP-85 test vectors in all BIP-39 languages
-and its own unit tests. Run `make test` for details.
+plus its own unit tests.
 
 There is a single BIP-85 vector, which we believe to be incorrect in the spec,
 marked as an xfail and [filed to BIP-85](https://github.com/bitcoin/bips/pull/1600).
