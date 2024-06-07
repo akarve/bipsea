@@ -78,18 +78,17 @@ readme-cmds:
 	bipsea xprv --help
 	bipsea derive --help
 	bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12
-	# bipsea seed -t eng -n 12 --pretty
-	# bipsea seed -t jpn -n 15
-	# bipsea seed -f eng -u "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
-	# bipsea seed -f any -u "123456123456123456"
-	# bipsea seed -f any -u "$$(cat input.txt)"
-	# bipsea seed | bipsea entropy
-	# bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12
-	# bipsea seed -f eng -u "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea entropy -n 12 -i 1
-	# bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10
-	# bipsea seed -f any -u "satoshi nakamoto" | bipsea entropy -a base85 -n 10 -i 1
-	# bipsea entropy -a base85 -n 10 --input "$$(bipsea seed)"
-	# bipsea seed | bipsea entropy -a drng -n 100
+	bipsea mnemonic -t eng -n 12 --pretty
+	bipsea mnemonic -t jpn -n 15
+	bipsea validate -m "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner"
+	bipsea xprv -m "airport letter idea forget broccoli prefer panda food delay struggle ridge salute above want dinner" -p "secret"
+	bipsea xprv -m "123456123456123456"
+	bipsea validate -f free -m "$$(cat input.txt)"
+	bipsea validate -m "load kitchen smooth mass blood happy kidney orbit used process lady sudden" | bipsea xprv | bipsea derive -a mnemonic -n 12
+	bipsea xprv -m "satoshi nakamoto" | bipsea derive -a base85 -n 10
+	bipsea xprv -m "satoshi nakamoto" | bipsea derive -a base85 -n 10 -i 1
+	bipsea xprv -m "$$(cat input.txt)" | bipsea derive -a base85 -n 10
+	bipsea mnemonic | bipsea xprv | bipsea derive -a drng -n 100
 
 GITHUB_39 := https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039
 FILES_39 := chinese_simplified.txt chinese_traditional.txt czech.txt english.txt \

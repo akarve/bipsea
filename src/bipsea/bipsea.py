@@ -152,7 +152,9 @@ def validate(from_, mnemonic):
     name="xprv",
     help="Derive a BIP-32 XPRV from ANY string.",
 )
-@click.option("-m", "--mnemonic", help="Mnemonic (not validated). YOU must call `validate`.")
+@click.option(
+    "-m", "--mnemonic", help="Mnemonic (not validated). YOU must call `validate`."
+)
 @click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
 def xprv(mnemonic, passphrase, mainnet):
@@ -168,7 +170,9 @@ def xprv(mnemonic, passphrase, mainnet):
     click.echo(prv)
 
 
-@click.command(name="derive", help="Derive a secret according to the BIP-85 `--application`.")
+@click.command(
+    name="derive", help="Derive a secret according to the BIP-85 `--application`."
+)
 @click.option(
     "-a",
     "--application",
