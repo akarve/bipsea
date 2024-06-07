@@ -1,3 +1,6 @@
+.PHONY: all check clean cmd-env git-no-unsaved git-off-main git-on-main install
+.PHONY: install-dev install-go install-local lint publish push readme-cmds test
+.PHONY: test-publish uninstall
 
 lint:
 	isort .
@@ -87,7 +90,7 @@ readme-cmds: cmd-env
 	@bipsea mnemonic -t spa -n 12 | bipsea validate -f spa
 	@bipsea mnemonic | bipsea validate | bipsea xprv
 	@bipsea validate -f free -m "123456123456123456" | bipsea xprv
-	@bipsea validate -f free -m "$$(cat input.txt)"
+	@bipsea validate -f free -m @"$$(cat input.txt)"
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1
 	@bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000 > /dev/null
