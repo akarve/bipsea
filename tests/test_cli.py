@@ -28,6 +28,7 @@ def runner():
 
 
 class TestMnemonic:
+
     @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
     def test_mnemonic_bad_lang(self, runner, lang):
         cmd = ["mnemonic", "-t", lang]
@@ -139,6 +140,7 @@ class TestMnemonicAndValidate:
 
 
 class TestDerive:
+
     @pytest.mark.parametrize("vector", PWD_BASE85)
     def test_pwd_base85(self, runner, vector):
         xprv = vector["master"]
