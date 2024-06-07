@@ -31,14 +31,12 @@ that can derive _millions of independent, multi-purpose secrets_.
 
 BIP-85 offers the following benefits:
 
-* The security of numerous independent passwords with the operational efficiency
+* Offers the security of numerous independent passwords with the operational efficiency
 of a single master password. (The master secret can be multi-factor.)
 * Uses Bitcoin's well-tested hierarchical deterministic wallet
 tree (including primitives like ECDSA and hardened children)
-* Can generate millions of new mnemonic seed words and master keys
-* Can generate millions of new passwords from a single master root key
-(as an extended private key (xprv)
-and a short derivation path.
+* Generates millions of new mnemonics and master keys
+* Generates millions of new passwords and random streams from a single master key
 
 Unlike a password manager, which protects many secrets with one hot secret,
 BIP-85 _derives_ many secrets from one protected secret. Therefore you only need
