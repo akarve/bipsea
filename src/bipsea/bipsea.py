@@ -123,10 +123,11 @@ def mnemonic(to, number, pretty):
     "mnemonic",
     help="String mnemonic in format given by --from.",
 )
-# TODO: pipe mnemonic
 def validate(from_, mnemonic):
     if mnemonic:
         mnemonic = mnemonic.strip()
+    else:
+        mnemonic = look_for_pipe()
     # TODO: add to spec we still normalize and split on space always!
     words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
 
@@ -146,7 +147,7 @@ def validate(from_, mnemonic):
         if not validate_mnemonic_words(words, language):
             raise click.BadParameter(
                 f"One or more non-{ISO_TO_LANGUAGE[from_]} words, or bad checksum,"
-                " or invalid number of words {len(words)}.",
+                f" or invalid number of words {len(words)}.",
                 param_hint="--mnemonic",
             )
 
@@ -158,12 +159,14 @@ def validate(from_, mnemonic):
     help="Derive a BIP-32 XPRV from a string (does not validate).",
 )
 @click.option("-m", "--mnemonic", help="Quoted mnemonic.")
-@click.option("-p", "--passphrase", help="BIP-39 passphrase.")
+@click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
 # TODO: pipe mnemonic
 def xprv(mnemonic, passphrase, mainnet):
     if mnemonic:
         mnemonic = mnemonic.strip()
+    else:
+        mnemonic = look_for_pipe()
 
     mnemonic_list = re.split(r"\s+", mnemonic)
     seed = to_master_seed(mnemonic_list, passphrase)
@@ -176,14 +179,13 @@ def xprv(mnemonic, passphrase, mainnet):
 @click.option(
     "-a",
     "--application",
-    default="mnemonic",
     required=True,
     type=click.Choice(APPLICATIONS.keys()),
 )
 @click.option(
     "-n",
     "--number",
-    type=int,
+    type=click.IntRange(min=1),
     help="Length of output in bytes, chars, or words, depending on --application.",
 )
 @click.option(
@@ -213,36 +215,21 @@ def xprv(mnemonic, passphrase, mainnet):
 )
 def derive_cli(application, number, index, special, xprv, to):
     if not xprv:
-        stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
-        if stdin:
-            lines = sys.stdin.readlines()
-            if lines:
-                # get just the last line because there might be a warning above
-                xprv = lines[-1].strip()
-            else:
-                no_prv()
-        else:
-            no_prv()
+        xprv = look_for_pipe()
     else:
         xprv = xprv.strip()
 
+    if xprv[:4] not in ("xprv", "tprv") or len(xprv) != 111:
+        raise click.BadParameter(f"{xprv}", param_hint="--xprv (or pipe)")
+
     if number is not None:
-        number = int(number)
         if application in ("wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
                 message="`--number` has no effect when `--application wif|xprv`",
             )
-        elif number < 1:
-            raise click.BadOptionUsage(
-                option_name="--number",
-                message="must be a positive integer",
-            )
     else:
         number = 24
-
-    if not xprv[:4] in ("tprv", "xprv"):
-        no_prv()
 
     master = parse_ext_key(xprv)
 
@@ -310,13 +297,6 @@ def look_for_pipe():
         if lines:
             # get just the last line because there might be a warning above
             return lines[-1].strip()
- 
-
-def no_prv():
-    raise click.BadOptionUsage(
-        option_name="--input",
-        message="Missing xprv or tprv from pipe or --input. Try `bipsea seed | bipsea entropy`.",
-    )
 
 
 if __name__ == "__main__":
