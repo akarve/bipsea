@@ -1,6 +1,5 @@
 import logging
 import random
-import re
 
 import pytest
 from click.testing import CliRunner
@@ -28,7 +27,85 @@ def runner():
     return CliRunner()
 
 
-class TestMnemonicValidate:
+class TestMnemonic:
+    @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
+    def test_mnemonic_bad_lang(self, runner, lang):
+        cmd = ["mnemonic", "-t", lang]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "not one of" in result.output
+
+    @pytest.mark.parametrize("n", ("5", "-1", 0, 25, 5))
+    def test_mnemonic_bad_number(self, runner, n):
+        cmd = ["mnemonic", "-n", int(n)]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "not one of" in result.output
+
+
+class TestValidate:
+    def test_free_mnemonics(self, runner):
+        lengths = {"short": 5, "enough": 42}
+        for k, v in lengths.items():
+            cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(v, 0)]
+            result = runner.invoke(cli, cmd)
+            assert result.exit_code == 0
+            if k == "short":
+                assert "Warning" in result.output
+            else:
+                assert "Warning" not in result.output
+
+    def gen_free_ascii_mnemonic(self, length: int, seed: int):
+        random.seed(seed)
+        custom = "".join(
+            random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
+        )
+
+        return custom
+
+
+# slowest tests because they call pbkdf2
+class TestXPRV:
+
+    @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
+    def test_bip_39_vectors(self, runner, vectors):
+        for vector in vectors:  # for speed since test_bip39 already covers all
+            _, mnemonic, _, xprv = vector
+            result = runner.invoke(
+                cli, ["xprv", "--mnemonic", mnemonic, "-p", "TREZOR"]
+            )
+            assert result.exit_code == 0
+            last = result.output.strip().split("\n")[-1]
+            assert last == xprv
+
+    @pytest.mark.parametrize("vector", VECTORS["english"])
+    def test_english_vectors_change_passphrase(self, runner, vector):
+        """prove that meaningful passphrase mnemonic changes change the xprv
+        (but white space after the mnemonic doesn't)"""
+        _, mnemonic, _, xprv = vector
+        xprv_cmd = ["xprv"]
+        change_passphrase = runner.invoke(
+            cli, xprv_cmd + ["-m", mnemonic, "-p", "TREZoR"]
+        )
+        assert change_passphrase.exit_code == 0
+        result_xprv = change_passphrase.output.strip().split("\n")[-1]
+        assert result_xprv != xprv
+
+    @pytest.mark.parametrize("fix", (".", " \t\n "), ids=lambda x: f"pre/suffix-{x}")
+    @pytest.mark.parametrize("vector", VECTORS["english"])
+    def test_english_vectors_change_mnemonic(self, runner, vector, fix):
+        _, mnemonic, _, xprv = vector
+        cmd = ["xprv", "--mnemonic", fix + mnemonic + fix, "-p", "TREZOR"]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
+        result_xprv = result.output.strip().split("\n")[-1]
+        if fix == ".":
+            assert result_xprv != xprv
+        else:
+            assert result_xprv == xprv
+
+
+class TestMnemonicAndValidate:
 
     @pytest.mark.parametrize("style", ("--pretty", "--not-pretty"), ids=lambda x: x[1:])
     @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
@@ -47,130 +124,13 @@ class TestMnemonicValidate:
         assert validate_mnemonic_words(words, ISO_TO_LANGUAGE[lang])
 
         if style != "--pretty":
-            validate = ["validate", "-f", lang, "--input", output]
+            validate = ["validate", "-f", lang, "--mnemonic", output]
             check_result = runner.invoke(cli, validate)
             assert check_result.exit_code == 0
             check_output = check_result.output.strip()
             assert check_output == output
 
-
-class TestMnemonic:
-    @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
-    def test_mnemonic_bad_lang(self, runner, lang):
-        cmd = ["mnemonic", "-t", lang]
-        result = runner.invoke(cli, cmd)
-        assert result.exit_code != 0
-        assert "not one of" in result.output
-
-    @pytest.mark.parametrize("n", ("5", "-1", 0, 25, 5))
-    def test_mnemonic_bad_number(self, runner, n):
-        cmd = ["mnemonic", "-n", int(n)]
-        result = runner.invoke(cli, cmd)
-        assert result.exit_code != 0
-        assert "not one of" in result.output
-
-
-
-@pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
-def test_seed_command_to_actual_seed(runner, language, vectors):
-    for vector in vectors[:1]:  # for speed since test_bip39 already covers all
-        _, mnemonic, _, xprv = vector
-        for upper in (True, False):
-            mnemonic = mnemonic.upper() if upper else mnemonic
-            result = runner.invoke(
-                cli,
-                [
-                    "seed",
-                    "-t",
-                    "xprv",
-                    "-f",
-                    LANGUAGES[language]["code"],
-                    "--input",
-                    mnemonic,
-                    "-p",
-                    "TREZOR",
-                ],
-            )
-            assert result.exit_code == 0
-            last = result.output.strip().split("\n")[-1]
-            assert last == xprv
-
-
-@pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
-def test_seed_option_sensitivity(runner, language, vectors):
-    """prove that meaningful passphrase mnemonic changes change the xprv
-    (but white space after the mnemonic doesn't)"""
-    for vector in vectors[:1]:  # one vector per language for speed
-        _, mnemonic, _, xprv = vector
-        lang_code = LANGUAGES[language]["code"]
-        base_cmd = ["seed", "-t", "xprv", "-f", lang_code]
-        change_passphrase = runner.invoke(
-            cli, base_cmd + ["-u", mnemonic, "-p", "TREZoR"]
-        )
-        assert change_passphrase.exit_code == 0
-        result_xprv = change_passphrase.output.strip().split("\n")[-1]
-        assert result_xprv != xprv
-
-        for suffix in ("", ".", " \t\n "):
-            cmd = base_cmd + ["-u", mnemonic + suffix, "-p", "TREZOR"]
-            result = runner.invoke(cli, cmd)
-            if suffix == ".":
-                assert result.exit_code != 0
-                assert ISO_TO_LANGUAGE[lang_code] in result.output
-                assert "not in" in result.output
-            else:
-                assert result.exit_code == 0
-                result_xprv = result.output.strip().split("\n")[-1]
-                assert result_xprv == xprv
-
-
-@pytest.mark.parametrize("n", N_WORDS_ALLOWED, ids=lambda n: f"{n} words")
-def test_seed_command_from_rand(runner, n):
-    for style in ("--not-pretty", "--pretty"):
-        cmd = ["seed", "-t", "eng", "-n", str(n), "-f", "random"]
-        cmd.append(style)
-        result = runner.invoke(cli, cmd)
-        output = result.output.strip()
-        split_on = "\n" if style == "--pretty" else " "
-        words = output.split(split_on)
-        assert len(words) == int(n)
-        assert result.exit_code == 0
-        if style != "--pretty":
-            assert validate_mnemonic_words(words, ISO_TO_LANGUAGE["eng"])
-
-
-@pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
-def test_seed_command_from_rand_languages(runner, code):
-    cmd = ["seed", "-t", code, "-n", "24", "-f", "random"]
-    result = runner.invoke(cli, cmd)
-    output = result.output.strip()
-    words = re.split(r"\s+", output)
-    assert result.exit_code == 0
-    assert validate_mnemonic_words(words, ISO_TO_LANGUAGE[code])
-
-
-def test_seed_command_from_custom_words(runner):
-    lengths = {"short": 5, "enough": 42}
-    base = ["seed", "-t", "xprv"]
-    for k, v in lengths.items():
-        cmd = base + ["-f", "any", "-u", gen_custom_seed_words(v, 0)]
-        result = runner.invoke(cli, cmd)
-        assert result.exit_code == 0
-        if k == "short":
-            assert "Warning" in result.output
-        else:
-            assert "Warning" not in result.output
-
-
-def gen_custom_seed_words(length: int, seed: int):
-    """non bip-39 seeds (--from "any")"""
-    random.seed(seed)
-    custom = "".join(
-        random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
-    )
-
-    return custom
-
+# end new class(es)
 
 def test_seed_from_and_to_words(runner):
     result = runner.invoke(cli, ["seed", "--from", "eng", "--to", "eng"])

@@ -77,7 +77,7 @@ def cli():
     "--to",
     "to",
     type=click.Choice(MNEMONIC_TO_VALUES),
-    help=("Mnemonic language, 3-letter ISO code."),
+    help=("Mnemonic language 3-letter ISO code."),
     default="eng",
 )
 @click.option(
@@ -110,33 +110,49 @@ cli.add_command(mnemonic)
 
 @click.command(
     name="validate",
-    help="Validates the words of a BIP-39 mnemonic (count, wordlist, checksum).",
+    help="Validates and normalizes the words of a BIP-39 mnemonic (count, wordlist, checksum, NFKD).",
 )
 @click.option(
     "-f",
     "--from",
     "from_",
-    type=click.Choice(MNEMONIC_TO_VALUES),
-    help=("Mnemonic language, 3-letter ISO code."),
+    type=click.Choice(["free"] + MNEMONIC_TO_VALUES),
+    help=("Mnemonic language 3-letter ISO code, or 'free' for any string."),
     default="eng",
 )
 @click.option(
-    "-u",
-    "--input",
-    "input",
-    help="Quoted mnemonic words in the language given by --from.",
+    "-m",
+    "--mnemonic",
+    "mnemonic",
+    help="String mnemonic in format given by --from.",
 )
-def validate(from_, input):
-    language = ISO_TO_LANGUAGE[from_]
-    words = normalize_list(re.split(r"\s+", input), lower=True)
-    if not validate_mnemonic_words(words, language):
-        raise click.BadParameter(
-            f"One or more Words not in {ISO_TO_LANGUAGE[from_]} wordlist,"
-            f" or bad checksum, or invalid number of words {len(words)}.",
-            param_hint="--input",
-        )
+def validate(from_, mnemonic):
+    if mnemonic:
+        mnemonic = mnemonic.strip()
+    # TODO: add to spec we still normalize and split on space always!
+    words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
+
+    if from_ == "free":
+        implied = relative_entropy(normalize_str(mnemonic, lower=True))
+        if implied < MIN_REL_ENTROPY:
+            click.secho(
+                (
+                    f"Warning: Relative entropy of input seems low ({implied:.2f})."
+                    " Consider more complex --input."
+                ),
+                fg="yellow",
+                err=True,
+            )
     else:
-        click.echo(" ".join(words))
+        language = ISO_TO_LANGUAGE[from_]
+        if not validate_mnemonic_words(words, language):
+            raise click.BadParameter(
+                f"One or more non-{ISO_TO_LANGUAGE[from_]} words, or bad checksum,"
+                " or invalid number of words {len(words)}.",
+                param_hint="--mnemonic",
+            )
+
+    click.echo(" ".join(words))
 
 
 cli.add_command(validate)
@@ -146,25 +162,15 @@ cli.add_command(validate)
     name="xprv",
     help="Derives a BIP-32 extended private key from any string without validation.",
 )
-@click.option(
-    "--mnemonic",
-    help="Quoted mnemonic.",
-)
-@click.option(
-    "--passphrase",
-    help="Quoted mnemonic words in the language given by --from.",
-)
-@click.option(
-    "--mainnet/--testnet",
-    is_flag=True,
-    default=True,
-    help="Print a number before, and a newline after, each mnemonic word.",
-)
+@click.option("-m", "--mnemonic", help="Quoted mnemonic.")
+@click.option("-p", "--passphrase", help="BIP-39 passphrase.")
+@click.option("--mainnet/--testnet", is_flag=True, default=True)
 def xprv(mnemonic, passphrase, mainnet):
-    input = mnemonic
-    if input:
-        input = input.strip()
-    seed = to_master_seed(input, passphrase)
+    if mnemonic:
+        mnemonic = mnemonic.strip()
+
+    mnemonic_list = re.split(r"\s+", mnemonic)
+    seed = to_master_seed(mnemonic_list, passphrase)
     prv = to_master_key(seed, mainnet=mainnet, private=True)
 
     click.echo(prv)
