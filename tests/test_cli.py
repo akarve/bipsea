@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
 from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
-from bipsea.bip39 import LANGUAGES, verify_seed_words
+from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
 
@@ -26,6 +26,49 @@ MNEMONIC_12 = {
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+class TestMnemonicValidate:
+
+    @pytest.mark.parametrize("style", ("--pretty", "--not-pretty"), ids=lambda x: x[1:])
+    @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
+    @pytest.mark.parametrize("lang", ISO_TO_LANGUAGE.keys())
+    def test_commands(self, runner, lang, n, style):
+        n_words = str(n)
+        mnemonic = ["mnemonic", "-n", n_words, "-t", lang, style]
+        result = runner.invoke(cli, mnemonic)
+        assert result.exit_code == 0
+
+        output = result.output.strip()
+        words = output.split("\n" if style == "--pretty" else " ")
+        if style == "--pretty":
+            words = [w.partition(") ")[2] for w in words]
+        assert len(words) == int(n)
+        assert validate_mnemonic_words(words, ISO_TO_LANGUAGE[lang])
+
+        if style != "--pretty":
+            validate = ["validate", "-f", lang, "--input", output]
+            check_result = runner.invoke(cli, validate)
+            assert check_result.exit_code == 0
+            check_output = check_result.output.strip()
+            assert check_output == output
+
+
+class TestMnemonic:
+    @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
+    def test_mnemonic_bad_lang(self, runner, lang):
+        cmd = ["mnemonic", "-t", lang]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "not one of" in result.output
+
+    @pytest.mark.parametrize("n", ("5", "-1", 0, 25, 5))
+    def test_mnemonic_bad_number(self, runner, n):
+        cmd = ["mnemonic", "-n", int(n)]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "not one of" in result.output
+
 
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())
@@ -93,7 +136,7 @@ def test_seed_command_from_rand(runner, n):
         assert len(words) == int(n)
         assert result.exit_code == 0
         if style != "--pretty":
-            assert verify_seed_words(words, ISO_TO_LANGUAGE["eng"])
+            assert validate_mnemonic_words(words, ISO_TO_LANGUAGE["eng"])
 
 
 @pytest.mark.parametrize("code", [v["code"] for v in LANGUAGES.values()])
@@ -103,7 +146,7 @@ def test_seed_command_from_rand_languages(runner, code):
     output = result.output.strip()
     words = re.split(r"\s+", output)
     assert result.exit_code == 0
-    assert verify_seed_words(words, ISO_TO_LANGUAGE[code])
+    assert validate_mnemonic_words(words, ISO_TO_LANGUAGE[code])
 
 
 def test_seed_command_from_custom_words(runner):
@@ -225,7 +268,7 @@ def test_entropy_bip39_languages(runner, iso):
     )
     assert result.exit_code == 0
     words = result.output.strip()
-    assert verify_seed_words(words.split(" "), ISO_TO_LANGUAGE[iso])
+    assert validate_mnemonic_words(words.split(" "), ISO_TO_LANGUAGE[iso])
 
 
 @pytest.mark.parametrize("vector", HEX, ids=["HEX"])

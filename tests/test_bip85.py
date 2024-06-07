@@ -15,7 +15,7 @@ from data.bip85_vectors import (
 )
 
 from bipsea.bip32types import parse_ext_key
-from bipsea.bip39 import LANGUAGES, verify_seed_words
+from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bip85 import DRNG, INDEX_TO_LANGUAGE, apply_85, derive, to_entropy
 from bipsea.util import LOGGER, to_hex_string
 
@@ -83,7 +83,7 @@ def test_bip39_application(vector):
     words = output["application"].split(" ")
     assert len(words) == vector["mnemonic_length"]
     assert output["application"] == vector["derived_mnemonic"]
-    assert verify_seed_words(words, "english")
+    assert validate_mnemonic_words(words, "english")
 
 
 @pytest.mark.filterwarnings("ignore:.*184 bits")
@@ -101,7 +101,7 @@ def test_bip39_application_languages(vector, lang):
     path = f"m/83696968'/39'/{codes[0]}/{n_words}'"
     output = apply_85(derive(master, path), path)
     words = output["application"].split(" ")
-    assert verify_seed_words(words, lang)
+    assert validate_mnemonic_words(words, lang)
 
 
 @pytest.mark.parametrize("vector", HEX, ids=["HEX"])
