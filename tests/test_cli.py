@@ -88,8 +88,8 @@ class TestXPRV:
 
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_passphrase(self, runner, vector):
-        """prove that meaningful passphrase mnemonic changes change the xprv
-        (but white space after the mnemonic doesn't)"""
+        """prove that meaningful passphrase and mnemonic changes change the xprv
+        (but white space around the mnemonic does not)"""
         _, mnemonic, _, xprv = vector
         xprv_cmd = ["xprv"]
         change_passphrase = runner.invoke(
