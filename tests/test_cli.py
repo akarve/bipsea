@@ -6,6 +6,7 @@ from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
 from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
 
+from bipsea.bip32types import validate_prv
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli
 from bipsea.util import ASCII_INPUTS, LOGGER
@@ -112,6 +113,25 @@ class TestXPRV:
         else:
             assert result_xprv == xprv
 
+    @pytest.mark.parametrize(
+        "mainnet", (True, False), ids=lambda x: "manninet" if x else "testnet"
+    )
+    def test_testnet(self, runner, mainnet):
+        xprv_cmd = [
+            "xprv",
+            "-m",
+            MNEMONIC_12["words"],
+            "--mainnet" if mainnet else "--testnet",
+        ]
+        xprv_result = runner.invoke(cli, xprv_cmd)
+        assert xprv_result.exit_code == 0
+        output = xprv_result.output.strip()
+        assert validate_prv(output, private=True)
+        if mainnet:
+            assert output == MNEMONIC_12["xprv"]
+        else:
+            assert output.startswith("tprv")
+
 
 class TestMnemonicAndValidate:
 
@@ -204,34 +224,48 @@ class TestDerive:
         assert validate_mnemonic_words(words.split(" "), ISO_TO_LANGUAGE[iso])
 
     @pytest.mark.parametrize("vector", HEX, ids=["HEX"])
-    def test_entropy_hex(self, runner, vector):
+    def test_app_hex(self, runner, vector):
         xprv = vector["master"]
         result = runner.invoke(cli, ["derive", "-a", "hex", "-x", xprv, "-n", 64])
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_entropy"]
 
     @pytest.mark.parametrize("vector", WIF, ids=["WIF"])
-    def test_entropy_wif(self, runner, vector):
+    def test_app_wif(self, runner, vector):
         xprv = vector["master"]
         result = runner.invoke(cli, ["derive", "-a", "wif", "-x", xprv])
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_wif"]
 
+    def test_bad_xprv(self, runner):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"][1:], "--application", "mnemonic"]
+        )
+        assert result.exit_code != 0
+        assert "Invalid" in result.output
+        assert "--xprv" in result.output
 
-# TODO: refactor for new commands
-@pytest.mark.skip
-def test_bipsea_integration(runner):
-    result_seed = runner.invoke(
-        cli,
-        ["seed", "-f", "eng", "-u", MNEMONIC_12["words"], "-n", "12", "-t", "xprv"],
-    )
-    xprv = result_seed.output.strip()
-    assert xprv == MNEMONIC_12["xprv"]
-    assert result_seed.exit_code == 0
-    result_entropy = runner.invoke(
-        cli, ["entropy", "-a", "base64", "-n", "20", "--input", xprv]
-    )
-    assert result_entropy.exit_code == 0
-    pwd64 = result_entropy.output.strip()
-    assert pwd64 == "72zJIS7JhyR5r5NjkuE/"
-    assert len(pwd64) == 20
+
+class TestIntegration:
+
+    def test_mnemonic_validate_xprv_derive(self, runner):
+        """this also tests that the default options are compatible"""
+        mnemonic_result = runner.invoke(cli, ["mnemonic"])
+        assert mnemonic_result.exit_code == 0
+        mnemonic = mnemonic_result.output.strip()
+
+        validate_result = runner.invoke(cli, ["validate", "-m", mnemonic])
+        assert validate_result.exit_code == 0
+        validate = validate_result.output.strip()
+        assert mnemonic == validate
+
+        xprv_result = runner.invoke(cli, ["xprv", "-m", validate])
+        assert xprv_result.exit_code == 0
+        xprv = xprv_result.output.strip()
+
+        derive_result = runner.invoke(
+            cli, ["derive", "-x", xprv, "-a", "mnemonic", "-n", "12", "-t", "jpn"]
+        )
+        assert derive_result.exit_code == 0
+        words = derive_result.output.splitlines()[-1].strip()
+        assert validate_mnemonic_words(words.split(" "), "japanese")

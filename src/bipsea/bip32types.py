@@ -102,23 +102,22 @@ def parse_ext_key(key: str):
         data=master_dec[45:],
     )
 
-    if True:
-        matches = 0
-        for net in VERSIONS:
-            for vis in VERSIONS[net]:
-                if ext_key.version == VERSIONS[net][vis]:
-                    matches += 1
-                    if net == "mainnet":
-                        assert key.startswith("x")
-                    else:
-                        assert key.startswith("t")
-                    if vis == "public":
-                        assert key[1:4] == "pub"
-                        assert ext_key.is_public()
-                    else:
-                        assert key[1:4] == "prv"
-                        assert ext_key.is_private()
-        assert matches == 1, f"unrecognized version: {ext_key.version}"
+    matches = 0
+    for net in VERSIONS:
+        for vis in VERSIONS[net]:
+            if ext_key.version == VERSIONS[net][vis]:
+                matches += 1
+                if net == "mainnet":
+                    assert key.startswith("x")
+                else:
+                    assert key.startswith("t")
+                if vis == "public":
+                    assert key[1:4] == "pub"
+                    assert ext_key.is_public()
+                else:
+                    assert key[1:4] == "prv"
+                    assert ext_key.is_private()
+    assert matches == 1, f"unrecognized version: {ext_key.version}"
 
     int_key = int.from_bytes(ext_key.data, "big")
     if (int_key < 1) or (int_key >= SECP256k1.order):
@@ -135,3 +134,19 @@ def parse_ext_key(key: str):
     assert len(ext_key.data) - 1 == 32 == len(ext_key.chain_code)
 
     return ext_key
+
+
+def validate_prv(prv: str, private: bool) -> bool:
+    try:
+        key = parse_ext_key(prv)
+        assert len(str(key)) == 111
+        assert key.get_network() in ("mainnet", "testnet")
+        if private:
+            assert key.is_private()
+        else:
+            assert key.is_public()
+
+    except (AssertionError, ValueError):
+        return False
+
+    return True
