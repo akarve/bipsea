@@ -4,7 +4,7 @@ import pytest
 from data.bip32_vectors import INVALID_KEYS, VECTORS
 
 from bipsea.bip32 import to_master_key
-from bipsea.bip32types import parse_ext_key
+from bipsea.bip32types import parse_ext_key, validate_prv
 from bipsea.bip85 import derive
 from bipsea.util import LOGGER
 
@@ -24,8 +24,10 @@ def test_vectors_and_parse_ext_key(vector):
             master = to_master_key(seed, mainnet=True, private=True)
             derived = derive(master, ch, private=type_ == "ext prv")
             assert str(derived) == expected
+        xprv = str(parse_ext_key(expected))
+        assert validate_prv(xprv, type_ == "ext prv")
         if ch == "m":
-            assert expected == str(parse_ext_key(expected))
+            assert expected == xprv
 
 
 @pytest.mark.parametrize(
