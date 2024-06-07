@@ -53,18 +53,20 @@ class TestValidate:
         assert result.exit_code != 0
         assert "Non-spanish" in result.output
 
-    def test_free_mnemonics(self, runner):
-        lengths = {"short": 5, "enough": 42}
-        for k, v in lengths.items():
-            cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(v, 0)]
-            result = runner.invoke(cli, cmd)
-            assert result.exit_code == 0
-            if k == "short":
-                assert "Warning" in result.output
-            else:
-                assert "Warning" not in result.output
+    @pytest.mark.parametrize(
+        "k, v", [("one", 1), ("under", 8), ("at", 9), ("over", 400)]
+    )
+    def test_free_mnemonics(self, runner, k, v):
+        cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(v)]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
+        logger.warning(result.output)
+        if k in ("one", "under"):
+            assert "Warning" in result.output
+        else:
+            assert "Warning" not in result.output
 
-    def gen_free_ascii_mnemonic(self, length: int, seed: int):
+    def gen_free_ascii_mnemonic(self, length: int, seed: int = 0):
         random.seed(seed)
         custom = "".join(
             random.choice("".join(sorted(list(ASCII_INPUTS)))) for _ in range(length)
@@ -73,7 +75,7 @@ class TestValidate:
         return custom
 
 
-# slowest CLI class because it calls pbkdf2 under the hood
+# Slowest CLI class because it calls pbkdf2 under the hood
 class TestXPRV:
 
     @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
