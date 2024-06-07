@@ -63,12 +63,6 @@ TIMEOUT = 0.08
 logger = logging.getLogger(LOGGER)
 
 
-@click.group()
-@click.version_option(version=__version__, prog_name=__app_name__)
-def cli():
-    pass
-
-
 @click.command(
     name="mnemonic", help="Generate a BIP-39 mnemonic from `secrets.randbits`."
 )
@@ -272,6 +266,12 @@ def derive_cli(application, number, index, special, xprv, to):
     else:
         output = apply_85(derived, path)["application"]
     click.echo(output)
+
+
+@click.group()
+@click.version_option(version=__version__, prog_name=__app_name__)
+def cli():
+    pass
 
 
 cli.add_command(mnemonic)
