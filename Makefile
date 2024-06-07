@@ -1,6 +1,5 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
-.PHONY: install-go install-local lint publish push readme-cmds test uninstall
-.SILENT: readme-cmds
+.PHONY: install-go install-local lint publish push readme-cmds readme-env test uninstall
 
 lint:
 	isort .
@@ -72,9 +71,10 @@ git-no-unsaved:
 		exit 1; \
 	fi
 
-MNEMONIC := "elder major green sting survey canoe inmate funny bright jewel anchor volcano"
-readme-cmds:
-	echo $(MNEMONIC)
+readme-cmds-env:
+	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
+
+readme-cmds: readme-cmds-env
 	bipsea --version
 	bipsea --help
 	bipsea mnemonic --help
@@ -90,7 +90,7 @@ readme-cmds:
 	bipsea validate -f free -m "$$(cat input.txt)"
 	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12
 	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 100
 	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6
 	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6
 
