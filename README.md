@@ -54,8 +54,6 @@ the master private key.
 > for more.
 
 
-General secrets keychain with semantic derivation paths
-
 # How does it work?
 
 The root of your BIP-85 password tree is an extended master private key (xprv).
