@@ -1,6 +1,14 @@
 .PHONY: all build check clean git-no-unsaved git-on-main got-off-main install install-dev
 .PHONY: install-go install-local lint publish push readme-cmds test uninstall
 
+lint:
+	isort .
+	black .
+	actionlint
+	flake8 . --ignore=E501,W503
+	checkmake Makefile
+
+
 build: clean download-wordlists
 	python3 -m build
 
@@ -29,13 +37,6 @@ install-go:
 
 uninstall:
 	pip uninstall -y bipsea
-
-lint:
-	isort .
-	black .
-	actionlint
-	flake8 . --ignore=E501,W503
-	checkmake Makefile
 
 publish: install-local lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
