@@ -70,7 +70,7 @@ def cli():
 
 
 @click.command(
-    name="mnemonic", help="Generates a BIP-39 seed mnemonic with secrets.randbits."
+    name="mnemonic", help="Generate a BIP-39 mnemonic from `secrets.randbits`."
 )
 @click.option(
     "-t",
@@ -105,12 +105,9 @@ def mnemonic(to, number, pretty):
     click.echo(output)
 
 
-cli.add_command(mnemonic)
-
-
 @click.command(
     name="validate",
-    help="Validates and normalizes the words of a BIP-39 mnemonic (count, wordlist, checksum, NFKD).",
+    help="Validate and normalize a BIP-39 mnemonic into one string.",
 )
 @click.option(
     "-f",
@@ -156,12 +153,9 @@ def validate(from_, mnemonic):
     click.echo(" ".join(words))
 
 
-cli.add_command(validate)
-
-
 @click.command(
     name="xprv",
-    help="Derives a BIP-32 extended private key from any string without validation.",
+    help="Derive a BIP-32 XPRV from a string (does not validate).",
 )
 @click.option("-m", "--mnemonic", help="Quoted mnemonic.")
 @click.option("-p", "--passphrase", help="BIP-39 passphrase.")
@@ -176,9 +170,6 @@ def xprv(mnemonic, passphrase, mainnet):
     prv = to_master_key(seed, mainnet=mainnet, private=True)
 
     click.echo(prv)
-
-
-cli.add_command(xprv)
 
 
 @click.command(name="derive", help="Derives a secret according to BIP-85.")
@@ -297,6 +288,9 @@ def derive_cli(application, number, index, special, xprv, to):
     click.echo(output)
 
 
+cli.add_command(mnemonic)
+cli.add_command(validate)
+cli.add_command(xprv)
 cli.add_command(derive_cli)
 
 
@@ -308,6 +302,15 @@ def check_range(number: int, application: str):
             message=f"--number out of range. Try [{min}, {max}] for {application}.",
         )
 
+
+def look_for_pipe():
+    stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
+    if stdin:
+        lines = sys.stdin.readlines()
+        if lines:
+            # get just the last line because there might be a warning above
+            return lines[-1].strip()
+ 
 
 def no_prv():
     raise click.BadOptionUsage(
