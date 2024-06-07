@@ -18,8 +18,8 @@ and the [python-ecdsa](https://github.com/tlsfuzzer/python-ecdsa) module, which
 is [vulnerable to side-channel attacks](https://github.com/tlsfuzzer/python-ecdsa?tab=readme-ov-file#security).
 bipsea does not rely on third-party libraries from any wallet vendor.
 
-You can run bipsea offline to generate general-use passwords, Bitcoin seed words,
-and more. Consider dedicated cold hardware that runs [Tails](https://tails.net),
+You can run bipsea offline to generate passwords, seed mnemonics, and more.
+Consider dedicated cold hardware that runs [Tails](https://tails.net),
 has networking disabled, and disables
 [Intel Management Engine](https://support.system76.com/articles/intel-me/)
 and other possible hardware backdoors.
@@ -28,15 +28,14 @@ and other possible hardware backdoors.
 
 BIP-85 enables you to protect and store a _single_ master secret
 that can derive _millions of independent, multi-purpose secrets_. 
+The following benefits emerge:
 
-BIP-85 offers the following benefits:
-
-* Offers the security of numerous independent passwords with the operational efficiency
+1. Offers the security of numerous independent passwords with the operational efficiency
 of a single master password. (The master secret can be multi-factor.)
-* Uses Bitcoin's well-tested hierarchical deterministic wallet
+1. Uses Bitcoin's well-tested hierarchical deterministic wallet
 tree (including primitives like ECDSA and hardened children)
-* Generates millions of new mnemonics and master keys
-* Generates millions of new passwords and random streams from a single master key
+1. Generates millions of new mnemonics and master keys
+1. Generates millions of new passwords and random streams from a single master key
 
 Unlike a password manager, which protects many secrets with one hot secret,
 BIP-85 _derives_ many secrets from one protected secret. Therefore you only need
@@ -47,7 +46,7 @@ You could safely store all derivation paths in a hot password manager like Apple
 You could even store the derived secrets in a hot password manager at no risk to
 the master private key.
 
-> Note: bipsea alone is not password manager, but you could use it to implement one.
+> bipsea alone is not password manager, but you could use it to implement one.
 > See [BIP-?: General secrets keychain with semantic derivation paths](https://github.com/akarve/bip-keychain)
 > for more.
 
