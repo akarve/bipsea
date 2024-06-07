@@ -72,12 +72,12 @@ class TestValidate:
         return custom
 
 
-# slowest tests because they call pbkdf2
+# slowest CLI class because it calls pbkdf2 under the hood
 class TestXPRV:
 
     @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
     def test_bip_39_vectors(self, runner, vectors):
-        for vector in vectors:  # for speed since test_bip39 already covers all
+        for vector in vectors:
             _, mnemonic, _, xprv = vector
             result = runner.invoke(
                 cli, ["xprv", "--mnemonic", mnemonic, "-p", "TREZOR"]
