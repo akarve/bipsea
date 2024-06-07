@@ -29,7 +29,6 @@ def runner():
 
 
 class TestMnemonic:
-
     @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
     def test_mnemonic_bad_lang(self, runner, lang):
         cmd = ["mnemonic", "-t", lang]
@@ -46,7 +45,6 @@ class TestMnemonic:
 
 
 class TestValidate:
-
     def test_wrong_language(self, runner):
         mnemonic = "きわめる そせい ばかり なみだ みつかる くしゃみ にあう ひみつ かくとく よけい げんき ほきょう"
         result = runner.invoke(cli, ["validate", "-f", "spa", "-m", mnemonic])
@@ -77,7 +75,6 @@ class TestValidate:
 
 # Slowest CLI class because it calls pbkdf2 under the hood
 class TestXPRV:
-
     @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
     def test_bip_39_vectors(self, runner, vectors):
         for vector in vectors:
@@ -136,7 +133,6 @@ class TestXPRV:
 
 
 class TestMnemonicAndValidate:
-
     @pytest.mark.parametrize("style", ("--pretty", "--not-pretty"), ids=lambda x: x[1:])
     @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
     @pytest.mark.parametrize("lang", ISO_TO_LANGUAGE.keys())
@@ -162,7 +158,6 @@ class TestMnemonicAndValidate:
 
 
 class TestDerive:
-
     @pytest.mark.parametrize("vector", PWD_BASE85)
     def test_pwd_base85(self, runner, vector):
         xprv = vector["master"]
@@ -249,7 +244,6 @@ class TestDerive:
 
 
 class TestIntegration:
-
     def test_mnemonic_validate_xprv_derive(self, runner):
         """this also tests that the default options are compatible"""
         mnemonic_result = runner.invoke(cli, ["mnemonic"])
