@@ -96,9 +96,8 @@ def test_bip39_application(vector):
 def test_bip39_application_languages(vector, lang):
     n_words = vector["mnemonic_length"]
     master = parse_ext_key(vector["master"])
-    codes = [k for k, v in INDEX_TO_LANGUAGE.items() if v == lang]
-    assert len(codes) == 1
-    path = f"m/83696968'/39'/{codes[0]}/{n_words}'"
+    code = next(k for k, v in INDEX_TO_LANGUAGE.items() if v == lang)
+    path = f"m/83696968'/39'/{code}/{n_words}'"
     output = apply_85(derive(master, path), path)
     words = output["application"].split(" ")
     assert validate_mnemonic_words(words, lang)

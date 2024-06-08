@@ -124,7 +124,6 @@ def validate(from_, mnemonic):
         mnemonic = try_for_pipe_input()
     no_empty_param("--mnemonic", mnemonic)
 
-    # TODO: add to spec we still normalize and split on space always!
     words = normalize_list(re.split(r"\s+", mnemonic), lower=True)
 
     if from_ == "free":
@@ -152,11 +151,9 @@ def validate(from_, mnemonic):
 
 @click.command(
     name="xprv",
-    help="Derive a BIP-32 XPRV from *any* string.",
+    help="Derive a BIP-32 XPRV from arbitrary string. Use bipsea validate` to validate!",
 )
-@click.option(
-    "-m", "--mnemonic", help="Mnemonic. Pipe from `bipsea validate` as needed."
-)
+@click.option("-m", "--mnemonic", help="Mnemonic. Pipe from `bipsea validate`.")
 @click.option("-p", "--passphrase", default="", help="BIP-39 passphrase.")
 @click.option("--mainnet/--testnet", is_flag=True, default=True)
 def xprv(mnemonic, passphrase, mainnet):

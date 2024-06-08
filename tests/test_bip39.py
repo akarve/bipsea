@@ -75,13 +75,13 @@ def test_vectors(language, vectors):
         assert validate_mnemonic_words(computed_words, language)
 
 
-def test_meta():
+@pytest.mark.parametrize("v", N_WORDS_META.values())
+def test_meta(v):
     """Computed BIP-39 table with ENT, CS, ENT+CS"""
-    for v in N_WORDS_META.values():
-        assert (v["entropy_bits"] % 32) == 0, "Entropy bits must be a multiple of 32"
-        assert (
-            v["checksum_bits"] == v["entropy_bits"] // 32
-        ), "Unexpected mismatch between checksum and entropy sizes"
+    assert (v["entropy_bits"] % 32) == 0, "Entropy bits must be a multiple of 32"
+    assert (
+        v["checksum_bits"] == v["entropy_bits"] // 32
+    ), "Unexpected mismatch between checksum and entropy sizes"
 
 
 def test_verify_checksum():
@@ -91,19 +91,19 @@ def test_verify_checksum():
     assert not validate_mnemonic_words(correct[:-1] + ["mix"], "english")
 
 
-def test_test_main_pub_prv():
-    for net in (True, False):
-        for vis in (True, False):
-            expected_type = {
-                (True, True): "xprv",
-                (True, False): "xpub",
-                (False, True): "tprv",
-                (False, False): "tpub",
-            }[(net, vis)]
-            seed = to_master_seed(MNEMONIC_12["words"], "")
-            prv = str(to_master_key(seed, mainnet=net, private=vis))
-            assert prv == MNEMONIC_12[expected_type]
-            assert prv.startswith(expected_type)
+@pytest.mark.parametrize("vis", (True, False))
+@pytest.mark.parametrize("net", (True, False))
+def test_test_main_pub_prv(net, vis):
+    expected_type = {
+        (True, True): "xprv",
+        (True, False): "xpub",
+        (False, True): "tprv",
+        (False, False): "tpub",
+    }[(net, vis)]
+    seed = to_master_seed(MNEMONIC_12["words"], "")
+    prv = str(to_master_key(seed, mainnet=net, private=vis))
+    assert prv == MNEMONIC_12[expected_type]
+    assert prv.startswith(expected_type)
 
 
 @pytest.mark.parametrize("language", LANGUAGES.keys())

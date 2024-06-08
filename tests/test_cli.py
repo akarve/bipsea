@@ -52,14 +52,14 @@ class TestValidate:
         assert "Non-spanish" in result.output
 
     @pytest.mark.parametrize(
-        "k, v", [("one", 1), ("under", 8), ("at", 9), ("over", 400)]
+        "size, num", [("one", 1), ("under", 8), ("at", 9), ("over", 400)]
     )
-    def test_free_mnemonics(self, runner, k, v):
-        cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(v)]
+    def test_free_mnemonics(self, runner, size, num):
+        cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(num)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         logger.warning(result.output)
-        if k in ("one", "under"):
+        if size in ("one", "under"):
             assert "Warning" in result.output
         else:
             assert "Warning" not in result.output
@@ -91,15 +91,12 @@ class TestXPRV:
         """prove that meaningful passphrase and mnemonic changes change the xprv
         (but white space around the mnemonic does not)"""
         _, mnemonic, _, xprv = vector
-        xprv_cmd = ["xprv"]
-        change_passphrase = runner.invoke(
-            cli, xprv_cmd + ["-m", mnemonic, "-p", "TREZoR"]
-        )
+        change_passphrase = runner.invoke(cli, ["xprv", "-m", mnemonic, "-p", "TREZoR"])
         assert change_passphrase.exit_code == 0
         result_xprv = change_passphrase.output.strip().split("\n")[-1]
         assert result_xprv != xprv
 
-    @pytest.mark.parametrize("fix", (".", " \t\n "), ids=lambda x: f"pre/suffix-{x}")
+    @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"pre/suffix-{x}")
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_mnemonic(self, runner, vector, fix):
         _, mnemonic, _, xprv = vector
@@ -107,13 +104,13 @@ class TestXPRV:
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
         result_xprv = result.output.strip().split("\n")[-1]
-        if fix == ".":
+        if fix == "x":
             assert result_xprv != xprv
         else:
             assert result_xprv == xprv
 
     @pytest.mark.parametrize(
-        "mainnet", (True, False), ids=lambda x: "manninet" if x else "testnet"
+        "mainnet", (True, False), ids=lambda x: "mainnet" if x else "testnet"
     )
     def test_testnet(self, runner, mainnet):
         xprv_cmd = [
@@ -133,10 +130,10 @@ class TestXPRV:
 
 
 class TestMnemonicAndValidate:
-    @pytest.mark.parametrize("style", ("--pretty", "--not-pretty"), ids=lambda x: x[1:])
     @pytest.mark.parametrize("n", N_WORDS_ALLOWED)
+    @pytest.mark.parametrize("style", ("--pretty", "--not-pretty"), ids=lambda x: x[2:])
     @pytest.mark.parametrize("lang", ISO_TO_LANGUAGE.keys())
-    def test_commands(self, runner, lang, n, style):
+    def test_commands(self, runner, n, style, lang):
         n_words = str(n)
         mnemonic = ["mnemonic", "-n", n_words, "-t", lang, style]
         result = runner.invoke(cli, mnemonic)
