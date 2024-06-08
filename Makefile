@@ -25,7 +25,7 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 
-publish: install-editable lint test readme-cmds build git-no-unsaved git-on-main
+publish: git-no-unsaved git-on-main build test-published
 	git pull origin main
 	python3 -m twine upload dist/*
 
