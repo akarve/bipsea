@@ -42,8 +42,8 @@ install-dist::
 
 uninstall::
 	pip uninstall -y bipsea
-	pip uninstall -y requirements.txt
-	pip uninstall -y test-requirements.txt
+	pip uninstall -y -r requirements.txt
+	pip uninstall -y -r tst-requirements.txt
 	
 check::
 	black . --check
