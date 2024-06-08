@@ -1,4 +1,4 @@
-.PHONY: all clean test
+.PHONY: all clean install test
 
 all: install build
 
@@ -9,7 +9,7 @@ test-ci::
 
 test-dist:: clean install-local build install-dist readme-cmds
 
-push:: test git-off-main git-no-unsaved
+push:: test readme-cmds git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
