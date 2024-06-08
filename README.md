@@ -216,7 +216,8 @@ bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea derive -a dice -n 100 -s 6
 
 > Die rolls start at 0 so that, for instance, you can get a proper 10-digit PIN.
 
-Or, for a 6-digit PIN roll a 10-sided virtual die.
+For a 6-digit PIN roll a 10-sided virtual die.
+
     4,9,9,3,7,6
 
 
