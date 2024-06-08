@@ -8,7 +8,7 @@ setup(
     name=__app_name__,
     version=__version__,
     package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    packages=find_packages(where="src", include=["bipsea", "bipsea.wordlists"]),
     package_data={
         f"{__app_name__}": ["wordlists/*.txt"],
     },
