@@ -23,7 +23,7 @@ clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 
-publish:: download-wordlists git-no-unsaved git-on-main build test-published
+publish:: download-wordlists git-no-unsaved git-on-main test-dist
 	git pull origin main
 	python3 -m twine upload dist/*
 
