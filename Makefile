@@ -7,8 +7,6 @@ test-ci::
 
 test-dist:: uninstall build install-dist readme-cmds
 
-test-published:: uninstall install-pypi test install-dev
-
 push:: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
