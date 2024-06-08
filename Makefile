@@ -1,6 +1,8 @@
 .PHONY: all clean test
 
-test:: lint readme-cmds test-ci
+all: install build
+
+test: lint test-ci
 
 test-ci::
 	pytest -sx
@@ -17,17 +19,19 @@ build:
 download-wordlists:: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
 
-clean::
+clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 	pip uninstall -y bipsea
 	pip uninstall -y -r tst-requirements.txt
 
-publish:: download-wordlists git-no-unsaved git-on-main test-dist install-dev test
+publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
 	git pull origin main
 	python3 -m twine upload dist/*
 
-install-dev:: install-local
+install:: install-ci install-go
+
+install-ci:: install-local
 	pip install -r tst-requirements.txt
 
 install-local::
@@ -37,9 +41,6 @@ install-go::
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
-
-install-pypi::
-	pip install -U bipsea
 
 install-dist::
 	pip install dist/*.whl 
