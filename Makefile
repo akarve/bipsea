@@ -7,13 +7,13 @@ test:: lint test-ci
 test-ci::
 	pytest -sx
 
-test-dist:: clean install-local build install-dist readme-cmds
+test-dist:: clean build install-dist readme-cmds
 
 push:: test readme-cmds git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-build:
+build: install-local
 	python3 -m build
 
 download-wordlists:: cmd-env
