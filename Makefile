@@ -11,7 +11,7 @@ test-ci:
 
 test-published: uninstall install test readme install-local
 
-push: lint git-off-main git-no-unsaved
+push: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
