@@ -32,6 +32,7 @@ setup(
     install_requires=[
         "click~=8.1.3",
         "base58~=2.1.1",
+        "build~=1.2.1",
         "ecdsa~=0.19.0",
     ],
     project_urls={

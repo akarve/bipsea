@@ -5,13 +5,13 @@ test:: lint readme-cmds test-ci
 test-ci::
 	pytest -sx
 
-test-dist:: uninstall build install-dist readme-cmds
+test-dist:: clean install-local build install-dist readme-cmds
 
 push:: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-build: clean
+build:
 	python3 -m build
 
 download-wordlists:: cmd-env
@@ -20,14 +20,18 @@ download-wordlists:: cmd-env
 clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
+	pip uninstall -y bipsea
+	pip uninstall -y -r tst-requirements.txt
 
-publish:: download-wordlists git-no-unsaved git-on-main test-dist
+publish:: download-wordlists git-no-unsaved git-on-main test-dist install-dev test
 	git pull origin main
 	python3 -m twine upload dist/*
 
-install-dev::
-	pip install -e .
+install-dev:: install-local
 	pip install -r tst-requirements.txt
+
+install-local::
+	pip install -e .
 
 install-go::
 	# you must have go installed https://go.dev/doc/install	
@@ -40,11 +44,6 @@ install-pypi::
 install-dist::
 	pip install dist/*.whl 
 
-uninstall::
-	pip uninstall -y bipsea
-	pip uninstall -y -r requirements.txt
-	pip uninstall -y -r tst-requirements.txt
-	
 check::
 	black . --check
 	isort . --check
