@@ -14,7 +14,7 @@ push:: test git-off-main git-no-unsaved
 build: clean
 	python3 -m build
 
-download-wordlists: cmd-env
+download-wordlists:: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
 
 clean::
