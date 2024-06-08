@@ -8,10 +8,10 @@
 > And in cryptography bind them._  
 > -[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
-bipsea is a pure Python, composable command line utility that generates, and
-verifies Bitcoin mnemonics and hierarchical secrets according to BIP-85.
+bipsea is composable command-line utility that generates and validates Bitcoin
+mnemonics and hierarchical secrets according to BIP-85.
 bipsea is designed be usable, readable, and correct via extensive unit tests.
-bipsea also includes a Python API for BIPs 32, 39, and 85.
+bipsea includes pure Python APIs for BIPs 32, 39, and 85.
 **bipsea is currently for experimental purposes only.**
 
 bipsea relies on cryptographic primitives from Python
