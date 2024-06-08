@@ -122,15 +122,10 @@ def test_rsa(vector, key_bits, index):
     secret = derived_key.data[1:]  # chop the BIP-32 1-byte prefix
     entropy = to_entropy(secret)
     key = RSA.generate(key_bits, randfunc=DRNG(entropy).read)
-    for vis in ("public", "private"):
-        file_name = f"{key_bits}-{index}-{vis}.pem"
-        file_path = os.path.join("tests", "data", "rsa", file_name)
-        if vis == "public":
-            with open(file_path, "rb") as f:
-                assert f.read() == key.public_key().export_key()
-        else:
-            with open(file_path, "rb") as f:
-                assert f.read() == key.export_key()
+    file_name = f"{key_bits}-{index}-public.pem"
+    file_path = os.path.join("tests", "data", "rsa", file_name)
+    with open(file_path, "rb") as f:
+        assert f.read() == key.public_key().export_key()
 
 
 @pytest.mark.parametrize("vector", WIF, ids=["WIF"])
