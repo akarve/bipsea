@@ -23,3 +23,5 @@ jobs:
       run: make check
     - name: test-ci
       run: make test-ci
+    - name: test-dist
+      run: make test-dist
