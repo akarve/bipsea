@@ -104,7 +104,7 @@ class TestXPRV:
         result_xprv = change_passphrase.output.strip().split("\n")[-1]
         assert result_xprv != xprv
 
-    @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"pre/suffix-{x}")
+    @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"add-{x}")
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_mnemonic(self, runner, vector, fix):
         _, mnemonic, _, xprv = vector
