@@ -113,19 +113,23 @@ def test_hex(vector):
     assert vector["derived_entropy"] == output["application"]
 
 
-@pytest.mark.parametrize("index", [0, 1])
 @pytest.mark.parametrize("key_bits", [1024])
 @pytest.mark.parametrize("vector", XPRV, ids=["RSA"])
-def test_rsa(vector, key_bits, index):
-    master = parse_ext_key(vector["master"])
-    derived_key = derive(master, f"m/83696968'/828365'/{key_bits}'/{index}'")
-    secret = derived_key.data[1:]  # chop the BIP-32 1-byte prefix
-    entropy = to_entropy(secret)
-    key = RSA.generate(key_bits, randfunc=DRNG(entropy).read)
-    file_name = f"{key_bits}-{index}-public.pem"
-    file_path = os.path.join("tests", "data", "rsa", file_name)
-    with open(file_path, "rb") as f:
-        assert f.read() == key.public_key().export_key()
+def test_rsa(vector, key_bits):
+    data = []
+    for index in (0, 1):
+        master = parse_ext_key(vector["master"])
+        derived_key = derive(master, f"m/83696968'/828365'/{key_bits}'/{index}'")
+        secret = derived_key.data[1:]  # chop the BIP-32 1-byte prefix
+        entropy = to_entropy(secret)
+        key = RSA.generate(key_bits, randfunc=DRNG(entropy).read)
+        file_name = f"{key_bits}-{index}-public.pem"
+        file_path = os.path.join("tests", "data", "rsa", file_name)
+        datum = open(file_path, "rb").read()
+        assert datum == key.public_key().export_key()
+        data.append(datum)
+    # keys must be distinct since indexes are distinct
+    assert data[0] != data[1]
 
 
 @pytest.mark.parametrize("vector", WIF, ids=["WIF"])
