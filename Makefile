@@ -5,7 +5,7 @@ test:: lint readme-cmds test-ci
 test-ci::
 	pytest -sx
 
-test-dist:: uninstall build install-dist test install-dev
+test-dist:: uninstall build install-dist readme-cmds
 
 test-published:: uninstall install-pypi test install-dev
 
