@@ -262,3 +262,15 @@ class TestIntegration:
         assert derive_result.exit_code == 0
         words = derive_result.output.splitlines()[-1].strip()
         assert validate_mnemonic_words(words.split(" "), "japanese")
+
+    @pytest.mark.parametrize("input", ("m", 1, "\t"))
+    def test_too_short_inputs(self, runner, input):
+        for cmd in ("validate", "xprv"):
+            bad_m_result = runner.invoke(cli, [cmd, "-m", input])
+            assert bad_m_result.exit_code != 0
+            assert "Error" in bad_m_result.output
+
+        for cmd in "derive":
+            bad_x_result = runner.invoke(cli, ["derive", "-x", input, "-a", "base85"])
+            assert bad_x_result.exit_code != 0
+            assert "Error" in bad_x_result.output

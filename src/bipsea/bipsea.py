@@ -164,6 +164,13 @@ def xprv(mnemonic, passphrase, mainnet):
     no_empty_param("--mnemonic", mnemonic)
 
     mnemonic_list = re.split(r"\s+", mnemonic)
+    total_chars = sum(len(s) for s in mnemonic_list)
+    if total_chars < 10:
+        raise click.BadOptionUsage(
+            option_name="--mnemonic",
+            message="Suspiciously short mnemonic. Try `bipsea validate`.",
+        )
+
     seed = to_master_seed(mnemonic_list, passphrase)
     prv = to_master_key(seed, mainnet=mainnet, private=True)
 
@@ -295,7 +302,6 @@ def check_range(number: int, application: str):
 
 
 def no_empty_param(name: str, val, msg="Must not be empty."):
-    logger.debug(val)
     if not val:
         raise click.BadParameter(msg, param_hint=name)
 
