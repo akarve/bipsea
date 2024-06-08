@@ -1,17 +1,15 @@
-.PHONY: all check clean cmd-env git-no-unsaved git-off-main git-on-main install
-.PHONY: install-dev install-go install-editable lint publish published push readme-cmds
-.PHONY: test uninstall
+.PHONY: all clean test
 
-test: lint readme-cmds test-ci
+test:: lint readme-cmds test-ci
 
-test-ci:
+test-ci::
 	pytest -sx
 
-test-dist: uninstall build install-dist test install-dev
+test-dist:: uninstall build install-dist test install-dev
 
-test-published: uninstall install-pypi test install-dev
+test-published:: uninstall install-pypi test install-dev
 
-push: test git-off-main git-no-unsaved
+push:: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
@@ -21,40 +19,40 @@ build: clean download-wordlists
 download-wordlists: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
 
-clean:
+clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 
-publish: git-no-unsaved git-on-main build test-published
+publish:: git-no-unsaved git-on-main build test-published
 	git pull origin main
 	python3 -m twine upload dist/*
 
-install-dev:
+install-dev::
 	pip install -e .
 	pip install -r requirements.txt -r tst-requirements.txt
 
-install-go:
+install-go::
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
-install-pypi:
+install-pypi::
 	pip install -U bipsea
 
-install-dist:
+install-dist::
 	pip install dist/*.whl 
 
-uninstall:
+uninstall::
 	pip uninstall -y bipsea
 	pip uninstall -y requirements.txt
 	pip uninstall -y test-requirements.txt
 	
-check:
+check::
 	black . --check
 	isort . --check
 	flake8 . --ignore=E501,W503
 
-lint:
+lint::
 	isort .
 	black .
 	actionlint
@@ -62,33 +60,33 @@ lint:
 	checkmake Makefile
 
 
-git-off-main:
+git-off-main::
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" = "main" ]; then \
 		echo "Cowardly refusing push from main."; \
 		exit 1; \
 	fi
 
-git-on-main:
+git-on-main::
 	@branch=$$(git symbolic-ref --short HEAD); \
 	if [ "$$branch" != "main" ]; then \
 		echo "Must be on main branch."; \
 		exit 1; \
 	fi
 
-git-no-unsaved:
+git-no-unsaved::
 	@if ! git diff --quiet; then \
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
 	fi
 
-cmd-env:
+cmd-env::
 	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
 	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
 	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
 
 REDIRECT_TO ?= > /dev/null
-readme-cmds: cmd-env
+readme-cmds:: cmd-env
 	bipsea --version $(REDIRECT_TO)
 
 	bipsea --help $(REDIRECT_TO)
