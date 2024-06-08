@@ -241,7 +241,7 @@ class TestDerive:
 
 
 class TestIntegration:
-    def test_mnemonic_validate_xprv_derive(self, runner):
+    def test_chain_all_commands(self, runner):
         """this also tests that the default options are compatible"""
         mnemonic_result = runner.invoke(cli, ["mnemonic"])
         assert mnemonic_result.exit_code == 0
