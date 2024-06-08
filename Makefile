@@ -1,8 +1,8 @@
 .PHONY: all clean install test
 
-all: install build
+all:: install build
 
-test: lint test-ci
+test:: lint test-ci
 
 test-ci::
 	pytest -sx
@@ -19,7 +19,7 @@ build:
 download-wordlists:: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
 
-clean:
+clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 	pip uninstall -y bipsea
