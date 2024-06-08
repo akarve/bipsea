@@ -25,8 +25,7 @@ clean::
 	pip uninstall -y bipsea
 	pip uninstall -y -r tst-requirements.txt
 
-publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
-	git pull origin main
+publish:: download-wordlists git-no-unsaved git-on-main build test-dist install test
 	python3 -m twine upload dist/*
 
 install:: install-ci install-go
