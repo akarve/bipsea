@@ -1,8 +1,10 @@
 import logging
+import os
 from hashlib import sha256
 
 import base58
 import pytest
+from Crypto.PublicKey import RSA
 from data.bip85_vectors import (
     BIP_39,
     DICE,
@@ -111,14 +113,24 @@ def test_hex(vector):
     assert vector["derived_entropy"] == output["application"]
 
 
-@pytest.mark.parametrize("vector", XPRV, ids=["XPRV"])
-@pytest.mark.xfail(reason="RSA application not implemented", raises=NotImplementedError)
-def test_rsa_unimplemented(vector):
-    """currently no support for RSA application.
-    path format: m/83696968'/828365'/{key_bits}'/{key_index}'"""
-    rsa_path = "m/83696968'/828365'/1024'/0'"
+@pytest.mark.parametrize("index", [0, 1])
+@pytest.mark.parametrize("key_bits", [1024])
+@pytest.mark.parametrize("vector", XPRV, ids=["RSA"])
+def test_rsa(vector, key_bits, index):
     master = parse_ext_key(vector["master"])
-    apply_85(derive(master, rsa_path), rsa_path)
+    derived_key = derive(master, f"m/83696968'/828365'/{key_bits}'/{index}'")
+    secret = derived_key.data[1:]  # chop the BIP-32 1-byte prefix
+    entropy = to_entropy(secret)
+    key = RSA.generate(key_bits, randfunc=DRNG(entropy).read)
+    for vis in ("public", "private"):
+        file_name = f"{key_bits}-{index}-{vis}.pem"
+        file_path = os.path.join("tests", "data", "rsa", file_name)
+        if vis == "public":
+            with open(file_path, "rb") as f:
+                assert f.read() == key.public_key().export_key()
+        else:
+            with open(file_path, "rb") as f:
+                assert f.read() == key.export_key()
 
 
 @pytest.mark.parametrize("vector", WIF, ids=["WIF"])
