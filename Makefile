@@ -1,15 +1,15 @@
 .PHONY: all check clean cmd-env git-no-unsaved git-off-main git-on-main install
-.PHONY: install-dev install-go install-local lint publish published push readme test
-.PHONY: uninstall
+.PHONY: install-dev install-go install-editable lint publish published push readme-cmds
+.PHONY: test uninstall
 
-
-test: lint readme
-	pytest -sx
+test: lint readme-cmds test-ci
 
 test-ci:
 	pytest -sx
 
-test-published: uninstall install test readme install-local
+test-dist: uninstall build install-dist test install-dev
+
+test-published: uninstall install-pypi test install-dev
 
 push: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
@@ -18,38 +18,36 @@ push: test git-off-main git-no-unsaved
 build: clean download-wordlists
 	python3 -m build
 
+download-wordlists: cmd-env
+	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
+
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 
-cmd-env:
-	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
-	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
-	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
-
-download-wordlists: cmd-env
-	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
-
-publish: install-local lint test readme build git-no-unsaved git-on-main
+publish: install-editable lint test readme-cmds build git-no-unsaved git-on-main
 	git pull origin main
 	python3 -m twine upload dist/*
 
-install:
-	pip3 install -U bipsea
-
-install-local:
-	pip3 install -e .
-
 install-dev:
-	pip3 install -r requirements.txt -r tst-requirements.txt
+	pip install -e .
+	pip install -r requirements.txt -r tst-requirements.txt
 
 install-go:
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
+install-pypi:
+	pip install -U bipsea
+
+install-dist:
+	pip install dist/*.whl 
+
 uninstall:
-	pip3 uninstall -y bipsea
+	pip uninstall -y bipsea
+	pip uninstall -y requirements.txt
+	pip uninstall -y test-requirements.txt
 	
 check:
 	black . --check
@@ -84,28 +82,34 @@ git-no-unsaved:
 		exit 1; \
 	fi
 
-readme: cmd-env
-	bipsea --version
+cmd-env:
+	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
+	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
+	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
 
-	bipsea --help
-	bipsea mnemonic --help
-	bipsea validate --help
-	bipsea xprv --help
-	bipsea derive --help
+REDIRECT_TO ?= > /dev/null
+readme-cmds: cmd-env
+	bipsea --version $(REDIRECT_TO)
 
-	bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12
+	bipsea --help $(REDIRECT_TO)
+	bipsea mnemonic --help $(REDIRECT_TO)
+	bipsea validate --help $(REDIRECT_TO)
+	bipsea xprv --help $(REDIRECT_TO)
+	bipsea derive --help $(REDIRECT_TO)
 
-	bipsea mnemonic -t jpn -n 15
-	bipsea mnemonic -t eng -n 12 --pretty > /dev/null
-	bipsea mnemonic -t spa -n 12 | bipsea validate -f spa
+	bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12 $(REDIRECT_TO)
 
-	bipsea mnemonic | bipsea validate | bipsea xprv
+	bipsea mnemonic -t jpn -n 15 $(REDIRECT_TO)
+	bipsea mnemonic -t eng -n 12 --pretty $(REDIRECT_TO)
+	bipsea mnemonic -t spa -n 12 | bipsea validate -f spa $(REDIRECT_TO)
 
-	bipsea validate -f free -m "123456123456123456" | bipsea xprv
-	bipsea validate -f free -m @"$$(cat input.txt)"
+	bipsea mnemonic | bipsea validate | bipsea xprv $(REDIRECT_TO)
 
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000 > /dev/null
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6
+	bipsea validate -f free -m "123456123456123456" | bipsea xprv $(REDIRECT_TO)
+	bipsea validate -f free -m @"$$(cat input.txt)" $(REDIRECT_TO)
+
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 $(REDIRECT_TO)
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1 $(REDIRECT_TO)
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000 $(REDIRECT_TO)
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6 $(REDIRECT_TO)
+	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6 $(REDIRECT_TO)
