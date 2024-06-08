@@ -26,16 +26,19 @@ setup(
     ],
     keywords="Bitcoin BIP85 BIP32 cryptography",
     install_requires=[
-        "click",
-        "base58",
-        "ecdsa",
-        "pytest",
+        "click~=8.1.3",
+        "base58~=2.1.1",
+        "ecdsa~=0.19.0",
     ],
+    # other setup arguments
     tests_require=[
-        "black",
-        "isort",
-        "pytest",
-        "requests",
+        "black~=24.4.2",
+        "build~=1.2.1",
+        "flake8~=7.0.0",
+        "isort~=5.13.2",
+        "pycryptodome~=3.20.0",
+        "pytest~=8.2.1",
+        "twine~=5.1.0",
     ],
     project_urls={
         "Source": "https://github.com/akarve/bipsea",
