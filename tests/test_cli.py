@@ -4,7 +4,15 @@ import random
 import pytest
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
-from data.bip85_vectors import BIP_39, HEX, PWD_BASE85, WIF
+from data.bip85_vectors import (
+    BIP_39,
+    COMMON_XPRV,
+    DICE,
+    HEX,
+    PWD_BASE64,
+    PWD_BASE85,
+    WIF,
+)
 
 from bipsea.bip32types import validate_prv
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
@@ -96,7 +104,7 @@ class TestXPRV:
         result_xprv = change_passphrase.output.strip().split("\n")[-1]
         assert result_xprv != xprv
 
-    @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"pre/suffix-{x}")
+    @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"add-{x}")
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_mnemonic(self, runner, vector, fix):
         _, mnemonic, _, xprv = vector
@@ -155,24 +163,22 @@ class TestMnemonicAndValidate:
 
 
 class TestDerive:
-    @pytest.mark.parametrize("vector", PWD_BASE85)
-    def test_pwd_base85(self, runner, vector):
-        xprv = vector["master"]
-        for app in ("base64", "base85", "hex", "drng"):
-            for n in (20, 50, 64):
-                result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "-x", xprv])
-                assert result.exit_code == 0
-                answer = result.output.strip()
-                length = len(answer)
-                if app in ("hex", "drng"):
-                    length = length // 2
-                assert length == n
+    @pytest.mark.parametrize("n", (20, 50, 64))
+    @pytest.mark.parametrize("app", ("base64", "base85", "hex", "drng"))
+    def test_password_length(self, runner, app, n):
+        xprv = COMMON_XPRV
+        result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "-x", xprv])
+        assert result.exit_code == 0
+        answer = result.output.strip()
+        length = len(answer)
+        if app in ("hex", "drng"):
+            length = length // 2
+        assert length == n
 
     @pytest.mark.parametrize("n", (20, 50, 64))
     @pytest.mark.parametrize("app", ("base64", "base85", "hex", "drng"))
-    @pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
-    def test_n(self, runner, vector, app, n):
-        xprv = vector["master"]
+    def test_n(self, runner, app, n):
+        xprv = COMMON_XPRV
         result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "--xprv", xprv])
         assert result.exit_code == 0
         answer = result.output.strip()
@@ -183,9 +189,8 @@ class TestDerive:
 
     @pytest.mark.parametrize("n", (-1, 0, 1025))
     @pytest.mark.parametrize("app", ["base64", "base85", "hex", "drng"])
-    @pytest.mark.parametrize("vector", PWD_BASE85, ids=["PWD_BASE85"])
-    def test_bad_n(self, runner, vector, app, n):
-        xprv = vector["master"]
+    def test_bad_n(self, runner, app, n):
+        xprv = COMMON_XPRV
         if n == 1025 and app == "drng":
             return
         result = runner.invoke(cli, ["entropy", "-a", app, "-n", n, "--input", xprv])
@@ -197,7 +202,7 @@ class TestDerive:
         BIP_39,
         ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
     )
-    def test_app_39(self, runner, vector):
+    def test_mnemonic(self, runner, vector):
         xprv = vector["master"]
         n_words = vector["mnemonic_length"]
         result = runner.invoke(
@@ -208,7 +213,7 @@ class TestDerive:
         assert words == vector["derived_mnemonic"]
 
     @pytest.mark.parametrize("iso", [v["code"] for v in LANGUAGES.values()])
-    def test_app_39_languages(self, runner, iso):
+    def test_mnemonic_languages(self, runner, iso):
         xprv = MNEMONIC_12["xprv"]
         result = runner.invoke(
             cli, ["derive", "-a", "mnemonic", "-x", xprv, "-n", 12, "-t", iso]
@@ -217,19 +222,42 @@ class TestDerive:
         words = result.output.strip()
         assert validate_mnemonic_words(words.split(" "), ISO_TO_LANGUAGE[iso])
 
-    @pytest.mark.parametrize("vector", HEX, ids=["HEX"])
-    def test_app_hex(self, runner, vector):
+    @pytest.mark.parametrize("vector", DICE)
+    def test_dice(self, runner, vector):
+        xprv = vector["master"]
+        result = runner.invoke(
+            cli, ["derive", "-a", "dice", "-x", xprv, "-n", 10, "-s", 6]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == vector["derived_rolls"]
+
+    @pytest.mark.parametrize("vector", HEX)
+    def test_hex(self, runner, vector):
         xprv = vector["master"]
         result = runner.invoke(cli, ["derive", "-a", "hex", "-x", xprv, "-n", 64])
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_entropy"]
 
-    @pytest.mark.parametrize("vector", WIF, ids=["WIF"])
-    def test_app_wif(self, runner, vector):
+    @pytest.mark.parametrize("vector", WIF)
+    def test_wif(self, runner, vector):
         xprv = vector["master"]
         result = runner.invoke(cli, ["derive", "-a", "wif", "-x", xprv])
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_wif"]
+
+    @pytest.mark.parametrize("vector", PWD_BASE64)
+    def test_base64(self, runner, vector):
+        xprv = vector["master"]
+        result = runner.invoke(cli, ["derive", "-a", "base64", "-x", xprv, "-n", 21])
+        assert result.exit_code == 0
+        assert result.output.strip() == vector["derived_pwd"]
+
+    @pytest.mark.parametrize("vector", PWD_BASE85)
+    def test_base85(self, runner, vector):
+        xprv = vector["master"]
+        result = runner.invoke(cli, ["derive", "-a", "base85", "-x", xprv, "-n", 12])
+        assert result.exit_code == 0
+        assert result.output.strip() == vector["derived_pwd"]
 
     def test_bad_xprv(self, runner):
         result = runner.invoke(

@@ -91,8 +91,12 @@ def test_verify_checksum():
     assert not validate_mnemonic_words(correct[:-1] + ["mix"], "english")
 
 
-@pytest.mark.parametrize("vis", (True, False))
-@pytest.mark.parametrize("net", (True, False))
+@pytest.mark.parametrize(
+    "vis", (True, False), ids=lambda x: "public" if x else "private"
+)
+@pytest.mark.parametrize(
+    "net", (True, False), ids=lambda x: "mainnet" if x else "testnet"
+)
 def test_test_main_pub_prv(net, vis):
     expected_type = {
         (True, True): "xprv",
