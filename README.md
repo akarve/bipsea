@@ -338,9 +338,7 @@ and has begun to roll out quantum-resistant changes to SSL.
 # Developer
 
 ```
-make install-dev
-make install-local
-make install-go
+make
 make test
 ```
 

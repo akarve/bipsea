@@ -18,10 +18,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: install
-      run: make install-dev
+      run: make install-ci
     - name: check
       run: make check
-    - name: test-ci
+    - name: test
       run: make test-ci
     - name: test-dist
       run: make test-dist
