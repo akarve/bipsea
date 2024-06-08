@@ -13,7 +13,7 @@ setup(
         f"{__app_name__}": ["wordlists/*.txt"],
     },
     include_package_data=True,
-    description="Python implementation of BIP-32, BIP-39, BIP-85",
+    description="Composable Python CLI for Bitcoin mnemonics and BIP-85 secrets.",
     long_description=(Path(__file__).parent / "README.md").read_text(),
     long_description_content_type="text/markdown",
     author="Aneesh Karve",
