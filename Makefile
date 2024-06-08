@@ -2,6 +2,7 @@
 .PHONY: install-dev install-go install-local lint publish published push readme test
 .PHONY: uninstall
 
+
 test: lint readme
 	pytest -sx
 
