@@ -9,7 +9,7 @@ test: lint readme
 test-ci:
 	pytest -sx
 
-published: uninstall install readme
+test-published: uninstall install test readme install-local
 
 push: lint git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
