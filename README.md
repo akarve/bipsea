@@ -9,7 +9,7 @@
 > -[BIP-85](https://github.com/bitcoin/bips/blob/master/bip-0085.mediawiki)
 
 bipsea is a standalone, test-driven implementation of BIP-32, BIP-39, and BIP-85.
-bipsea is designed for readability and correctness.
+bipsea is designed for usability, readability, and correctness.
 bipsea includes a command-line interface and API.
 **bipsea is currently for experimental purposes only.**
 
