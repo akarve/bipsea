@@ -13,7 +13,7 @@ push:: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-build: clean download-wordlists
+build: clean
 	python3 -m build
 
 download-wordlists: cmd-env
@@ -23,7 +23,7 @@ clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
 
-publish:: git-no-unsaved git-on-main build test-published
+publish:: download-wordlists git-no-unsaved git-on-main build test-published
 	git pull origin main
 	python3 -m twine upload dist/*
 

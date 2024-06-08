@@ -10,7 +10,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", include=["bipsea", "bipsea.wordlists"]),
     package_data={
-        f"{__app_name__}.wordlists": ["*.txt"],
+        f"{__app_name__}": ["wordlists/*.txt"],
     },
     include_package_data=True,
     description="Composable Python CLI for Bitcoin mnemonics and BIP-85 secrets.",
