@@ -276,8 +276,7 @@ BIP-85 specifies a variety of application codes including the following:
 | `707785'`        | for 10 to 80 characters of a base85 password |
 
 bipsea implements all of the above applications plus the BIP-85 discrete random
-number generator (DRNG). bipsea does not implement the RSA application codes from
-BIP-85 but you could potentially use the DRNG for RSA and similar applications.
+number generator (DRNG).
 
 
 ### Derivation
