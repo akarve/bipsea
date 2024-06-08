@@ -12,6 +12,8 @@ setup(
     },
     include_package_data=True,
     description="Python implementation of BIP-32, BIP-39, BIP-85",
+    long_description=(Path(__file__).parent / "README.md").read_text(),
+    long_description_content_type="text/markdown",
     author="Aneesh Karve",
     author_email="bonded_metals_0u@icloud.com",
     classifiers=[
