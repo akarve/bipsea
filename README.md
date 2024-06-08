@@ -30,14 +30,14 @@ and other possible hardware backdoors.
 
 ## Installation
 
-```
+```sh
 pip install bipsea
 ```
 
 
 ## Help
 
-```
+```sh
 bipsea --help
 ```
 
@@ -132,7 +132,6 @@ bipsea mnemonic | bipsea validate | bipsea xprv
 chain) that serializes as an xprv or _extended private key_.
 
 
-
 ### xprv from dice rolls (or any string)
 
 ```
@@ -164,6 +163,7 @@ It's important to use a fixed, trusted, and cold-stored mnemonic so that `derive
 _If the root xprv changes, so do all of the child secrets._
 
 In the following examples we derive all secrets from a single mnemonic.
+
 ```sh
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
 ```
@@ -198,7 +198,7 @@ to get a fresh, repeatable secret.
 BIP-85 includes a discrete random number generator.
 
 ```sh
-bipsea validate -m "$$MNEMONIC" | bipsea xprv | bipsea derive -a drng -n 1000
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea derive -a drng -n 1000
 ```
     <1,000 bytes (2,000 hex characters) from the DRNG>
 
@@ -209,8 +209,8 @@ bipsea implements cryptogaphic dice based on the BIP-85 DRNG.
 
 To simulate 100 6-sided die rolls:
 
-```
-bipsea validate -m "$$MNEMONIC" | bipsea xprv | bipsea derive -a dice -n 100 -s 6
+```sh
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea derive -a dice -n 100 -s 6
 ```
     4,2,5,3,4,4,4,5,0,3
 
