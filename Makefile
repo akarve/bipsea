@@ -29,7 +29,7 @@ publish:: git-no-unsaved git-on-main build test-published
 
 install-dev::
 	pip install -e .
-	pip install -r requirements.txt -r tst-requirements.txt
+	pip install tst-requirements.txt
 
 install-go::
 	# you must have go installed https://go.dev/doc/install	
