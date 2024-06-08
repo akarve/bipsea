@@ -35,13 +35,13 @@ publish: install-local lint test readme build git-no-unsaved git-on-main
 	python3 -m twine upload dist/*
 
 install:
-	pip install -U bipsea
+	pip3 install -U bipsea
 
 install-local:
-	pip install -e .
+	pip3 install -e .
 
 install-dev:
-	pip install -r requirements.txt -r tst-requirements.txt
+	pip3 install -r requirements.txt -r tst-requirements.txt
 
 install-go:
 	# you must have go installed https://go.dev/doc/install	
@@ -49,7 +49,7 @@ install-go:
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
 uninstall:
-	pip uninstall -y bipsea
+	pip3 uninstall -y bipsea
 	
 check:
 	black . --check
