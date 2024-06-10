@@ -41,9 +41,6 @@ pytest = "~8.2.1"
 [tool.poetry.scripts]
 bipsea = "bipsea.bipsea:cli"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
-
 [tool.setuptools]
 package-dir = {"" = "src"}
 
