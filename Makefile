@@ -30,7 +30,7 @@ publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
 install:: install-ci install-go
 
 install-ci::
-	poetry install
+	poetry install --with dev
 
 install-go::
 	# you must have go installed https://go.dev/doc/install	
