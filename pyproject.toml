@@ -50,6 +50,3 @@ include = ["bipsea", "bipsea.wordlists"]
 
 [tool.setuptools.package-data]
 "bipsea" = ["wordlists/*.txt"]
-
-[tool.pytest]
-pythonpath = "src"
