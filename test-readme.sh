@@ -22,10 +22,10 @@ poetry run bipsea validate -f free -m "123456123456123456" | poetry run bipsea x
 
 poetry run bipsea validate -f free -m "$(cat input.txt)"
 
-# poetry run bipsea validate -m "$MNEMONIC" | poetry run bipsea xprv | poetry run bipsea derive -a base85
+poetry run bipsea xprv -x "$XPRV" | poetry run bipsea derive -a base85
 
-# poetry run bipsea validate -m "$MNEMONIC" | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -t jpn -n 12
+ poetry run bipsea xprv -x "$XPRV" | poetry run bipsea derive -a mnemonic -t jpn -n 12
 
-# poetry run bipsea validate -m "$MNEMONIC" | poetry run bipsea xprv | poetry run bipsea derive -a drng -n 1000
+poetry run bipsea xprv -x "$XPRV" | poetry run bipsea derive -a drng -n 1000
 
-# poetry run bipsea validate -m "$MNEMONIC" | poetry run bipsea xprv | poetry run bipsea derive -a dice -n 100 -s 6
+poetry run bipsea xprv -x "$XPRV" | poetry run bipsea derive -a dice -n 100 -s 6
