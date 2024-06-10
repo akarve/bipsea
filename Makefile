@@ -12,8 +12,9 @@ test-ci::
 
 test-dist:: clean build install-dist test-readme
 
+REDIRECT_OUTPUT ?= > /dev/null
 test-readme::
-	sh test-readme.sh > /dev/null
+	bash test-readme.sh $(REDIRECT_OUTPUT)
 
 push:: test-fast git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
