@@ -19,10 +19,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: poetry
       uses: snok/install-poetry@v1
-    - name: Verify Poetry Import
-      run: poetry run python -c "from poetry.factory import Factory;"
-    - name: test-poetry
-      run: poetry --version
     - name: install
       run: make install-ci
     - name: check
