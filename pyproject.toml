@@ -50,3 +50,8 @@ include = ["bipsea", "bipsea.wordlists"]
 
 [tool.setuptools.package-data]
 "bipsea" = ["wordlists/*.txt"]
+
+[tool.pytest.ini_options]
+pythonpath = "project"
+log_cli = false
+log_cli_level = DEBUG
