@@ -13,7 +13,7 @@ push:: test readme-cmds git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
-build: install-local
+build: install-ci
 	poetry build
 
 download-wordlists:: cmd-env
@@ -29,10 +29,7 @@ publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
 
 install:: install-ci install-go
 
-install-ci:: install-local
-	poetry install --only dev
-
-install-local::
+install-ci::
 	poetry install
 
 install-go::

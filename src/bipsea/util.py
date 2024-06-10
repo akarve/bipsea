@@ -9,7 +9,6 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-import poetry
 from poetry.factory import Factory
 
 POETRY = Factory().create_poetry()
