@@ -12,7 +12,7 @@ test-dist:: clean build install-dist readme-cmds
 test-readme::
 	sh test-readme.sh > /dev/null
 
-push:: test readme-cmds git-off-main git-no-unsaved
+push:: test git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
