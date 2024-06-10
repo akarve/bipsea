@@ -23,7 +23,8 @@ jobs:
       run: make install-ci
     - name: Run tests inside poetry shell
       run: |
-        poetry shell -c "pytest -v"
+        poetry shell
+        pytest -v
     - name: check
       run: make check
     - name: test
