@@ -81,25 +81,24 @@ REDIRECT_TO ?= > /dev/null
 readme-cmds:: cmd-env
 	poetry run bipsea --version $(REDIRECT_TO)
 
-	bipsea --help $(REDIRECT_TO)
-	bipsea mnemonic --help $(REDIRECT_TO)
-	bipsea validate --help $(REDIRECT_TO)
-	bipsea xprv --help $(REDIRECT_TO)
-	bipsea derive --help $(REDIRECT_TO)
+	poetry run bipsea --help $(REDIRECT_TO)
+	poetry run bipsea mnemonic --help $(REDIRECT_TO)
+	poetry run bipsea validate --help $(REDIRECT_TO)
+	poetry run bipsea xprv --help $(REDIRECT_TO)
+	poetry run bipsea derive --help $(REDIRECT_TO)
 
-	bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12 $(REDIRECT_TO)
+	poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12 $(REDIRECT_TO)
+	poetry run bipsea mnemonic -t jpn -n 15 $(REDIRECT_TO)
+	poetry run bipsea mnemonic -t eng -n 12 --pretty $(REDIRECT_TO)
+	poetry run bipsea mnemonic -t spa -n 12 | poetry run bipsea validate -f spa $(REDIRECT_TO)
 
-	bipsea mnemonic -t jpn -n 15 $(REDIRECT_TO)
-	bipsea mnemonic -t eng -n 12 --pretty $(REDIRECT_TO)
-	bipsea mnemonic -t spa -n 12 | bipsea validate -f spa $(REDIRECT_TO)
+	poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv $(REDIRECT_TO)
 
-	bipsea mnemonic | bipsea validate | bipsea xprv $(REDIRECT_TO)
+	poetry run bipsea validate -f free -m "123456123456123456" | poetry run bipsea xprv $(REDIRECT_TO)
+	poetry run bipsea validate -f free -m @"$$(cat input.txt)" $(REDIRECT_TO)
 
-	bipsea validate -f free -m "123456123456123456" | bipsea xprv $(REDIRECT_TO)
-	bipsea validate -f free -m @"$$(cat input.txt)" $(REDIRECT_TO)
-
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 $(REDIRECT_TO)
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12 -i 1 $(REDIRECT_TO)
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a drng -n 1000 $(REDIRECT_TO)
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 10 -s 6 $(REDIRECT_TO)
-	bipsea validate -m $(MNEMONIC) | bipsea xprv | bipsea derive -a dice -n 6 $(REDIRECT_TO)
+	poetry run bipsea validate -m $(MNEMONIC) | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -t jpn -n 12 $(REDIRECT_TO)
+	poetry run bipsea validate -m $(MNEMONIC) | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -t jpn -n 12 -i 1 $(REDIRECT_TO)
+	poetry run bipsea validate -m $(MNEMONIC) | poetry run bipsea xprv | poetry run bipsea derive -a drng -n 1000 $(REDIRECT_TO)
+	poetry run bipsea validate -m $(MNEMONIC) | poetry run bipsea xprv | poetry run bipsea derive -a dice -n 10 -s 6 $(REDIRECT_TO)
+	poetry run bipsea validate -m $(MNEMONIC) | poetry run bipsea xprv | poetry run bipsea derive -a dice -n 6 $(REDIRECT_TO)
