@@ -7,7 +7,7 @@ test:: lint test-ci
 test-ci::
 	poetry run pytest tests -sx
 
-test-dist:: clean build install-dist readme-cmds
+test-dist:: clean build install-dist test-readme
 
 test-readme::
 	sh test-readme.sh > /dev/null
