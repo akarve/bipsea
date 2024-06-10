@@ -14,7 +14,7 @@ test-dist:: clean build install-dist test-readme
 
 REDIRECT_OUTPUT ?= > /dev/null
 test-readme::
-	bash test-readme.sh $(REDIRECT_OUTPUT)
+	bash scripts/test-readme.sh $(REDIRECT_OUTPUT)
 
 push:: test-fast git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
@@ -24,7 +24,7 @@ build: install-ci
 	poetry build
 
 download-lists::
-	bash download-lists.sh
+	bash scripts/download-lists.sh
 
 clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
@@ -51,6 +51,7 @@ check::
 	poetry run black . --check
 	poetry run isort . --check
 	poetry run flake8 . --ignore=E501,W503
+	bash -n scripts/*.sh
 
 lint::
 	isort .
