@@ -9,10 +9,13 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
+import poetry
 from poetry.factory import Factory
 
-MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 POETRY = Factory().create_poetry()
+
+MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
+
 LOGGER_NAME = POETRY.package.name
 
 __app_name__ = POETRY.package.name
