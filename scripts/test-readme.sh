@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
