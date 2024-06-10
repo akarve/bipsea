@@ -11,9 +11,9 @@ poetry run bipsea validate --help
 poetry run bipsea xprv --help
 poetry run bipsea derive --help
 
-poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12
+# poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12
 
-# poetry run bipsea mnemonic -t spa -n 12 | poetry run bipsea validate -f spa
+poetry run bipsea mnemonic -t spa -n 12 | poetry run bipsea validate -f spa
 
 # poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv
 
