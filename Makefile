@@ -33,7 +33,7 @@ install-ci:: install-local
 	poetry install --only dev
 
 install-local::
-	poetry install --editable
+	poetry install
 
 install-go::
 	# you must have go installed https://go.dev/doc/install	
