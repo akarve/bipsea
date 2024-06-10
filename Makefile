@@ -13,7 +13,7 @@ test-ci::
 test-dist:: clean build install-dist test-readme
 
 test-readme::
-	sh test-readme.sh > /dev/null
+	bash test-readme.sh > /dev/null
 
 push:: test-fast git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \

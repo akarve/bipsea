@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
@@ -14,7 +14,7 @@ poetry run bipsea mnemonic -t jpn -n 15
 poetry run bipsea mnemonic -t eng -n 12 --pretty
 poetry run bipsea validate -f free -m "123456123456123456"
 poetry run bipsea validate -f free -m @"$(cat input.txt)"
-poetry run bipsea validate -m "$MNEMONIC"
+poetry run bipsea validate -m "$MNEMONIC" | poetry run bipsea xprv
 poetry run bipsea xprv -m "$MNEMONIC"
 poetry run bipsea derive -x "$XPRV" -a mnemonic -t jpn -n 12
 poetry run bipsea derive -x "$XPRV" -a mnemonic -t jpn -n 12 -i 1
