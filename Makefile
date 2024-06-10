@@ -38,7 +38,7 @@ install-go::
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
 install-dist::
-	poetry run pip3 install dist/*.whl 
+	poetry install
 
 check::
 	poetry run black . --check
