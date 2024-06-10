@@ -41,9 +41,9 @@ install-dist::
 	pip3 install dist/*.whl 
 
 check::
-	black . --check
-	isort . --check
-	flake8 . --ignore=E501,W503
+	poetry run black . --check
+	poetry run isort . --check
+	poetry run flake8 . --ignore=E501,W503
 
 lint::
 	isort .
