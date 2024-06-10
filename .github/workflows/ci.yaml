@@ -23,9 +23,7 @@ jobs:
       run: make install-ci
     - name: check
       run: make check
-
     - name: test
-      run: poetry run pytest
-        #make test-ci
+      run: make test-ci
     - name: test-dist
       run: make test-dist
