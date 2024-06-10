@@ -5,7 +5,7 @@ all:: install build
 test:: lint test-ci
 
 test-ci::
-	pytest -sx
+	poetry run pytest -sx
 
 test-dist:: clean build install-dist readme-cmds
 
@@ -38,7 +38,7 @@ install-go::
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
 install-dist::
-	pip3 install dist/*.whl 
+	poetry run pip3 install dist/*.whl 
 
 check::
 	poetry run black . --check
