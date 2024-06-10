@@ -23,6 +23,10 @@ jobs:
       run: make install-ci
     - name: check
       run: make check
+    - name: Verify Poetry Import
+      run: poetry run python -c "from poetry.factory import Factory"
+    - name: Print PYTHONPATH
+      run: poetry run python -c "import sys; print(sys.path)"
     - name: test
       run: make test-ci
     - name: test-dist
