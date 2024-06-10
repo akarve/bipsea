@@ -73,7 +73,7 @@ git-no-unsaved::
 	fi
 
 cmd-env::
-	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
+	$(eval export MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
 	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
 	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
 
