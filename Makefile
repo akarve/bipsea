@@ -4,15 +4,18 @@ all:: install build
 
 test:: lint test-ci
 
+test-fast:: lint
+	pytest -n auto
+
 test-ci::
-	poetry run pytest tests -sx
+	poetry run pytest -sx -n auto
 
 test-dist:: clean build install-dist test-readme
 
 test-readme::
 	sh test-readme.sh > /dev/null
 
-push:: test git-off-main git-no-unsaved
+push:: test-fast git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
