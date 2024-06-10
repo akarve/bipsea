@@ -8,7 +8,7 @@ test-fast:: lint
 	pytest -n auto
 
 test-ci::
-	poetry run pytest tests -sx
+	poetry run pytest -sx -n auto
 
 test-dist:: clean build install-dist test-readme
 
