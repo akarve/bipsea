@@ -5,7 +5,7 @@ all:: install build
 test:: lint test-ci
 
 test-ci::
-	poetry run pytest -sx
+	pytest -sx
 
 test-dist:: clean build install-dist readme-cmds
 
@@ -41,16 +41,16 @@ install-dist::
 	pip3 install dist/*.whl 
 
 check::
-	poetry run black . --check
-	poetry run isort . --check
-	poetry run flake8 . --ignore=E501,W503
+	black . --check
+	isort . --check
+	flake8 . --ignore=E501,W503
 
 lint::
-	poetry run isort .
-	poetry run black .
-	poetry run actionlint
-	poetry run flake8 . --ignore=E501,W503
-	poetry run checkmake Makefile
+	isort .
+	black .
+	actionlint
+	flake8 . --ignore=E501,W503
+	checkmake Makefile
 
 git-off-main::
 	@branch=$$(git symbolic-ref --short HEAD); \
