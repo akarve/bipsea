@@ -11,7 +11,7 @@ authors = ["Aneesh Karve <bonded_metals_0u@icloud.com>"]
 license = "Apache-2.0"
 homepage = "https://github.com/akarve/bipsea"
 repository = "https://github.com/akarve/bipsea"
-keywords = ["Bitcoin", "BIP85", "BIP32", "cryptography"]
+keywords = ["Bitcoin", "BIP-32", "BIP-39", "BIP-85", "cryptography", "secrets", "ECDSA", "entropy"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
