@@ -17,6 +17,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: poetry
+      uses: snok/install-poetry@v1
     - name: install
       run: make install-ci
     - name: check

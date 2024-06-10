@@ -5,7 +5,7 @@ all:: install build
 test:: lint test-ci
 
 test-ci::
-	pytest -sx
+	poetry run pytest -sx
 
 test-dist:: clean build install-dist readme-cmds
 
@@ -14,7 +14,7 @@ push:: test readme-cmds git-off-main git-no-unsaved
 	git push origin $$branch
 
 build: install-local
-	python3 -m build
+	poetry build
 
 download-wordlists:: cmd-env
 	$(foreach file,$(FILES_39),curl -s $(GITHUB_39)/$(file) -o src/bipsea/wordlists/$(file);)
@@ -22,19 +22,18 @@ download-wordlists:: cmd-env
 clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
-	pip uninstall -y bipsea
-	pip uninstall -y -r tst-requirements.txt
+	poetry run pip uninstall -y bipsea
 
 publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
-	python3 -m twine upload dist/*
+	poetry publish
 
 install:: install-ci install-go
 
 install-ci:: install-local
-	pip install -r tst-requirements.txt
+	poetry install --only dev
 
 install-local::
-	pip install -e .
+	poetry install --editable
 
 install-go::
 	# you must have go installed https://go.dev/doc/install	
@@ -42,20 +41,19 @@ install-go::
 	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
 
 install-dist::
-	pip install dist/*.whl 
+	pip3 install dist/*.whl 
 
 check::
-	black . --check
-	isort . --check
-	flake8 . --ignore=E501,W503
+	poetry run black . --check
+	poetry run isort . --check
+	poetry run flake8 . --ignore=E501,W503
 
 lint::
-	isort .
-	black .
-	actionlint
-	flake8 . --ignore=E501,W503
-	checkmake Makefile
-
+	poetry run isort .
+	poetry run black .
+	poetry run actionlint
+	poetry run flake8 . --ignore=E501,W503
+	poetry run checkmake Makefile
 
 git-off-main::
 	@branch=$$(git symbolic-ref --short HEAD); \
