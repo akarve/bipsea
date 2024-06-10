@@ -24,6 +24,9 @@ jobs:
     - name: check
       run: make check
     - name: test
-      run: make test-ci
+      run: |
+        export PYTHONPATH=$(poetry env info --path)/lib/python3.9/site-packages
+        poetry run pytest
+        make test-ci
     - name: test-dist
       run: make test-dist
