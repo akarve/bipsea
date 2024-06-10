@@ -25,9 +25,7 @@ jobs:
       run: make check
 
     - name: test
-      env:
-        PYTHONPATH: "${{ github.workspace }}/src"
-      run: poetry run python3 -m pytest
+      run: poetry run pytest
         #make test-ci
     - name: test-dist
       run: make test-dist
