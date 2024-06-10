@@ -30,7 +30,7 @@ clean::
 	rm -rf build dist *.egg-info .pytest_cache
 	pip uninstall -y bipsea
 
-publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
+publish:: download-lists git-no-unsaved git-on-main test-dist install test
 	poetry publish
 
 install:: install-ci install-go
