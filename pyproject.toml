@@ -52,4 +52,4 @@ include = ["bipsea", "bipsea.wordlists"]
 "bipsea" = ["wordlists/*.txt"]
 
 [tool.pytest.ini_options]
-pythonpath = "project"
+pythonpath = "bipsea"
