@@ -34,7 +34,7 @@ ecdsa = "~0.19.0"
 black = "~24.4.2"
 flake8 = "~7.0.0"
 isort = "~5.13.2"
-importlib_resources = { version = "*", python = "<3.9" }
+importlib_resources = { version = "^5.0.0", python = "<3.9" }
 pycryptodome = "~3.20.0"
 pytest = "~8.2.1"
 
