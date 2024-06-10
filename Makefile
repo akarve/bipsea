@@ -79,7 +79,7 @@ cmd-env::
 
 REDIRECT_TO ?= > /dev/null
 readme-cmds:: cmd-env
-	bipsea --version $(REDIRECT_TO)
+	poetry run bipsea --version $(REDIRECT_TO)
 
 	bipsea --help $(REDIRECT_TO)
 	bipsea mnemonic --help $(REDIRECT_TO)
