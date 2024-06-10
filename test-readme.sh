@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+set -o pipefail
+
 
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
 
@@ -10,6 +12,8 @@ poetry run bipsea mnemonic --help
 poetry run bipsea validate --help
 poetry run bipsea xprv --help
 poetry run bipsea derive --help
+
+poetry run bipsea mnemonic | poetry run bipsea xprv | poetry run bipsea derive -a dice
 
 poetry run bipsea mnemonic | poetry run bipsea validate 
 
