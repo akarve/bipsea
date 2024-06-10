@@ -5,14 +5,15 @@ import logging
 import math
 import random
 import string
+from poetry.factory import Factory
 import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "1.0.9"
-__app_name__ = "bipsea"
 
-LOGGER = __app_name__
+poetry = Factory().create_poetry()
+
+LOGGER = poetry.name
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 
 ASCII_INPUTS = set(string.printable.lower())
