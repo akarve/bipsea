@@ -73,7 +73,7 @@ git-no-unsaved::
 	fi
 
 cmd-env::
-	$(eval export MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
+	$(eval MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano")
 	$(eval GITHUB_39=https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039)
 	$(eval FILES_39=chinese_simplified.txt chinese_traditional.txt czech.txt english.txt french.txt italian.txt japanese.txt korean.txt portuguese.txt spanish.txt)
 
@@ -87,7 +87,8 @@ readme-cmds:: cmd-env
 	poetry run bipsea xprv --help $(REDIRECT_TO)
 	poetry run bipsea derive --help $(REDIRECT_TO)
 
-	poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12 $(REDIRECT_TO)
+	export MNEMONIC=$(MNEMONIC) \
+	&& poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12 $(REDIRECT_TO)
 	poetry run bipsea mnemonic -t jpn -n 15 $(REDIRECT_TO)
 	poetry run bipsea mnemonic -t eng -n 12 --pretty $(REDIRECT_TO)
 	poetry run bipsea mnemonic -t spa -n 12 | poetry run bipsea validate -f spa $(REDIRECT_TO)
