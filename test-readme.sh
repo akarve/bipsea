@@ -2,6 +2,7 @@
 set -e
 
 MNEMONIC="elder major green sting survey canoe inmate funny bright jewel anchor volcano"
+XPRV="xprv9s21ZrQH143K46aCaxAxmT97r6rx9XBFf1gjWTi65Eb3QHjEpuvobGPpXYSyoQqQw5SQhrZpwFKVRSjrFjKDs4shbu7BwTXfVaPV8yF2gc8"
 
 poetry run bipsea --version
 
@@ -11,11 +12,13 @@ poetry run bipsea validate --help
 poetry run bipsea xprv --help
 poetry run bipsea derive --help
 
-# poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv | poetry run bipsea derive -a mnemonic -n 12
+poetry run bipsea mnemonic | poetry run bipsea validate 
+
+poetry run bipsea xprv -m "$MNEMONIC" | poetry run bipsea derive -a mnemonic -n 12
 
 poetry run bipsea mnemonic -t spa -n 12 | poetry run bipsea validate -f spa
 
-poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv
+#poetry run bipsea mnemonic | poetry run bipsea validate | poetry run bipsea xprv
 
 # poetry run bipsea validate -f free -m "123456123456123456" | poetry run bipsea xprv
 
