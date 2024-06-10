@@ -5,7 +5,7 @@ all:: install build
 test:: lint test-ci
 
 test-ci::
-	pytest -sx
+	poetry run pytest -sx
 
 test-dist:: clean build install-dist readme-cmds
 
