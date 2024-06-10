@@ -17,9 +17,9 @@ from data.bip85_vectors import (
 from bipsea.bip32types import validate_prv
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli
-from bipsea.util import ASCII_INPUTS, LOGGER
+from bipsea.util import ASCII_INPUTS, LOGGER_NAME
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 MNEMONIC_12 = {

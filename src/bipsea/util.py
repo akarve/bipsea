@@ -9,11 +9,16 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-__version__ = "1.0.9"
-__app_name__ = "bipsea"
+from poetry.factory import Factory
 
-LOGGER = __app_name__
+POETRY = Factory().create_poetry()
+
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
+
+LOGGER_NAME = POETRY.package.name
+
+__app_name__ = POETRY.package.name
+__version__ = POETRY.package.version
 
 ASCII_INPUTS = set(string.printable.lower())
 FORMAT = "utf-8"
@@ -23,7 +28,7 @@ CARD_SUITS = ["S", "D", "C", "H"]
 CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def to_hex_string(data: bytes) -> str:
