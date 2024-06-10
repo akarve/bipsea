@@ -22,7 +22,7 @@ download-wordlists:: cmd-env
 clean::
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf build dist *.egg-info .pytest_cache
-	pip uninstall -y bipsea
+	#pip uninstall -y bipsea
 
 publish:: download-wordlists git-no-unsaved git-on-main test-dist install test
 	poetry publish
