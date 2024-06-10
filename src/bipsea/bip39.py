@@ -14,9 +14,9 @@ except ImportError:
 from typing import List
 from unicodedata import normalize
 
-from .util import LOGGER, __app_name__
+from .util import LOGGER_NAME, __app_name__
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 LANGUAGES = {

@@ -12,9 +12,9 @@ from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
 from .bip32 import hmac_sha512
 from .bip39 import LANGUAGES, N_WORDS_META, entropy_to_words, validate_mnemonic_words
-from .util import LOGGER, to_hex_string
+from .util import LOGGER_NAME, to_hex_string
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 APPLICATIONS = {

@@ -5,16 +5,18 @@ import logging
 import math
 import random
 import string
-from poetry.factory import Factory
 import warnings
 from collections import Counter
 from typing import List, Sequence
 
+from poetry.factory import Factory
 
-poetry = Factory().create_poetry()
-
-LOGGER = poetry.name
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
+POETRY = Factory().create_poetry()
+LOGGER_NAME = POETRY.package.name
+
+__app_name__ = POETRY.package.name
+__version__ = POETRY.package.version
 
 ASCII_INPUTS = set(string.printable.lower())
 FORMAT = "utf-8"
@@ -24,7 +26,7 @@ CARD_SUITS = ["S", "D", "C", "H"]
 CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def to_hex_string(data: bytes) -> str:

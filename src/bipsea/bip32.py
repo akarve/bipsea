@@ -12,9 +12,9 @@ from ecdsa import SECP256k1, SigningKey, VerifyingKey
 from ecdsa.keys import MalformedPointError
 
 from .bip32types import VERSIONS, ExtendedKey
-from .util import LOGGER
+from .util import LOGGER_NAME
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 # same count for hardened and unhardened children

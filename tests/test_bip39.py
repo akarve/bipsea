@@ -21,7 +21,7 @@ from bipsea.bip39 import (
     to_master_seed,
     validate_mnemonic_words,
 )
-from bipsea.util import LOGGER, __app_name__
+from bipsea.util import LOGGER_NAME, __app_name__
 
 MNEMONIC_12 = {
     "words": [
@@ -45,7 +45,7 @@ MNEMONIC_12 = {
 }
 
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 @pytest.mark.parametrize("language, vectors", VECTORS.items(), ids=VECTORS.keys())

@@ -6,9 +6,9 @@ from data.bip32_vectors import INVALID_KEYS, VECTORS
 from bipsea.bip32 import to_master_key
 from bipsea.bip32types import parse_ext_key, validate_prv
 from bipsea.bip85 import derive
-from bipsea.util import LOGGER
+from bipsea.util import LOGGER_NAME
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 @pytest.mark.parametrize(

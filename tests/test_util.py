@@ -5,7 +5,7 @@ import pytest
 
 from bipsea.util import (
     ASCII_INPUTS,
-    LOGGER,
+    LOGGER_NAME,
     contains_only_ascii,
     deck_52,
     relative_entropy,
@@ -13,7 +13,7 @@ from bipsea.util import (
     shuffle,
 )
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def test_absolute_entropy():

@@ -4,9 +4,9 @@ from collections import namedtuple
 import base58
 from ecdsa import SECP256k1
 
-from .util import LOGGER
+from .util import LOGGER_NAME
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 VERSIONS = {

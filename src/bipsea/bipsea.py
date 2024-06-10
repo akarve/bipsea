@@ -29,7 +29,7 @@ from .bip85 import (
     to_entropy,
 )
 from .util import (
-    LOGGER,
+    LOGGER_NAME,
     MIN_REL_ENTROPY,
     __app_name__,
     __version__,
@@ -60,7 +60,7 @@ N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 TIMEOUT = 0.08
 
 
-logger = logging.getLogger(LOGGER)
+logger = logging.getLogger(LOGGER_NAME)
 
 
 @click.command(
