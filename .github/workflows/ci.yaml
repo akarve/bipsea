@@ -17,12 +17,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: poetry
-      uses: snok/install-poetry@v1
-    - name: pip poetry
+    - name: install poetry
       run: pip install -U poetry
     - name: test import
-      run: poetry run python -c "from poetry.factory import Factory;"
+      run: |
+        python -c "from poetry.factory import Factory;"
+        python --version
     - name: install
       run: make install-ci
     - name: check
