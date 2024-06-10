@@ -2,7 +2,6 @@
 
 import logging
 import re
-import select
 import sys
 
 import click
@@ -307,12 +306,9 @@ def no_empty_param(name: str, val, msg="Must not be empty."):
 
 
 def try_for_pipe_input():
-    stdin, _, _ = select.select([sys.stdin], [], [], TIMEOUT)
-    if stdin:
-        lines = sys.stdin.readlines()
-        if lines:
-            # get just the last line because there might be a warning above
-            return lines[-1].strip()
+    if not sys.stdin.isatty():
+        return sys.stdin.read().strip()
+    return ""
 
 
 if __name__ == "__main__":
