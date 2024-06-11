@@ -354,18 +354,24 @@ class TestIntegration:
         ids=lambda cmd: (cmd[:32] + "...") if len(cmd) > 32 else cmd,
     )
     def test_commands(self, command):
-        with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=True) as script:
+        with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:
             script.write("#!/bin/sh\n")
             script.write(command + "\n")
             script.flush()
-            Path(script.name).chmod(0o755)
 
+        Path(script.name).chmod(0o755)
+
+        try:
             result = subprocess.run(
                 ["poetry", "run", script.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            assert (
-                result.returncode == 0
-            ), f"Command failed: {command}\nOutput: {result.stdout}\nError: {result.stderr}"
+            assert result.returncode == 0, (
+                f"Command failed: {command}\n"
+                f"Output: {result.stdout}\n"
+                f"Error: {result.stderr}"
+            )
+        finally:
+            Path(script.name).unlink()
