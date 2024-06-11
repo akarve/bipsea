@@ -26,4 +26,4 @@ jobs:
     - name: check
       run: make check
     - name: test
-      run: make test-ci
+      run: make test-all
