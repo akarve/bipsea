@@ -9,7 +9,7 @@ import logging
 from typing import List
 
 from ecdsa import SECP256k1, SigningKey, VerifyingKey
-from ecdsa.keys import MalformedPointError
+from ecdsa.ellipticcurve import INFINITY
 
 from .bip32types import VERSIONS, ExtendedKey
 from .util import LOGGER_NAME
@@ -124,7 +124,7 @@ def CKDpriv(
     child_key_int = (
         parse_256_IL + int.from_bytes(private_key, "big")
     ) % SECP256k1.order
-    if (parse_256_IL >= SECP256k1.order) or not child_key_int:
+    if (parse_256_IL >= SECP256k1.order) or child_key_int == 0:
         raise ValueError(
             f"Rare invalid child key. Retry with the next child index: {child_number} + 1."
         )
@@ -173,31 +173,23 @@ def CKDpub(
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
         raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
 
-    parent_key = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
+    parent_point = VerifyingKey.from_string(public_key, curve=SECP256k1).pubkey.point
 
     derived = hmac_sha512(
         key=chain_code,
         data=public_key + child_number,
     )
     parse_256_IL = int.from_bytes(derived[:32], "big")
+    child_point = VerifyingKey.from_public_point(
+        SECP256k1.generator * parse_256_IL + parent_point, curve=SECP256k1
+    )
     # BIP-39: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
     # key is invalid, and one should proceed with the next value for i.
-    if parse_256_IL >= SECP256k1.order:
-        raise ValueError(f"Invalid key. Try next child index: {child_number} + 1.")
-    try:
-        child_key = VerifyingKey.from_public_point(
-            SECP256k1.generator * parse_256_IL + parent_key,
-            curve=SECP256k1,
-        ).to_string("compressed")
-    except MalformedPointError as mal:
-        # TODO: Is this in fact how to detect the point at infinity?
-        # or do we get None back?
-        raise ValueError(
-            f"Invalid key (point at infinity?). Try next child index: {child_number} + 1."
-        ) from mal
+    if parse_256_IL >= SECP256k1.order or child_point == INFINITY:
+        raise ValueError(f"Key out of range. Try next child index: {child_number} + 1.")
 
     return ExtendedKey(
-        data=child_key,
+        data=child_point.to_string("compressed"),
         chain_code=derived[32:],
         child_number=child_number_int.to_bytes(4, "big"),
         depth=depth,

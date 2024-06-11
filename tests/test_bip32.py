@@ -38,3 +38,6 @@ def test_vectors_and_parse_ext_key(vector):
 def test_invalid_keys(key, reason):
     with pytest.raises((AssertionError, ValueError)):
         parse_ext_key(key)
+
+
+        

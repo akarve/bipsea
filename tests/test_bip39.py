@@ -1,15 +1,10 @@
 import hashlib
+import importlib
 import logging
 import re
 import warnings
 
 import pytest
-
-try:
-    from importlib.resources import files
-except ImportError:
-    from importlib_resources import files  # for Python 3.8
-
 from data.bip39_vectors import VECTORS
 
 from bipsea.bip32 import to_master_key
@@ -18,6 +13,7 @@ from bipsea.bip39 import (
     N_MNEMONICS,
     N_WORDS_META,
     entropy_to_words,
+    files,
     to_master_seed,
     validate_mnemonic_words,
 )

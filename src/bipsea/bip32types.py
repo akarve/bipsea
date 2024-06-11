@@ -2,7 +2,7 @@ import logging
 from collections import namedtuple
 
 import base58
-from ecdsa import SECP256k1
+from ecdsa import SECP256k1, SigningKey, VerifyingKey
 
 from .util import LOGGER_NAME
 
@@ -120,8 +120,15 @@ def parse_ext_key(key: str):
     assert matches == 1, f"unrecognized version: {ext_key.version}"
 
     int_key = int.from_bytes(ext_key.data, "big")
-    if (int_key < 1) or (int_key >= SECP256k1.order):
-        raise ValueError(f"Key out of bounds: {ext_key.data}")
+
+    if ext_key.is_private():
+        private_key = SigningKey.from_string(ext_key.data[1:], curve=SECP256k1)
+        if (int_key < 1) or (int_key >= SECP256k1.order):
+            raise ValueError(f"Private key out of bounds: {ext_key.data}")
+    else:
+        public_key = VerifyingKey.from_string(ext_key.data, curve=SECP256k1)
+        if (int_key < 1):
+            raise ValueError(f"Public key out of bounds: {ext_key.data}")
     depth = int.from_bytes(ext_key.depth, "big")
     if depth == 0:
         assert ext_key.finger == bytes(4)

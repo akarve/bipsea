@@ -5,6 +5,7 @@ from hashlib import sha256
 import base58
 import pytest
 from Crypto.PublicKey import RSA
+from data.bip32_vectors import VECTORS
 from data.bip85_vectors import (
     BIP_39,
     COMMON_XPRV,
@@ -20,6 +21,7 @@ from data.bip85_vectors import (
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bip85 import (
+    APPLICATIONS,
     DRNG,
     INDEX_TO_LANGUAGE,
     apply_85,
@@ -121,6 +123,7 @@ def test_hex(vector):
     assert vector["derived_entropy"] == output["application"]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("key_bits", [1024])
 def test_rsa(key_bits):
     data = []
@@ -207,8 +210,11 @@ def test_split_and_validate(path, works):
     "path, works",
     [
         ("m/8369696'", False),
-        ("m/83696968'/128169'/16'/10000'", True),
-        ("m/83696968'/128169'/15'/0'", False),
+        (f"m/83696968'/{APPLICATIONS['hex']}/16'/10000'", True),
+        (f"m/83696968'/{APPLICATIONS['hex']}/15'/10000'", False),
+        (f"m/83696968'/{APPLICATIONS['base85']}/9'/11123213'", False),
+        (f"m/83696968'/{APPLICATIONS['mnemonic']}/0'/13'", False),
+        ("m/83696968'/707764'/0'/13'", False),
         ("m/83696968'/0'/0'/0'", False),
         ("m/83696968'/128169'/0/0'", False),
     ],
@@ -220,3 +226,11 @@ def test_apply_bad(path, works):
     else:
         with pytest.raises((ValueError, NotImplementedError)):
             apply_85(master, path)
+
+
+def test_derive_public():
+    master = parse_ext_key(
+        "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"
+    )
+    with pytest.raises(ValueError):
+        derive(master, "m/1'")
