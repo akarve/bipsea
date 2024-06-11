@@ -86,8 +86,8 @@ class TestValidate:
         return custom
 
 
-# Slowest CLI class because it calls pbkdf2 under the hood
 class TestXPRV:
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
     def test_bip_39_vectors(self, runner, vectors):
         for vector in vectors:
@@ -99,6 +99,7 @@ class TestXPRV:
             last = result.output.strip().split("\n")[-1]
             assert last == xprv
 
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_passphrase(self, runner, vector):
         """prove that meaningful passphrase and mnemonic changes change the xprv
@@ -109,6 +110,7 @@ class TestXPRV:
         result_xprv = change_passphrase.output.strip().split("\n")[-1]
         assert result_xprv != xprv
 
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"add-{x}")
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_mnemonic(self, runner, vector, fix):
