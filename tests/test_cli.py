@@ -19,7 +19,7 @@ from data.bip85_vectors import (
     WIF,
 )
 
-from bipsea.bip32types import validate_prv
+from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
 from bipsea.util import ASCII_INPUTS, LOGGER_NAME
@@ -71,7 +71,6 @@ class TestValidate:
         cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(num)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
-        logger.warning(result.output)
         if size in ("one", "under"):
             assert "Warning" in result.output
         else:
@@ -137,7 +136,7 @@ class TestXPRV:
         xprv_result = runner.invoke(cli, xprv_cmd)
         assert xprv_result.exit_code == 0
         output = xprv_result.output.strip()
-        assert validate_prv(output, private=True)
+        assert validate_prv_str(output, private=True)
         if mainnet:
             assert output == MNEMONIC_12["xprv"]
         else:

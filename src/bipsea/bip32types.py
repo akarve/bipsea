@@ -148,7 +148,7 @@ def parse_ext_key(key: str, validate: bool = True):
     return ext_key
 
 
-def validate_prv(prv: str, private: bool) -> bool:
+def validate_prv_str(prv: str, private: bool) -> bool:
     try:
         key = parse_ext_key(prv)
         assert len(str(key)) == 111

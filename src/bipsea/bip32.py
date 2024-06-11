@@ -10,6 +10,7 @@ from typing import List
 
 from ecdsa import SECP256k1, SigningKey, VerifyingKey
 from ecdsa.ellipticcurve import INFINITY
+from ecdsa.keys import VerifyingKey as VerifyingKeyType
 
 from .bip32types import VERSIONS, ExtendedKey
 from .util import LOGGER_NAME
@@ -104,6 +105,9 @@ def CKDpriv(
     depth: bytes,
     version: bytes,
 ) -> ExtendedKey:
+    if version not in [VERSIONS[net]["private"] for net in ("mainnet", "testnet")]:
+        raise ValueError(f"Expected a private version, got version={version}")
+
     hardened = child_number >= TYPED_CHILD_KEY_COUNT
     secret_int = int.from_bytes(private_key[1:], "big")
     data = (
@@ -118,16 +122,12 @@ def CKDpriv(
         key=chain_code,
         data=data + child_number.to_bytes(4, "big"),
     )
-    # BIP-32: In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid
-    # (Note: this has probability lower than 1 in 2**127.)
     parse_256_IL = int.from_bytes(derived[:32], "big")
     child_key_int = (
         parse_256_IL + int.from_bytes(private_key, "big")
     ) % SECP256k1.order
-    if (parse_256_IL >= SECP256k1.order) or child_key_int == 0:
-        raise ValueError(
-            f"Rare invalid child key. Retry with the next child index: {child_number} + 1."
-        )
+    validate_private_child_params(parse_256_IL, child_key_int, child_number)
+
     child_key = bytes(1) + child_key_int.to_bytes(32, "big")
 
     return ExtendedKey(
@@ -169,6 +169,9 @@ def CKDpub(
     finger: bytes,
     version: bytes,
 ) -> ExtendedKey:
+    if version not in [VERSIONS[net]["public"] for net in ("mainnet", "testnet")]:
+        raise ValueError(f"Expected a public version, got version={version}")
+
     child_number_int = int.from_bytes(child_number, "big")
     if child_number_int >= TYPED_CHILD_KEY_COUNT:
         raise ValueError(f"Cannot call CKDpub() for hardened child: {child_number_int}")
@@ -183,10 +186,7 @@ def CKDpub(
     child_point = VerifyingKey.from_public_point(
         SECP256k1.generator * parse_256_IL + parent_point, curve=SECP256k1
     )
-    # BIP-39: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
-    # key is invalid, and one should proceed with the next value for i.
-    if parse_256_IL >= SECP256k1.order or child_point == INFINITY:
-        raise ValueError(f"Key out of range. Try next child index: {child_number} + 1.")
+    validate_public_child_params(parse_256_IL, child_point, child_number)
 
     return ExtendedKey(
         data=child_point.to_string("compressed"),
@@ -238,3 +238,23 @@ def fingerprint(private_key: bytes) -> bytes:
 
 def hmac_sha512(key: bytes, data: bytes) -> bytes:
     return hmac.new(key=key, msg=data, digestmod="sha512").digest()
+
+
+def validate_private_child_params(parse_256_IL: int, child_key: int, child_number: int):
+    # BIP-32: In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid
+    # (Note: this has probability lower than 1 in 2**127.)
+    if (parse_256_IL >= SECP256k1.order) or child_key == 0:
+        raise ValueError(
+            f"Rare invalid child key. Retry with the next child index: {child_number} + 1."
+        )
+
+
+def validate_public_child_params(
+    parse_256_IL: int, child_point: VerifyingKeyType, child_number: int
+):
+    # BIP-32: In case parse256(IL) ≥ n or Ki is the point at infinity, the resulting
+    # key is invalid, and one should proceed with the next value for i.
+    if parse_256_IL >= SECP256k1.order or child_point == INFINITY:
+        raise ValueError(
+            f"Child pub key out of range. Try next child index: {child_number} + 1."
+        )

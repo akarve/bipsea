@@ -7,7 +7,7 @@ import sys
 import click
 
 from .bip32 import to_master_key
-from .bip32types import parse_ext_key, validate_prv
+from .bip32types import parse_ext_key, validate_prv_str
 from .bip39 import (
     LANGUAGES,
     N_WORDS_ALLOWED,
@@ -223,7 +223,7 @@ def derive_cli(application, number, index, special, xprv, to):
         xprv = xprv.strip()
     no_empty_param("--xprv", xprv)
 
-    if not validate_prv(xprv, private=True):
+    if not validate_prv_str(xprv, private=True):
         raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
 
     if number is not None:
