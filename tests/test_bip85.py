@@ -5,7 +5,6 @@ from hashlib import sha256
 import base58
 import pytest
 from Crypto.PublicKey import RSA
-from data.bip32_vectors import VECTORS
 from data.bip85_vectors import (
     BIP_39,
     COMMON_XPRV,

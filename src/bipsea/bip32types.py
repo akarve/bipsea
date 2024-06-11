@@ -3,6 +3,7 @@ from collections import namedtuple
 
 import base58
 from ecdsa import SECP256k1, SigningKey, VerifyingKey
+from ecdsa.errors import MalformedPointError
 
 from .util import LOGGER_NAME
 
@@ -86,7 +87,7 @@ class ExtendedKey(
         )
 
 
-def parse_ext_key(key: str):
+def parse_ext_key(key: str, validate: bool = True):
     """
     master - bip32 extended key, base 58
     """
@@ -102,43 +103,47 @@ def parse_ext_key(key: str):
         data=master_dec[45:],
     )
 
-    matches = 0
-    for net in VERSIONS:
-        for vis in VERSIONS[net]:
-            if ext_key.version == VERSIONS[net][vis]:
-                matches += 1
-                if net == "mainnet":
-                    assert key.startswith("x")
-                else:
-                    assert key.startswith("t")
-                if vis == "public":
-                    assert key[1:4] == "pub"
-                    assert ext_key.is_public()
-                else:
-                    assert key[1:4] == "prv"
-                    assert ext_key.is_private()
-    assert matches == 1, f"unrecognized version: {ext_key.version}"
+    if validate:
+        try:
+            matches = 0
+            for net in VERSIONS:
+                for vis in VERSIONS[net]:
+                    if ext_key.version == VERSIONS[net][vis]:
+                        matches += 1
+                        if net == "mainnet":
+                            assert key.startswith("x")
+                        else:
+                            assert key.startswith("t")
+                        if vis == "public":
+                            assert key[1:4] == "pub"
+                            assert ext_key.is_public()
+                        else:
+                            assert key[1:4] == "prv"
+                            assert ext_key.is_private()
+            assert matches == 1, f"unrecognized version: {ext_key.version}"
 
-    int_key = int.from_bytes(ext_key.data, "big")
+            int_key = int.from_bytes(ext_key.data, "big")
 
-    if ext_key.is_private():
-        private_key = SigningKey.from_string(ext_key.data[1:], curve=SECP256k1)
-        if (int_key < 1) or (int_key >= SECP256k1.order):
-            raise ValueError(f"Private key out of bounds: {ext_key.data}")
-    else:
-        public_key = VerifyingKey.from_string(ext_key.data, curve=SECP256k1)
-        if (int_key < 1):
-            raise ValueError(f"Public key out of bounds: {ext_key.data}")
-    depth = int.from_bytes(ext_key.depth, "big")
-    if depth == 0:
-        assert ext_key.finger == bytes(4)
-        assert ext_key.child_number == bytes(4)
-    else:
-        assert ext_key.finger != bytes(4)
+            if ext_key.is_private():
+                SigningKey.from_string(ext_key.data[1:], curve=SECP256k1)
+                if (int_key < 1) or (int_key >= SECP256k1.order):
+                    raise ValueError(f"Private key out of bounds: {ext_key.data}")
+            else:
+                VerifyingKey.from_string(ext_key.data, curve=SECP256k1)
+                if int_key < 1:
+                    raise ValueError(f"Public key out of bounds: {ext_key.data}")
+            depth = int.from_bytes(ext_key.depth, "big")
+            if depth == 0:
+                assert ext_key.finger == bytes(4)
+                assert ext_key.child_number == bytes(4)
+            else:
+                assert ext_key.finger != bytes(4)
 
-    assert len(ext_key.version) == 4
-    assert len(ext_key.finger) == len(ext_key.child_number) == 4
-    assert len(ext_key.data) - 1 == 32 == len(ext_key.chain_code)
+            assert len(ext_key.version) == 4
+            assert len(ext_key.finger) == len(ext_key.child_number) == 4
+            assert len(ext_key.data) - 1 == 32 == len(ext_key.chain_code)
+        except (AssertionError, MalformedPointError) as source:
+            raise ValueError("Invalid key") from source
 
     return ext_key
 
@@ -153,7 +158,7 @@ def validate_prv(prv: str, private: bool) -> bool:
         else:
             assert key.is_public()
 
-    except (AssertionError, ValueError):
+    except ValueError:
         return False
 
     return True

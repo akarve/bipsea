@@ -36,8 +36,7 @@ def test_vectors_and_parse_ext_key(vector):
     ids=[f"Vector-5-{reason[:32]}-{key[:8]}" for key, reason in INVALID_KEYS],
 )
 def test_invalid_keys(key, reason):
-    with pytest.raises((AssertionError, ValueError)):
+    with pytest.raises(ValueError):
         parse_ext_key(key)
 
-
-        
+    # TODO call CKDpriv, CKDpub, N() on these keys
