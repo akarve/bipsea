@@ -11,6 +11,7 @@ from bipsea.util import (
     relative_entropy,
     shannon_entropy,
     shuffle,
+    to_hex_string,
 )
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -39,3 +40,14 @@ def test_contains_only_ascii():
 def test_shuffle():
     shuffled = shuffle(deck_52())
     assert shuffled != deck_52()
+
+
+def test_bad_relatve_entropy():
+    with pytest.warns(UserWarning, match="outside"):
+        relative_entropy("λ")
+
+
+def test_to_hex_string():
+    data = b"\x00\xff\x10\x20"
+    expected = "00ff1020"
+    assert to_hex_string(data) == expected

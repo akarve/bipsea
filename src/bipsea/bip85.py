@@ -6,7 +6,6 @@ import re
 from typing import Dict, Union
 
 import base58
-from ecdsa import SECP256k1
 
 from .bip32 import VERSIONS, ExtendedKey
 from .bip32 import derive_key as derive_key_bip32
@@ -176,14 +175,6 @@ def split_and_validate(path: str):
         raise ValueError(f"Unexpected path segments: {path}")
 
     return segments
-
-
-def validate_key(entropy: bytes):
-    """per BIP-85 we should hard fail under these conditions"""
-    assert len(entropy) == 32
-    int_key = int.from_bytes(entropy, "big")
-    if not int_key or int_key > SECP256k1.order:
-        raise ValueError("Invalid derived key. Try again with next child index.")
 
 
 def do_rolls(entropy: bytes, sides: int, rolls: int, index: int) -> str:

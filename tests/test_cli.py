@@ -1,5 +1,10 @@
 import logging
 import random
+import subprocess
+import sys
+import tempfile
+from io import StringIO
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -16,7 +21,7 @@ from data.bip85_vectors import (
 
 from bipsea.bip32types import validate_prv
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
-from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli
+from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
 from bipsea.util import ASCII_INPUTS, LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -269,7 +274,7 @@ class TestDerive:
 
 
 class TestIntegration:
-    def test_chain_all_commands(self, runner):
+    def test_chain_no_pipe(self, runner):
         """this also tests that the default options are compatible"""
         mnemonic_result = runner.invoke(cli, ["mnemonic"])
         assert mnemonic_result.exit_code == 0
@@ -302,3 +307,65 @@ class TestIntegration:
             bad_x_result = runner.invoke(cli, ["derive", "-x", input, "-a", "base85"])
             assert bad_x_result.exit_code != 0
             assert "Error" in bad_x_result.output
+
+    def test_try_for_pipe_input(self, monkeypatch):
+        test_input = "test input"
+        monkeypatch.setattr(sys, "stdin", StringIO(test_input))
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: False)
+        assert try_for_pipe_input() == test_input.strip()
+
+        monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+        assert try_for_pipe_input() == ""
+
+    @pytest.mark.parametrize(
+        "cmd, opt", [("validate", "-m"), ("derive", "-m"), ("xprv", "-x")]
+    )
+    def test_no_m(self, runner, cmd, opt):
+        result = runner.invoke(cli, [cmd, opt])
+        assert result.exit_code != 0
+        assert "Error" in result.output
+
+    commands = [
+        "bipsea --version",
+        "bipsea --help",
+        "bipsea mnemonic --help",
+        "bipsea validate --help",
+        "bipsea xprv --help",
+        "bipsea derive --help",
+        "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
+        "bipsea mnemonic -t jpn -n 15",
+        "bipsea mnemonic -n 12 --pretty",
+        "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
+        "bipsea mnemonic | bipsea validate",
+        "bipsea mnemonic | bipsea validate | bipsea xprv",
+        'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
+        'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
+        'bipsea validate -f free -m "$(cat input.txt)"',
+        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
+        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
+        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
+        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
+    ]
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "command",
+        commands,
+        ids=lambda cmd: (cmd[:32] + "...") if len(cmd) > 32 else cmd,
+    )
+    def test_commands(self, command):
+        with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=True) as script:
+            script.write("#!/bin/sh\n")
+            script.write(command + "\n")
+            script.flush()
+            Path(script.name).chmod(0o755)
+
+            result = subprocess.run(
+                ["poetry", "run", script.name],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            assert (
+                result.returncode == 0
+            ), f"Command failed: {command}\nOutput: {result.stdout}\nError: {result.stderr}"

@@ -2,21 +2,18 @@
 
 all:: install build
 
-test:: lint test-ci
+test:: lint
+	poetry run pytest -n auto
 
-test-fast:: lint
-	pytest -n auto
+test-all::
+	poetry run pytest -n auto -m ""
 
-test-ci::
-	poetry run pytest -sx -n auto
+test-dist:: clean build install-dist test-integration
 
-test-dist:: clean build install-dist test-readme
+test-integration::
+	pytest tests/test_cli.py::TestIntegration -m slow -n auto
 
-REDIRECT_OUTPUT ?= > /dev/null
-test-readme::
-	bash scripts/test-readme.sh $(REDIRECT_OUTPUT)
-
-push:: test-fast git-off-main git-no-unsaved
+push:: test-all git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
