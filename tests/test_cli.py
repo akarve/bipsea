@@ -343,9 +343,8 @@ class TestIntegration:
             "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
             "bipsea mnemonic | bipsea validate",
             "bipsea mnemonic | bipsea validate | bipsea xprv",
-    
         ],
-        "all-fixed" : [
+        "all-fixed": [
             'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
         ],
         "validate": [
@@ -357,14 +356,14 @@ class TestIntegration:
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
-        ]
-   }
+        ],
+    }
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
         "group, commands",
         groups.items(),
-        ids=[f"{group}-x-{len(commands)}" for group, commands in groups.items()]
+        ids=[f"{group}-x-{len(commands)}" for group, commands in groups.items()],
     )
     def test_commands(self, group, commands):
         with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:

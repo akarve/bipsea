@@ -19,7 +19,14 @@ from data.bip85_vectors import (
 
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
-from bipsea.bip85 import DRNG, INDEX_TO_LANGUAGE, apply_85, derive, to_entropy
+from bipsea.bip85 import (
+    DRNG,
+    INDEX_TO_LANGUAGE,
+    apply_85,
+    derive,
+    split_and_validate,
+    to_entropy,
+)
 from bipsea.util import LOGGER_NAME, to_hex_string
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -177,3 +184,39 @@ def test_dice(vector):
     assert len(rolls_int) == 10
     assert all(0 <= r < 10 for r in rolls_int)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+
+
+@pytest.mark.parametrize(
+    "path, works",
+    [
+        ("m", True),
+        ("x/1'", False),
+        ("m/5h/3/4'", True),
+        ("m/1/8*", False),
+    ],
+)
+def test_split_and_validate(path, works):
+    if works:
+        split_and_validate(path)
+    else:
+        with pytest.raises(ValueError):
+            split_and_validate(path)
+
+
+@pytest.mark.parametrize(
+    "path, works",
+    [
+        ("m/8369696'", False),
+        ("m/83696968'/128169'/16'/10000'", True),
+        ("m/83696968'/128169'/15'/0'", False),
+        ("m/83696968'/0'/0'/0'", False),
+        ("m/83696968'/128169'/0/0'", False),
+    ],
+)
+def test_apply_bad(path, works):
+    master = parse_ext_key(COMMON_XPRV)
+    if works:
+        apply_85(master, path)
+    else:
+        with pytest.raises((ValueError, NotImplementedError)):
+            apply_85(master, path)
