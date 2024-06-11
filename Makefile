@@ -11,7 +11,7 @@ test-all::
 test-dist:: clean build install-dist test-integration
 
 test-integration::
-	pytest tests/test_cli.py::TestIntegration -m slow -n auto
+	poetry run pytest "tests/test_cli.py::TestIntegration" -m "" -n auto
 
 push:: test-all git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
