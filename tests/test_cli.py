@@ -325,38 +325,52 @@ class TestIntegration:
         assert result.exit_code != 0
         assert "Error" in result.output
 
-    commands = [
-        "bipsea --version",
-        "bipsea --help",
-        "bipsea mnemonic --help",
-        "bipsea validate --help",
-        "bipsea xprv --help",
-        "bipsea derive --help",
-        "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
-        "bipsea mnemonic -t jpn -n 15",
-        "bipsea mnemonic -n 12 --pretty",
-        "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
-        "bipsea mnemonic | bipsea validate",
-        "bipsea mnemonic | bipsea validate | bipsea xprv",
-        'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
-        'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
-        'bipsea validate -f free -m "$(cat input.txt)"',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
-    ]
+    groups = {
+        "help": [
+            "bipsea --version",
+            "bipsea --help",
+            "bipsea mnemonic --help",
+            "bipsea validate --help",
+            "bipsea xprv --help",
+            "bipsea derive --help",
+        ],
+        "all-defaults": [
+            "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
+        ],
+        "mnemonic": [
+            "bipsea mnemonic -t jpn -n 15",
+            "bipsea mnemonic -n 12 --pretty",
+            "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
+            "bipsea mnemonic | bipsea validate",
+            "bipsea mnemonic | bipsea validate | bipsea xprv",
+    
+        ],
+        "all-fixed" : [
+            'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
+        ],
+        "validate": [
+            'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
+            'bipsea validate -f free -m "$(cat input.txt)"',
+        ],
+        "derive": [
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
+        ]
+   }
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "command",
-        commands,
-        ids=lambda cmd: (cmd[:32] + "...") if len(cmd) > 32 else cmd,
+        "group, commands",
+        groups.items(),
+        ids=[f"{group}-x-{len(commands)}" for group, commands in groups.items()]
     )
-    def test_commands(self, command):
+    def test_commands(self, group, commands):
         with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:
             script.write("#!/bin/sh\n")
-            script.write(command + "\n")
+            for cmd in commands:
+                script.write(cmd + "\n")
             script.flush()
 
         Path(script.name).chmod(0o755)
@@ -369,7 +383,7 @@ class TestIntegration:
                 text=True,
             )
             assert result.returncode == 0, (
-                f"Command failed: {command}\n"
+                f"Group failed: {group}\n"
                 f"Output: {result.stdout}\n"
                 f"Error: {result.stderr}"
             )
