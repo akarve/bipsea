@@ -35,8 +35,8 @@ def test_vectors_and_parse_ext_key(vector):
             master = to_master_key(seed, mainnet=True, private=True)
             derived = derive(master, ch, private=type_ == "ext prv")
             assert str(derived) == expected
-        xprv = str(parse_ext_key(expected))
-        assert validate_prv_str(xprv, type_ == "ext prv")
+            xprv = str(parse_ext_key(expected))
+            assert validate_prv_str(xprv, type_ == "ext prv")
         if ch == "m":
             assert expected == xprv
 

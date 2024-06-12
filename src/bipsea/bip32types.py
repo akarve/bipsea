@@ -122,16 +122,10 @@ def parse_ext_key(key: str, validate: bool = True):
                             assert ext_key.is_private()
             assert matches == 1, f"unrecognized version: {ext_key.version}"
 
-            int_key = int.from_bytes(ext_key.data, "big")
-
             if ext_key.is_private():
                 SigningKey.from_string(ext_key.data[1:], curve=SECP256k1)
-                if (int_key < 1) or (int_key >= SECP256k1.order):
-                    raise ValueError(f"Private key out of bounds: {ext_key.data}")
             else:
                 VerifyingKey.from_string(ext_key.data, curve=SECP256k1)
-                if int_key < 1:
-                    raise ValueError(f"Public key out of bounds: {ext_key.data}")
             depth = int.from_bytes(ext_key.depth, "big")
             if depth == 0:
                 assert ext_key.finger == bytes(4)
