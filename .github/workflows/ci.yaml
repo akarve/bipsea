@@ -1,4 +1,4 @@
-name: API & CLI Py 3.8 - 3.12 (coverage)
+name: API & CLI (coverage)
 
 on: [pull_request]
 
