@@ -2,7 +2,7 @@
 
 all:: install build
 
-test:: lint
+test::
 	poetry run pytest -n auto
 
 test-all::
@@ -13,7 +13,7 @@ test-dist:: clean build install-dist test-integration
 test-integration::
 	poetry run pytest "tests/test_cli.py::TestIntegration" -m "" -n auto
 
-push:: test-all git-off-main git-no-unsaved
+push:: lint test-all git-off-main git-no-unsaved
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
@@ -49,6 +49,7 @@ check::
 	poetry run isort . --check
 	poetry run flake8 . --ignore=E501,W503
 	bash -n scripts/*.sh
+	bash -n tests/*.sh
 
 lint::
 	isort .

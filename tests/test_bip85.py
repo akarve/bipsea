@@ -19,7 +19,15 @@ from data.bip85_vectors import (
 
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
-from bipsea.bip85 import DRNG, INDEX_TO_LANGUAGE, apply_85, derive, to_entropy
+from bipsea.bip85 import (
+    APPLICATIONS,
+    DRNG,
+    INDEX_TO_LANGUAGE,
+    apply_85,
+    derive,
+    split_and_validate,
+    to_entropy,
+)
 from bipsea.util import LOGGER_NAME, to_hex_string
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -114,6 +122,7 @@ def test_hex(vector):
     assert vector["derived_entropy"] == output["application"]
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("key_bits", [1024])
 def test_rsa(key_bits):
     data = []
@@ -177,3 +186,56 @@ def test_dice(vector):
     assert len(rolls_int) == 10
     assert all(0 <= r < 10 for r in rolls_int)
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
+
+
+@pytest.mark.parametrize(
+    "path, works",
+    [
+        ("m", True),
+        ("x/1'", False),
+        ("m/5h/3/4'", True),
+        ("m/1/8*", False),
+    ],
+)
+def test_split_and_validate(path, works):
+    if works:
+        split_and_validate(path)
+    else:
+        with pytest.raises(ValueError):
+            split_and_validate(path)
+
+
+@pytest.mark.parametrize(
+    "path, works",
+    [
+        ("m/8369696'", False),
+        (f"m/83696968'/{APPLICATIONS['hex']}/16'/10000'", True),
+        (f"m/83696968'/{APPLICATIONS['hex']}/15'/10000'", False),
+        (f"m/83696968'/{APPLICATIONS['base85']}/9'/11123213'", False),
+        (f"m/83696968'/{APPLICATIONS['mnemonic']}/0'/13'", False),
+        ("m/83696968'/707764'/0'/13'", False),
+        ("m/83696968'/0'/0'/0'", False),
+        ("m/83696968'/128169'/0/0'", False),
+    ],
+)
+def test_apply_bad(path, works):
+    master = parse_ext_key(COMMON_XPRV)
+    if works:
+        apply_85(master, path)
+    else:
+        with pytest.raises((ValueError, NotImplementedError)):
+            apply_85(master, path)
+
+
+def test_derive_public():
+    master = parse_ext_key(
+        "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"
+    )
+    with pytest.raises(ValueError):
+        derive(master, "m/1'")
+
+
+def test_drng_input():
+    DRNG(bytes(64))
+    with pytest.raises(ValueError):
+        DRNG(bytes(65))

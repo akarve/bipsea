@@ -19,7 +19,7 @@ from data.bip85_vectors import (
     WIF,
 )
 
-from bipsea.bip32types import validate_prv
+from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
 from bipsea.util import ASCII_INPUTS, LOGGER_NAME
@@ -39,6 +39,19 @@ MNEMONIC_12 = {
 @pytest.fixture
 def runner():
     return CliRunner()
+
+
+class TestBase:
+    @pytest.mark.parametrize("cmd", ["", "mnemonic", "validate", "xprv", "derive"])
+    def test_help(self, runner, cmd):
+        result = runner.invoke(cli, [cmd, "--help"])
+        result.exit_code == 0
+        assert cmd in result.output
+
+    def test_version(self, runner):
+        result = runner.invoke(cli, ["--version"])
+        result.exit_code == 0
+        assert "." in result.output
 
 
 class TestMnemonic:
@@ -71,7 +84,6 @@ class TestValidate:
         cmd = ["validate", "-f", "free", "-m", self.gen_free_ascii_mnemonic(num)]
         result = runner.invoke(cli, cmd)
         assert result.exit_code == 0
-        logger.warning(result.output)
         if size in ("one", "under"):
             assert "Warning" in result.output
         else:
@@ -86,8 +98,8 @@ class TestValidate:
         return custom
 
 
-# Slowest CLI class because it calls pbkdf2 under the hood
 class TestXPRV:
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("vectors", VECTORS.values(), ids=VECTORS.keys())
     def test_bip_39_vectors(self, runner, vectors):
         for vector in vectors:
@@ -99,6 +111,7 @@ class TestXPRV:
             last = result.output.strip().split("\n")[-1]
             assert last == xprv
 
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_passphrase(self, runner, vector):
         """prove that meaningful passphrase and mnemonic changes change the xprv
@@ -109,6 +122,7 @@ class TestXPRV:
         result_xprv = change_passphrase.output.strip().split("\n")[-1]
         assert result_xprv != xprv
 
+    @pytest.mark.slow  # calls PBKDF2 a lot
     @pytest.mark.parametrize("fix", ("x", " \t\n "), ids=lambda x: f"add-{x}")
     @pytest.mark.parametrize("vector", VECTORS["english"])
     def test_english_vectors_change_mnemonic(self, runner, vector, fix):
@@ -135,7 +149,7 @@ class TestXPRV:
         xprv_result = runner.invoke(cli, xprv_cmd)
         assert xprv_result.exit_code == 0
         output = xprv_result.output.strip()
-        assert validate_prv(output, private=True)
+        assert validate_prv_str(output, private=True)
         if mainnet:
             assert output == MNEMONIC_12["xprv"]
         else:
@@ -264,6 +278,34 @@ class TestDerive:
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_pwd"]
 
+    @pytest.mark.parametrize("app", ("wif", "xprv"))
+    def test_num_not_allowed(self, runner, app):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", 2]
+        )
+        assert result.exit_code != 0
+        logger.debug(result.output)
+        assert "--number" in result.output
+
+    @pytest.mark.parametrize(
+        "app, n", [("base64", 1), ("base85", 2), ("hex", 3), ("dice", 0)]
+    )
+    def test_bad_range(self, runner, app, n):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", n]
+        )
+        assert result.exit_code != 0
+        logger.debug(result.output)
+        assert "range" in result.output
+
+    def test_bad_application(self, runner):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", "google"]
+        )
+        assert result.exit_code != 0
+        logger.debug(result.output)
+        assert "application" in result.output
+
     def test_bad_xprv(self, runner):
         result = runner.invoke(
             cli, ["derive", "-x", MNEMONIC_12["xprv"][1:], "--application", "mnemonic"]
@@ -271,6 +313,22 @@ class TestDerive:
         assert result.exit_code != 0
         assert "Invalid" in result.output
         assert "--xprv" in result.output
+
+    def test_bad_to(self, runner):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-x",
+                MNEMONIC_12["xprv"],
+                "--application",
+                "base64",
+                "--to",
+                "spa",
+            ],
+        )
+        assert result.exit_code != 0
+        assert "--to" in result.output
 
 
 class TestIntegration:
@@ -325,39 +383,41 @@ class TestIntegration:
         assert result.exit_code != 0
         assert "Error" in result.output
 
-    commands = [
-        "bipsea --version",
-        "bipsea --help",
-        "bipsea mnemonic --help",
-        "bipsea validate --help",
-        "bipsea xprv --help",
-        "bipsea derive --help",
-        "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
-        "bipsea mnemonic -t jpn -n 15",
-        "bipsea mnemonic -n 12 --pretty",
-        "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
-        "bipsea mnemonic | bipsea validate",
-        "bipsea mnemonic | bipsea validate | bipsea xprv",
-        'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
-        'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
-        'bipsea validate -f free -m "$(cat input.txt)"',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
-        'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
-    ]
+    groups = {
+        "all-defaults": [
+            "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
+        ],
+        "mnemonic": [
+            "bipsea mnemonic -t jpn -n 15",
+            "bipsea mnemonic -n 12 --pretty",
+            "bipsea mnemonic -t spa -n 12 | bipsea validate -f spa",
+            "bipsea mnemonic | bipsea validate",
+            "bipsea mnemonic | bipsea validate | bipsea xprv",
+        ],
+        "validate": [
+            'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
+            'bipsea validate -f free -m "$(cat input.txt)"',
+        ],
+        "derive-and-all-fixed": [
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
+            'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
+            'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
+        ],
+    }
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        "command",
-        commands,
-        ids=lambda cmd: (cmd[:32] + "...") if len(cmd) > 32 else cmd,
+        "group, commands",
+        groups.items(),
+        ids=[f"{group}-{len(commands)}" for group, commands in groups.items()],
     )
-    def test_commands(self, command):
+    def test_commands(self, group, commands):
         with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:
             script.write("#!/bin/sh\n")
-            script.write(command + "\n")
-            script.flush()
+            for cmd in commands:
+                script.write(cmd + "\n")
 
         Path(script.name).chmod(0o755)
 
@@ -369,7 +429,7 @@ class TestIntegration:
                 text=True,
             )
             assert result.returncode == 0, (
-                f"Command failed: {command}\n"
+                f"Group failed: {group}\n"
                 f"Output: {result.stdout}\n"
                 f"Error: {result.stderr}"
             )

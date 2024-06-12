@@ -7,7 +7,7 @@ import sys
 import click
 
 from .bip32 import to_master_key
-from .bip32types import parse_ext_key, validate_prv
+from .bip32types import parse_ext_key, validate_prv_str
 from .bip39 import (
     LANGUAGES,
     N_WORDS_ALLOWED,
@@ -38,25 +38,14 @@ from .util import (
 
 ISO_TO_LANGUAGE = {v["code"]: k for k, v in LANGUAGES.items()}
 
-MNEMONIC_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
+N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 
-SEED_FROM_VALUES = [
+MNEMONIC_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
+MNEMONIC_FROM_VALUES = [
     "any",
     "random",
 ] + list(ISO_TO_LANGUAGE.keys())
-
-
-SEED_TO_VALUES = [
-    "tprv",
-    "xprv",
-] + list(ISO_TO_LANGUAGE.keys())
-
-
 ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
-
-N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
-
-TIMEOUT = 0.08
 
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -217,13 +206,13 @@ def xprv(mnemonic, passphrase, mainnet):
     help="Output language for `--application mnemonic`.",
 )
 def derive_cli(application, number, index, special, xprv, to):
-    if not xprv:
-        xprv = try_for_pipe_input()
-    else:
+    if xprv:
         xprv = xprv.strip()
+    else:
+        xprv = try_for_pipe_input()
     no_empty_param("--xprv", xprv)
 
-    if not validate_prv(xprv, private=True):
+    if not validate_prv_str(xprv, private=True):
         raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
 
     if number is not None:
@@ -264,11 +253,6 @@ def derive_cli(application, number, index, special, xprv, to):
     elif application == "dice":
         check_range(number, application)
         path += f"/{special}'/{number}'/{index}'"
-    else:
-        raise click.BadOptionUsage(
-            option_name="--application",
-            message=f"unrecognized {application}",
-        )
 
     derived = derive(master, path)
     if application == "drng":
@@ -312,4 +296,4 @@ def try_for_pipe_input():
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pragma: no cover
