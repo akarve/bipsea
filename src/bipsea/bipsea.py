@@ -242,6 +242,7 @@ def derive_cli(application, number, index, special, xprv, to):
     path += f"/{app_code}"
 
     if to:
+        # TODO TEST
         if application != "mnemonic":
             raise click.BadOptionUsage(
                 option_name="--to",
@@ -289,6 +290,7 @@ cli.add_command(derive_cli)
 def check_range(number: int, application: str):
     (min, max) = RANGES[application]
     if not (min <= number <= max):
+        # TODO TEST
         raise click.BadOptionUsage(
             option_name="--number",
             message=f"--number out of range. Try [{min}, {max}] for {application}.",
@@ -307,4 +309,4 @@ def try_for_pipe_input():
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pragma: no cover

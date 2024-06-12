@@ -6,9 +6,9 @@ import secrets
 import warnings
 from hashlib import pbkdf2_hmac
 
-try:
+try:  # pragma: no cover
     from importlib.resources import files
-except ImportError:
+except ImportError:  # pragma: no cover
     from importlib_resources import files  # for Python 3.8
 
 from typing import List
