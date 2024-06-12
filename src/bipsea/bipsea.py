@@ -217,10 +217,10 @@ def xprv(mnemonic, passphrase, mainnet):
     help="Output language for `--application mnemonic`.",
 )
 def derive_cli(application, number, index, special, xprv, to):
-    if not xprv:
-        xprv = try_for_pipe_input()
-    else:
+    if xprv:
         xprv = xprv.strip()
+    else:
+        xprv = try_for_pipe_input()
     no_empty_param("--xprv", xprv)
 
     if not validate_prv_str(xprv, private=True):
@@ -242,9 +242,8 @@ def derive_cli(application, number, index, special, xprv, to):
     path += f"/{app_code}"
 
     if to:
-        # TODO TEST
         if application != "mnemonic":
-            raise click.BadOptionUsage(
+            raise click.BadOptionUsage(  # TODO TEST
                 option_name="--to",
                 message="--to requires `--application mnemonic`",
             )
@@ -290,8 +289,7 @@ cli.add_command(derive_cli)
 def check_range(number: int, application: str):
     (min, max) = RANGES[application]
     if not (min <= number <= max):
-        # TODO TEST
-        raise click.BadOptionUsage(
+        raise click.BadOptionUsage(  # TODO TEST
             option_name="--number",
             message=f"--number out of range. Try [{min}, {max}] for {application}.",
         )
