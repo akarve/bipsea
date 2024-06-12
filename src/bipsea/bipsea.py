@@ -38,25 +38,14 @@ from .util import (
 
 ISO_TO_LANGUAGE = {v["code"]: k for k, v in LANGUAGES.items()}
 
-MNEMONIC_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
+N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
 
-SEED_FROM_VALUES = [
+MNEMONIC_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
+MNEMONIC_FROM_VALUES = [
     "any",
     "random",
 ] + list(ISO_TO_LANGUAGE.keys())
-
-
-SEED_TO_VALUES = [
-    "tprv",
-    "xprv",
-] + list(ISO_TO_LANGUAGE.keys())
-
-
 ENTROPY_TO_VALUES = list(ISO_TO_LANGUAGE.keys())
-
-N_WORDS_ALLOWED_STR = [str(n) for n in N_WORDS_ALLOWED]
-
-TIMEOUT = 0.08
 
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -243,7 +232,7 @@ def derive_cli(application, number, index, special, xprv, to):
 
     if to:
         if application != "mnemonic":
-            raise click.BadOptionUsage(  # TODO TEST
+            raise click.BadOptionUsage(
                 option_name="--to",
                 message="--to requires `--application mnemonic`",
             )
@@ -289,7 +278,7 @@ cli.add_command(derive_cli)
 def check_range(number: int, application: str):
     (min, max) = RANGES[application]
     if not (min <= number <= max):
-        raise click.BadOptionUsage(  # TODO TEST
+        raise click.BadOptionUsage(
             option_name="--number",
             message=f"--number out of range. Try [{min}, {max}] for {application}.",
         )
