@@ -233,3 +233,9 @@ def test_derive_public():
     )
     with pytest.raises(ValueError):
         derive(master, "m/1'")
+
+
+def test_drng_input():
+    DRNG(bytes(64))
+    with pytest.raises(ValueError):
+        DRNG(bytes(65))

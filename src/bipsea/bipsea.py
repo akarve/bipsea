@@ -264,11 +264,6 @@ def derive_cli(application, number, index, special, xprv, to):
     elif application == "dice":
         check_range(number, application)
         path += f"/{special}'/{number}'/{index}'"
-    else:
-        raise click.BadOptionUsage(
-            option_name="--application",
-            message=f"unrecognized {application}",
-        )
 
     derived = derive(master, path)
     if application == "drng":

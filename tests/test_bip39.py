@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import re
+import secrets
 import warnings
 
 import pytest
@@ -11,6 +12,7 @@ from bipsea.bip39 import (
     LANGUAGES,
     N_MNEMONICS,
     N_WORDS_META,
+    bip39_words,
     entropy_to_words,
     files,
     to_master_seed,
@@ -70,6 +72,17 @@ def test_vectors(language, vectors):
         assert validate_mnemonic_words(computed_words, language)
 
 
+def test_entropy_to_words_bad_n():
+    with pytest.raises(ValueError):
+        entropy_to_words(13, None, "english")
+
+
+def test_entropy_to_words_long_entropy():
+    rand_int = secrets.randbits(256)
+    rand_bytes = rand_int.to_bytes(32, "big")
+    entropy_to_words(12, rand_bytes, "english")
+
+
 @pytest.mark.parametrize("v", N_WORDS_META.values())
 def test_meta(v):
     """Computed BIP-39 table with ENT, CS, ENT+CS"""
@@ -103,6 +116,13 @@ def test_test_main_pub_prv(net, vis):
     prv = str(to_master_key(seed, mainnet=net, private=vis))
     assert prv == MNEMONIC_12[expected_type]
     assert prv.startswith(expected_type)
+
+
+def test_bip39_words_bad_language():
+    fake = "chinese"
+    assert fake not in LANGUAGES
+    with pytest.raises(ValueError):
+        bip39_words("chinese")
 
 
 @pytest.mark.parametrize("language", LANGUAGES.keys())

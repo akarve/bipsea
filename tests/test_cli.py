@@ -265,6 +265,23 @@ class TestDerive:
         assert result.exit_code == 0
         assert result.output.strip() == vector["derived_pwd"]
 
+    def test_bad_application(self, runner):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", "google"]
+        )
+        assert result.exit_code != 0
+        logger.debug(result.output)
+        assert "application" in result.output
+
+    @pytest.mark.parametrize("app", ("wif", "xprv"))
+    def test_num_not_allowed(self, runner, app):
+        result = runner.invoke(
+            cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", 2]
+        )
+        assert result.exit_code != 0
+        logger.debug(result.output)
+        assert "--number" in result.output
+
     def test_bad_xprv(self, runner):
         result = runner.invoke(
             cli, ["derive", "-x", MNEMONIC_12["xprv"][1:], "--application", "mnemonic"]
