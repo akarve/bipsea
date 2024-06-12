@@ -41,6 +41,19 @@ def runner():
     return CliRunner()
 
 
+class TestBase:
+    @pytest.mark.parametrize("cmd", ["", "mnemonic", "validate", "xprv", "derive"])
+    def test_help(self, runner, cmd):
+        result = runner.invoke(cli, [cmd, "--help"])
+        result.exit_code == 0
+        assert cmd in result.output
+
+    def test_version(self, runner):
+        result = runner.invoke(cli, ["--version"])
+        result.exit_code == 0
+        assert "." in result.output
+
+
 class TestMnemonic:
     @pytest.mark.parametrize("lang", ("zho", "x", "esperanto"))
     def test_mnemonic_bad_lang(self, runner, lang):
@@ -344,14 +357,6 @@ class TestIntegration:
         assert "Error" in result.output
 
     groups = {
-        "help": [
-            "bipsea --version",
-            "bipsea --help",
-            "bipsea mnemonic --help",
-            "bipsea validate --help",
-            "bipsea xprv --help",
-            "bipsea derive --help",
-        ],
         "all-defaults": [
             "bipsea mnemonic | bipsea validate | bipsea xprv | bipsea derive -a mnemonic -n 12",
         ],
