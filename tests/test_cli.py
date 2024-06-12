@@ -391,7 +391,6 @@ class TestIntegration:
             script.write("#!/bin/sh\n")
             for cmd in commands:
                 script.write(cmd + "\n")
-            script.flush()
 
         Path(script.name).chmod(0o755)
 
