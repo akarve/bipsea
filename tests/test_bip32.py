@@ -78,38 +78,37 @@ def test_ckdpriv_invalid_keys(key_str: str, reason: str):
         parse_ext_key(key_str)
     if "checksum" in reason:
         # the checksum case blows up on base58decode_check even if we don't validate
-        pass
-    else:
-        bad_key = parse_ext_key(key_str, validate=False)
-        if bad_key.is_public():
-            passes = any(r in reason for r in ("prvkey version / pubkey mismatch",))
+        return
+    bad_key = parse_ext_key(key_str, validate=False)
+    if bad_key.is_public():
+        passes = any(r in reason for r in ("prvkey version / pubkey mismatch",))
 
-            with no_raise() if passes else pytest.raises(ValueError):
-                CKDpriv(
-                    private_key=bad_key.data,
-                    chain_code=bad_key.chain_code,
-                    child_number=int.from_bytes(bad_key.child_number, "big"),
-                    depth=bad_key.depth,
-                    version=bad_key.version,
-                )
-        else:
-            passes = any(
-                r in reason
-                for r in (
-                    "prvkey prefix 04",
-                    "invalid prvkey prefix 01",
-                    "zero depth",
-                )
+        with no_raise() if passes else pytest.raises(ValueError):
+            CKDpriv(
+                private_key=bad_key.data,
+                chain_code=bad_key.chain_code,
+                child_number=int.from_bytes(bad_key.child_number, "big"),
+                depth=bad_key.depth,
+                version=bad_key.version,
             )
-            # TypeError because of https://github.com/tlsfuzzer/python-ecdsa/issues/341
-            with no_raise() if passes else pytest.raises((ValueError, TypeError)):
-                CKDpriv(
-                    private_key=bad_key.data,
-                    chain_code=bad_key.chain_code,
-                    child_number=int.from_bytes(bad_key.child_number, "big"),
-                    depth=bad_key.depth,
-                    version=bad_key.version,
-                )
+    else:
+        passes = any(
+            r in reason
+            for r in (
+                "prvkey prefix 04",
+                "invalid prvkey prefix 01",
+                "zero depth",
+            )
+        )
+        # TypeError because of https://github.com/tlsfuzzer/python-ecdsa/issues/341
+        with no_raise() if passes else pytest.raises((ValueError, TypeError)):
+            CKDpriv(
+                private_key=bad_key.data,
+                chain_code=bad_key.chain_code,
+                child_number=int.from_bytes(bad_key.child_number, "big"),
+                depth=bad_key.depth,
+                version=bad_key.version,
+            )
 
 
 @pytest.mark.parametrize(
@@ -122,34 +121,33 @@ def test_ckdpub_invalid_keys(key_str: str, reason: str):
         parse_ext_key(key_str)
     if "checksum" in reason:
         # the checksum case blows up on base58decode_check even if we don't validate
-        pass
+        return
+    bad_key = parse_ext_key(key_str, validate=False)
+    if bad_key.is_public():
+        passes = any(s in reason for s in ("zero depth",))
+        with (
+            pytest.raises((MalformedPointError, ValueError))
+            if not passes
+            else no_raise()
+        ):
+            CKDpub(
+                public_key=bad_key.data,
+                chain_code=bad_key.chain_code,
+                child_number=bad_key.child_number,
+                depth=bad_key.depth,
+                version=bad_key.version,
+                finger=bad_key.finger,
+            )
     else:
-        bad_key = parse_ext_key(key_str, validate=False)
-        if bad_key.is_public():
-            passes = any(s in reason for s in ("zero depth",))
-            with (
-                pytest.raises((MalformedPointError, ValueError))
-                if not passes
-                else no_raise()
-            ):
-                CKDpub(
-                    public_key=bad_key.data,
-                    chain_code=bad_key.chain_code,
-                    child_number=bad_key.child_number,
-                    depth=bad_key.depth,
-                    version=bad_key.version,
-                    finger=bad_key.finger,
-                )
-        else:
-            with pytest.raises((MalformedPointError, ValueError)):
-                CKDpub(
-                    public_key=bad_key.data,
-                    chain_code=bad_key.chain_code,
-                    child_number=bad_key.child_number,
-                    depth=bad_key.depth,
-                    version=bad_key.version,
-                    finger=bad_key.finger,
-                )
+        with pytest.raises((MalformedPointError, ValueError)):
+            CKDpub(
+                public_key=bad_key.data,
+                chain_code=bad_key.chain_code,
+                child_number=bad_key.child_number,
+                depth=bad_key.depth,
+                version=bad_key.version,
+                finger=bad_key.finger,
+            )
 
 
 def test_ckd_pub_bad_child_number():

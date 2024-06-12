@@ -367,18 +367,16 @@ class TestIntegration:
             "bipsea mnemonic | bipsea validate",
             "bipsea mnemonic | bipsea validate | bipsea xprv",
         ],
-        "all-fixed": [
-            'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
-        ],
         "validate": [
             'bipsea validate -f free -m "123456123456123456" | bipsea xprv',
             'bipsea validate -f free -m "$(cat input.txt)"',
         ],
-        "derive": [
+        "derive-and-all-fixed": [
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a base85',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a mnemonic -t jpn -n 12',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
+            'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
         ],
     }
 
