@@ -49,6 +49,7 @@ check::
 	poetry run isort . --check
 	poetry run flake8 . --ignore=E501,W503
 	bash -n scripts/*.sh
+	bash -n tests/*.sh
 
 lint::
 	isort .
