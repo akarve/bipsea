@@ -1,4 +1,3 @@
-import contextlib
 import logging
 
 import pytest
@@ -11,13 +10,14 @@ from bipsea.bip32 import (
     TYPED_CHILD_KEY_COUNT,
     CKDpriv,
     CKDpub,
+    N,
     to_master_key,
     validate_private_child_params,
     validate_public_child_params,
 )
 from bipsea.bip32types import parse_ext_key, validate_prv_str
 from bipsea.bip85 import derive
-from bipsea.util import LOGGER_NAME
+from bipsea.util import LOGGER_NAME, no_raise
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -32,11 +32,50 @@ def test_vectors_and_parse_ext_key(vector):
     for ch, tests in vector["chain"].items():
         for type_, expected in tests.items():
             assert type_ in ("ext pub", "ext prv")
+            private = type_ == "ext prv"
             master = to_master_key(seed, mainnet=True, private=True)
-            derived = derive(master, ch, private=type_ == "ext prv")
+            derived = derive(master, ch, private=private)
             assert str(derived) == expected
             xprv = str(parse_ext_key(expected))
-            assert validate_prv_str(xprv, type_ == "ext prv")
+            assert validate_prv_str(xprv, private)
+
+            depth_int = int.from_bytes(derived.depth, "big") + 1
+            depth_bytes = depth_int.to_bytes(1, "big")
+            if private:
+                private = CKDpriv(
+                    private_key=derived.data,
+                    chain_code=derived.chain_code,
+                    child_number=int.from_bytes(derived.child_number, "big"),
+                    depth=depth_bytes,
+                    version=derived.version,
+                )
+                assert private.is_private()
+                neutered = N(
+                    private_key=derived.data,
+                    chain_code=derived.chain_code,
+                    child_number=derived.child_number,
+                    depth=depth_bytes,
+                    finger=derived.finger,
+                    version=derived.version,
+                )
+                assert neutered.is_public()
+            else:
+                hardened = ch.endswith("H")
+                with (
+                    pytest.raises(ValueError, match="hardened")
+                    if hardened
+                    else no_raise()
+                ):
+                    public = CKDpub(
+                        public_key=derived.data,
+                        chain_code=derived.chain_code,
+                        child_number=derived.child_number,
+                        depth=depth_bytes,
+                        finger=derived.finger,
+                        version=derived.version,
+                    )
+                assert public.is_public()
+
         if ch == "m":
             assert expected == xprv
 
@@ -163,8 +202,3 @@ def test_ckd_pub_bad_child_number():
             version=key.version,
             finger=key.finger,
         )
-
-
-@contextlib.contextmanager
-def no_raise():
-    yield

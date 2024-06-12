@@ -1,6 +1,7 @@
 """constants and utilities"""
 
 import binascii
+import contextlib
 import logging
 import math
 import random
@@ -87,3 +88,8 @@ def shuffle(lst: List[str]) -> List[str]:
         lst[cursor], lst[choice] = lst[choice], lst[cursor]
 
     return lst
+
+
+@contextlib.contextmanager
+def no_raise():
+    yield
