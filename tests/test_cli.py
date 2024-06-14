@@ -411,7 +411,7 @@ class TestIntegration:
     @pytest.mark.parametrize(
         "group, commands",
         groups.items(),
-        ids=[f"{group}-{len(commands)}" for group, commands in groups.items()],
+        ids=[f"{group} x {len(commands)}" for group, commands in groups.items()],
     )
     def test_commands(self, group, commands):
         with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:
