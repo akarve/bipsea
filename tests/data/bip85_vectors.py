@@ -52,7 +52,7 @@ XPRV = [
         "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
         "path": "m/83696968'/32'/0'",
         "derived_entropy": "ead0b33988a616cf6a497f1c169d9e92562604e38305ccd3fc96f2252c177682",
-        "derived_key": "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX",
+        "derived_key": "xprv9s21ZrQH143K4Px85utdpu6DFvY2NpHkJajPoupAznfiacH2MC9LasyW4uvqKXNxLWcjqGTbHKAhoZoMAbmRe5g9tAPA7cUUX4UVA1vFKFm",
     },
 ]
 
@@ -77,7 +77,7 @@ PWD_BASE64 = [
     {
         "master": "xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
         "path": "m/83696968'/707764'/21'/0'",
-        "derived_entropy": "d7ad61d4a76575c5bad773feeb40299490b224e8e5df6c8ad8fe3d0a6eed7b85ead9fef7bcca8160f0ee48dc6e92b311fc71f2146623cc6952c03ce82c7b63fe",
+        "derived_entropy": "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9",
         "derived_pwd": "dKLoepugzdVJvdL56ogNV",
     },
 ]
