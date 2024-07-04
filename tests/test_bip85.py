@@ -33,6 +33,7 @@ from bipsea.util import LOGGER_NAME, to_hex_string
 XPRV_DERIVED_LEGACY = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX"
 BASE64_ENTROPY_LEGACY = "d7ad61d4a76575c5bad773feeb40299490b224e8e5df6c8ad8fe3d0a6eed7b85ead9fef7bcca8160f0ee48dc6e92b311fc71f2146623cc6952c03ce82c7b63fe"
 
+
 logger = logging.getLogger(LOGGER_NAME)
 
 
