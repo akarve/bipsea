@@ -165,8 +165,6 @@ def test_xprv_legacy(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
     output = apply_85(derive(master, path), path)
-    logger.debug(output)
-    logger.debug(to_hex_string(output["entropy"]))
     with pytest.raises(AssertionError) as expected:
         assert output["application"] == XPRV_DERIVED_LEGACY
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
