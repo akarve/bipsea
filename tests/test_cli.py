@@ -284,7 +284,6 @@ class TestDerive:
             cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", 2]
         )
         assert result.exit_code != 0
-        logger.debug(result.output)
         assert "--number" in result.output
 
     @pytest.mark.parametrize(
@@ -295,7 +294,6 @@ class TestDerive:
             cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", n]
         )
         assert result.exit_code != 0
-        logger.debug(result.output)
         assert "range" in result.output
 
     def test_bad_application(self, runner):
@@ -303,7 +301,6 @@ class TestDerive:
             cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", "google"]
         )
         assert result.exit_code != 0
-        logger.debug(result.output)
         assert "application" in result.output
 
     def test_bad_xprv(self, runner):
@@ -411,7 +408,7 @@ class TestIntegration:
     @pytest.mark.parametrize(
         "group, commands",
         groups.items(),
-        ids=[f"{group}-{len(commands)}" for group, commands in groups.items()],
+        ids=[f"{group} x {len(commands)}" for group, commands in groups.items()],
     )
     def test_commands(self, group, commands):
         with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as script:
