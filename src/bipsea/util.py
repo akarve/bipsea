@@ -16,10 +16,10 @@ POETRY = Factory().create_poetry()
 
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 
-LOGGER_NAME = POETRY.package.name
+__app_name__ = "bipsea"
+__version__ = "2.0.1"
 
-__app_name__ = POETRY.package.name
-__version__ = POETRY.package.version
+LOGGER_NAME = __app_name__
 
 ASCII_INPUTS = set(string.printable.lower())
 FORMAT = "utf-8"
