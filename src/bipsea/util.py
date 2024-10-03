@@ -10,10 +10,6 @@ import warnings
 from collections import Counter
 from typing import List, Sequence
 
-from poetry.factory import Factory
-
-POETRY = Factory().create_poetry()
-
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 
 __app_name__ = "bipsea"
