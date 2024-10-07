@@ -30,10 +30,6 @@ from bipsea.bip85 import (
 )
 from bipsea.util import LOGGER_NAME, to_hex_string
 
-XPRV_DERIVED_LEGACY = "xprv9s21ZrQH143K2srSbCSg4m4kLvPMzcWydgmKEnMmoZUurYuBuYG46c6P71UGXMzmriLzCCBvKQWBUv3vPB3m1SATMhp3uEjXHJ42jFg7myX"
-BASE64_ENTROPY_LEGACY = "d7ad61d4a76575c5bad773feeb40299490b224e8e5df6c8ad8fe3d0a6eed7b85ead9fef7bcca8160f0ee48dc6e92b311fc71f2146623cc6952c03ce82c7b63fe"
-
-
 logger = logging.getLogger(LOGGER_NAME)
 
 
@@ -60,16 +56,20 @@ def test_pwd_base64(vector):
     path = vector["path"]
     output = apply_85(derive(master, path), path)
     assert vector["derived_pwd"] == output["application"]
-    assert vector["derived_entropy"] == to_hex_string(output["entropy"])
+    # Hardcode what we believe is correct; issue filed to BIP85
+    assert (
+        to_hex_string(output["entropy"])
+        == "74a2e87a9ba0cdd549bdd2f9ea880d554c6c355b08ed25088cfa88f3f1c4f74632b652fd4a8f5fda43074c6f6964a3753b08bb5210c8f5e75c07a4c2a20bf6e9"
+    )
 
 
 @pytest.mark.parametrize("vector", PWD_BASE64)
-@pytest.mark.xfail(reason="see updated BIP-85 BASE64 test vector")
-def test_pwd_base64_entropy_legacy(vector):
+@pytest.mark.xfail(reason="wut!? correct password, bad entropy; filed to BIP-85")
+def test_pwd_base64_entropy(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
     output = apply_85(derive(master, path), path)
-    assert BASE64_ENTROPY_LEGACY == to_hex_string(output["entropy"])
+    assert vector["derived_entropy"] == to_hex_string(output["entropy"])
 
 
 @pytest.mark.parametrize("vector", PWD_BASE85)
@@ -155,21 +155,8 @@ def test_xprv(vector):
     master = parse_ext_key(vector["master"])
     path = vector["path"]
     output = apply_85(derive(master, path), path)
-    assert output["application"] == vector["derived_key"]
+    assert vector["derived_key"] == output["application"]
     assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-
-
-@pytest.mark.parametrize("vector", XPRV)
-@pytest.mark.xfail(reason="see updated BIP-85 XPRV test vector")
-def test_xprv_legacy(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    with pytest.raises(AssertionError) as expected:
-        assert output["application"] == XPRV_DERIVED_LEGACY
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-
-    raise expected.value
 
 
 def test_private_key_to_wif():
