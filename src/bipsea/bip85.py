@@ -99,8 +99,8 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
             depth=bytes(1),
             finger=bytes(4),
             child_number=bytes(4),
-            data=bytes(1) + entropy[:32],
-            chain_code=entropy[32:],
+            chain_code=entropy[:32],
+            data=bytes(1) + entropy[32:],
         )
 
         return {
