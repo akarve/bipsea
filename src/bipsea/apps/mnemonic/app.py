@@ -40,15 +40,16 @@ class MnemonicApp:
         return [
             Param(
                 "n_words",
-                "-n",
+                ("-n", "--words"),
                 int,
                 required=True,
                 choices=[str(n) for n in N_WORDS_META.keys()],
                 help="Number of mnemonic words",
+                role="number",
             ),
             Param(
                 "language",
-                "-t",
+                ("-t", "--language"),
                 str,
                 default="english",
                 choices=list(LANGUAGES.keys()),

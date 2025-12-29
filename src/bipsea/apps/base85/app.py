@@ -18,11 +18,12 @@ class Base85App:
         return [
             Param(
                 "length",
-                "-n",
+                ("-n", "--length"),
                 int,
                 required=True,
                 range=(10, 80),
                 help="Password length in characters",
+                role="number",
             ),
         ]
 

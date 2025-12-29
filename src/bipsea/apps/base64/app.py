@@ -18,11 +18,12 @@ class Base64App:
         return [
             Param(
                 "length",
-                "-n",
+                ("-n", "--length"),
                 int,
                 required=True,
                 range=(20, 86),
                 help="Password length in characters",
+                role="number",
             ),
         ]
 

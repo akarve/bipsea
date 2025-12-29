@@ -18,11 +18,12 @@ class HexApp:
         return [
             Param(
                 "length",
-                "-n",
+                ("-n", "--length"),
                 int,
                 required=True,
                 range=(16, 64),
                 help="Output length in bytes",
+                role="number",
             ),
         ]
 

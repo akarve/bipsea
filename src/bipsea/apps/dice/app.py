@@ -19,15 +19,16 @@ class DiceApp:
         return [
             Param(
                 "rolls",
-                "-n",
+                ("-n", "--rolls"),
                 int,
                 required=True,
                 range=(1, 10_000),
                 help="Number of rolls",
+                role="number",
             ),
             Param(
                 "sides",
-                "-s",
+                ("-s", "--sides"),
                 int,
                 default=6,
                 range=(2, None),
