@@ -47,7 +47,7 @@ install-dist::
 check::
 	poetry run black . --check
 	poetry run isort . --check
-	poetry run flake8 . --ignore=E501,W503
+	poetry run flake8 . --ignore=E501,W503,E704
 	bash -n scripts/*.sh
 	bash -n tests/*.sh
 
@@ -55,7 +55,7 @@ lint::
 	isort .
 	black .
 	actionlint
-	flake8 . --ignore=E501,W503
+	flake8 . --ignore=E501,W503,E704
 	checkmake Makefile
 
 git-off-main::

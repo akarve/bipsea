@@ -5,17 +5,7 @@ from hashlib import sha256
 import base58
 import pytest
 from Crypto.PublicKey import RSA
-from data.bip85_vectors import (
-    BIP_39,
-    COMMON_XPRV,
-    DICE,
-    EXT_KEY_TO_ENTROPY,
-    HEX,
-    PWD_BASE64,
-    PWD_BASE85,
-    WIF,
-    XPRV,
-)
+from data.bip85_vectors import COMMON_XPRV, EXT_KEY_TO_ENTROPY, PWD_BASE64
 
 from bipsea.bip32types import parse_ext_key
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
@@ -28,6 +18,7 @@ from bipsea.bip85 import (
     split_and_validate,
     to_entropy,
 )
+from bipsea.registry import APPS
 from bipsea.util import LOGGER_NAME, to_hex_string
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -72,54 +63,31 @@ def test_pwd_base64_entropy(vector):
     assert vector["derived_entropy"] == to_hex_string(output["entropy"])
 
 
-@pytest.mark.parametrize("vector", PWD_BASE85)
-def test_pwd_base85(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    assert vector["derived_pwd"] == output["application"]
-    assert vector["derived_entropy"] == to_hex_string(output["entropy"])
+def _all_app_vectors():
+    for app in APPS.values():
+        for v in app.vectors:
+            yield pytest.param(app, v, id=f"{app.name}-{v.path}")
 
 
-@pytest.mark.parametrize(
-    "vector",
-    BIP_39,
-    ids=[f"BIP_39-{v['mnemonic_length']}" for v in BIP_39],
-)
-def test_mnemonic(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
+@pytest.mark.parametrize("app,vector", list(_all_app_vectors()))
+def test_app_vectors(app, vector):
+    master = parse_ext_key(vector.master)
+    path = vector.path
     output = apply_85(derive(master, path), path)
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    words = output["application"].split(" ")
-    assert len(words) == vector["mnemonic_length"]
-    assert output["application"] == vector["derived_mnemonic"]
-    assert validate_mnemonic_words(words, "english")
+    assert to_hex_string(output["entropy"]) == vector.entropy
+    assert output["application"] == vector.output
 
 
 @pytest.mark.filterwarnings("ignore:.*184 bits")
 @pytest.mark.parametrize("lang", LANGUAGES, ids=[lang for lang in LANGUAGES])
-@pytest.mark.parametrize(
-    "vector",
-    BIP_39,
-    ids=[f"BIP_39-{v['mnemonic_length']}" for v in BIP_39],
-)
-def test_mnemonic_languages(vector, lang):
-    n_words = vector["mnemonic_length"]
-    master = parse_ext_key(vector["master"])
+@pytest.mark.parametrize("n_words", (12, 18, 24))
+def test_mnemonic_languages(n_words, lang):
+    master = parse_ext_key(COMMON_XPRV)
     code = next(k for k, v in INDEX_TO_LANGUAGE.items() if v == lang)
     path = f"m/83696968'/39'/{code}/{n_words}'"
     output = apply_85(derive(master, path), path)
     words = output["application"].split(" ")
     assert validate_mnemonic_words(words, lang)
-
-
-@pytest.mark.parametrize("vector", HEX)
-def test_hex(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    assert vector["derived_entropy"] == output["application"]
 
 
 @pytest.mark.slow
@@ -141,24 +109,6 @@ def test_rsa(key_bits):
     assert data[0] != data[1]
 
 
-@pytest.mark.parametrize("vector", WIF)
-def test_wif(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-    assert output["application"] == vector["derived_wif"]
-
-
-@pytest.mark.parametrize("vector", XPRV)
-def test_xprv(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    assert vector["derived_key"] == output["application"]
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
-
-
 def test_private_key_to_wif():
     """follow the procedure from
     https://en.bitcoin.it/wiki/Wallet_import_format"""
@@ -173,19 +123,6 @@ def test_private_key_to_wif():
     assert wif.decode("utf-8") == "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"
     # make sure our checksum is the same
     assert wif == base58.b58encode_check(extended)
-
-
-@pytest.mark.parametrize("vector", DICE)
-def test_dice(vector):
-    master = parse_ext_key(vector["master"])
-    path = vector["path"]
-    output = apply_85(derive(master, path), path)
-    rolls = output["application"]
-    assert rolls == vector["derived_rolls"]
-    rolls_int = [int(r) for r in rolls.split(",")]
-    assert len(rolls_int) == 10
-    assert all(0 <= r < 10 for r in rolls_int)
-    assert to_hex_string(output["entropy"]) == vector["derived_entropy"]
 
 
 @pytest.mark.parametrize(

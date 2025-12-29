@@ -9,16 +9,14 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
-from data.bip85_vectors import (
-    BIP_39,
-    COMMON_XPRV,
-    DICE,
-    HEX,
-    PWD_BASE64,
-    PWD_BASE85,
-    WIF,
-)
+from data.bip85_vectors import COMMON_XPRV
 
+from bipsea.apps.base64.app import app as base64_app
+from bipsea.apps.base85.app import app as base85_app
+from bipsea.apps.dice.app import app as dice_app
+from bipsea.apps.hex.app import app as hex_app
+from bipsea.apps.mnemonic.app import app as mnemonic_app
+from bipsea.apps.wif.app import app as wif_app
 from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
@@ -218,18 +216,19 @@ class TestDerive:
 
     @pytest.mark.parametrize(
         "vector",
-        BIP_39,
-        ids=[f"BIP_39-{v['mnemonic_length']}-words" for v in BIP_39],
+        mnemonic_app.vectors,
+        ids=[f"mnemonic-{v.path}" for v in mnemonic_app.vectors],
     )
     def test_mnemonic(self, runner, vector):
-        xprv = vector["master"]
-        n_words = vector["mnemonic_length"]
+        xprv = vector.master
+        segments = vector.path.split("/")
+        n_words = int(segments[4].rstrip("'"))
         result = runner.invoke(
             cli, ["derive", "-a", "mnemonic", "--xprv", xprv, "-n", n_words]
         )
         assert result.exit_code == 0
         words = result.output.strip()
-        assert words == vector["derived_mnemonic"]
+        assert words == vector.output
 
     @pytest.mark.parametrize("iso", [v["code"] for v in LANGUAGES.values()])
     def test_mnemonic_languages(self, runner, iso):
@@ -241,42 +240,55 @@ class TestDerive:
         words = result.output.strip()
         assert validate_mnemonic_words(words.split(" "), ISO_TO_LANGUAGE[iso])
 
-    @pytest.mark.parametrize("vector", DICE)
+    @pytest.mark.parametrize("vector", dice_app.vectors)
     def test_dice(self, runner, vector):
-        xprv = vector["master"]
+        xprv = vector.master
+        segments = vector.path.split("/")
+        sides = int(segments[3].rstrip("'"))
+        rolls = int(segments[4].rstrip("'"))
         result = runner.invoke(
-            cli, ["derive", "-a", "dice", "-x", xprv, "-n", 10, "-s", 6]
+            cli, ["derive", "-a", "dice", "-x", xprv, "-n", rolls, "-s", sides]
         )
         assert result.exit_code == 0
-        assert result.output.strip() == vector["derived_rolls"]
+        assert result.output.strip() == vector.output
 
-    @pytest.mark.parametrize("vector", HEX)
+    @pytest.mark.parametrize("vector", hex_app.vectors)
     def test_hex(self, runner, vector):
-        xprv = vector["master"]
-        result = runner.invoke(cli, ["derive", "-a", "hex", "-x", xprv, "-n", 64])
+        xprv = vector.master
+        segments = vector.path.split("/")
+        n_bytes = int(segments[3].rstrip("'"))
+        result = runner.invoke(cli, ["derive", "-a", "hex", "-x", xprv, "-n", n_bytes])
         assert result.exit_code == 0
-        assert result.output.strip() == vector["derived_entropy"]
+        assert result.output.strip() == vector.output
 
-    @pytest.mark.parametrize("vector", WIF)
+    @pytest.mark.parametrize("vector", wif_app.vectors)
     def test_wif(self, runner, vector):
-        xprv = vector["master"]
+        xprv = vector.master
         result = runner.invoke(cli, ["derive", "-a", "wif", "-x", xprv])
         assert result.exit_code == 0
-        assert result.output.strip() == vector["derived_wif"]
+        assert result.output.strip() == vector.output
 
-    @pytest.mark.parametrize("vector", PWD_BASE64)
+    @pytest.mark.parametrize("vector", base64_app.vectors)
     def test_base64(self, runner, vector):
-        xprv = vector["master"]
-        result = runner.invoke(cli, ["derive", "-a", "base64", "-x", xprv, "-n", 21])
+        xprv = vector.master
+        segments = vector.path.split("/")
+        length = int(segments[3].rstrip("'"))
+        result = runner.invoke(
+            cli, ["derive", "-a", "base64", "-x", xprv, "-n", length]
+        )
         assert result.exit_code == 0
-        assert result.output.strip() == vector["derived_pwd"]
+        assert result.output.strip() == vector.output
 
-    @pytest.mark.parametrize("vector", PWD_BASE85)
+    @pytest.mark.parametrize("vector", base85_app.vectors)
     def test_base85(self, runner, vector):
-        xprv = vector["master"]
-        result = runner.invoke(cli, ["derive", "-a", "base85", "-x", xprv, "-n", 12])
+        xprv = vector.master
+        segments = vector.path.split("/")
+        length = int(segments[3].rstrip("'"))
+        result = runner.invoke(
+            cli, ["derive", "-a", "base85", "-x", xprv, "-n", length]
+        )
         assert result.exit_code == 0
-        assert result.output.strip() == vector["derived_pwd"]
+        assert result.output.strip() == vector.output
 
     @pytest.mark.parametrize("app", ("wif", "xprv"))
     def test_num_not_allowed(self, runner, app):
