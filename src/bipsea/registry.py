@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Dict
 
+from .app_protocol import BIP85App
 from .apps import APPS
-from .protocol import BIP85App
 
 
 def get_apps() -> Dict[str, BIP85App]:

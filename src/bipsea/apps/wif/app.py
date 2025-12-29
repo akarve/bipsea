@@ -2,7 +2,7 @@ from typing import Any
 
 import base58
 
-from bipsea.protocol import Param, TestVector
+from bipsea.app_protocol import Param, TestVector
 
 
 class WifApp:

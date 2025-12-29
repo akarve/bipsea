@@ -1,8 +1,8 @@
 import base64 as b64
 from typing import Any
 
+from bipsea.app_protocol import Param, TestVector
 from bipsea.apps.shared import hardened_int
-from bipsea.protocol import Param, TestVector
 
 
 class Base64App:

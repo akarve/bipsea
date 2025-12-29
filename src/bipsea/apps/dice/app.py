@@ -1,9 +1,9 @@
 import math
 from typing import Any
 
+from bipsea.app_protocol import Param, TestVector
 from bipsea.apps.shared import hardened_int
 from bipsea.drng import DRNG
-from bipsea.protocol import Param, TestVector
 
 
 class DiceApp:

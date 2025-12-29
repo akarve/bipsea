@@ -1,5 +1,6 @@
 from typing import Any
 
+from bipsea.app_protocol import Param, TestVector
 from bipsea.apps.shared import hardened_int
 from bipsea.bip39 import (
     LANGUAGES,
@@ -7,7 +8,6 @@ from bipsea.bip39 import (
     entropy_to_words,
     validate_mnemonic_words,
 )
-from bipsea.protocol import Param, TestVector
 
 INDEX_TO_LANGUAGE = {
     "0'": "english",

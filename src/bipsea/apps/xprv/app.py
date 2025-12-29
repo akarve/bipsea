@@ -1,7 +1,7 @@
 from typing import Any
 
+from bipsea.app_protocol import Param, TestVector
 from bipsea.bip32 import VERSIONS, ExtendedKey
-from bipsea.protocol import Param, TestVector
 
 
 class XprvApp:

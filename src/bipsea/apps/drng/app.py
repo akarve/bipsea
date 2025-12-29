@@ -1,7 +1,7 @@
 from typing import Any
 
+from bipsea.app_protocol import Param, TestVector
 from bipsea.drng import DRNG
-from bipsea.protocol import Param, Vector
 from bipsea.util import to_hex_string
 
 
@@ -14,10 +14,11 @@ class DrngApp:
         return [
             Param(
                 "length",
-                "-n",
+                ("-n", "--length"),
                 int,
                 required=True,
                 help="Number of bytes to generate",
+                role="number",
             ),
         ]
 
@@ -35,9 +36,9 @@ class DrngApp:
         }
 
     @property
-    def vectors(self) -> list[Vector]:
+    def vectors(self) -> list[TestVector]:
         return [
-            Vector(
+            TestVector(
                 master="xprv9s21ZrQH143K2LBWUUQRFXhucrQqBpKdRRxNVq2zBqsx8HVqFk2uYo8kmbaLLHRdqtQpUm98uKfu3vca1LqdGhUtyoFnCNkfmXRyPXLjbKb",
                 path="m/83696968'/0'/0'/0'",
                 entropy="efecfbccffea313214232d29e71563d941229afb4338c21f9517c41aaa0d16f00b83d2a09ef747e7a64e8e2bd5a14869e693da66ce94ac2da570ab7ee48618f7",
