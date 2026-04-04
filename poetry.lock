@@ -293,9 +293,6 @@ files = [
     {file = "importlib_resources-6.4.5.tar.gz", hash = "sha256:980862a1d16c9e147a59603677fa2aa5fd82b87f223b6cb870695bcfce830065"},
 ]
 
-[package.dependencies]
-zipp = {version = ">=3.1.0", markers = "python_version < \"3.10\""}
-
 [package.extras]
 check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)"]
 cover = ["pytest-cov"]
@@ -592,5 +589,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.8.1, <4.0"
-content-hash = "efca24e2ccc4d92a447126ce480230beac9d854b32a04d908cc51fcb42aec3c6"
+python-versions = ">=3.10, <4.0"
+content-hash = "b66d659eca692165648808c2c19fcb238b8eb034f2b24d1c682cc4820bea3672"
