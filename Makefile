@@ -9,7 +9,7 @@ test-all::
 	poetry run pytest -n auto -m ""
 
 test-dist:: clean build install-dist test-integration
-	# note: restores runtime-only deps; run `make install-ci` for dev deps again
+	# after run `make install-ci` to restore dev deps
 
 test-integration::
 	poetry run pytest "tests/test_cli.py::TestIntegration" -m "" -n auto
