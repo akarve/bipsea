@@ -5,12 +5,7 @@ import logging
 import secrets
 import warnings
 from hashlib import pbkdf2_hmac
-
-try:  # pragma: no cover
-    from importlib.resources import files
-except ImportError:  # pragma: no cover
-    from importlib_resources import files  # for Python 3.8
-
+from importlib.resources import files
 from typing import List
 from unicodedata import normalize
 

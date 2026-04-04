@@ -13,7 +13,7 @@ from typing import List, Sequence
 MIN_REL_ENTROPY = 0.50  # somewhat magic heuristic
 
 __app_name__ = "bipsea"
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
 LOGGER_NAME = __app_name__
 
