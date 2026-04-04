@@ -41,9 +41,7 @@ def _number_range(app):
     return None
 
 
-RANGES = {
-    name: rng for name, app in APPS.items() if (rng := _number_range(app))
-}
+RANGES = {name: rng for name, app in APPS.items() if (rng := _number_range(app))}
 
 CODE_TO_APP = {app.code: app for app in APPS.values()}
 

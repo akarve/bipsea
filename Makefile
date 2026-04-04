@@ -1,4 +1,4 @@
-.PHONY: all build check clean download-lists install install-ci install-dist install-go lint publish push test test-all test-dist test-integration
+.PHONY: all build check check-version-sync clean download-lists install install-ci install-dist install-go lint publish push test test-all test-dist test-integration
 
 all:: install build
 
@@ -9,6 +9,7 @@ test-all::
 	poetry run pytest -n auto -m ""
 
 test-dist:: clean build install-dist test-integration
+	# note: restores runtime-only deps; run `make install-ci` for dev deps again
 
 test-integration::
 	poetry run pytest "tests/test_cli.py::TestIntegration" -m "" -n auto
@@ -28,7 +29,7 @@ clean::
 	rm -rf build dist *.egg-info .pytest_cache
 	pip uninstall -y bipsea
 
-publish:: download-lists git-no-unsaved git-on-main test-dist install-ci test
+publish:: download-lists git-no-unsaved git-on-main check-version-sync test-dist install-ci test
 	poetry publish
 
 install:: install-ci install-go
@@ -44,12 +45,15 @@ install-go::
 install-dist::
 	poetry install --without dev
 
-check::
+check:: check-version-sync
 	poetry run black . --check
 	poetry run isort . --check
 	poetry run flake8 . --ignore=E501,W503,E704
 	bash -n scripts/*.sh
 	bash -n tests/*.sh
+
+check-version-sync::
+	@poetry run python -c "import pathlib,re,sys; p=pathlib.Path('pyproject.toml').read_text(); u=pathlib.Path('src/bipsea/util.py').read_text(); pv=re.search(r'(?m)^version\\s*=\\s*\"([^\"]+)\"', p).group(1); uv=re.search(r'(?m)^__version__\\s*=\\s*\"([^\"]+)\"', u).group(1); sys.exit(0) if pv==uv else sys.exit(f'Version mismatch: pyproject.toml={pv} util.py={uv}')"
 
 lint::
 	isort .
