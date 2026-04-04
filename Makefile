@@ -1,4 +1,4 @@
-.PHONY: all clean install test
+.PHONY: all build check clean download-lists install install-ci install-dist install-go lint publish push test test-all test-dist test-integration
 
 all:: install build
 
@@ -13,7 +13,7 @@ test-dist:: clean build install-dist test-integration
 test-integration::
 	poetry run pytest "tests/test_cli.py::TestIntegration" -m "" -n auto
 
-push:: lint test-all git-off-main git-no-unsaved
+push:: git-off-main git-no-unsaved lint test-all
 	@branch=$$(git symbolic-ref --short HEAD); \
 	git push origin $$branch
 
@@ -73,7 +73,7 @@ git-on-main::
 	fi
 
 git-no-unsaved::
-	@if ! git diff --quiet; then \
+	@if ! git diff --quiet || ! git diff --cached --quiet; then \
 		echo "There are unsaved changes in the git repository."; \
 		exit 1; \
 	fi

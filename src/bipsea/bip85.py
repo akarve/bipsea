@@ -32,8 +32,17 @@ __all__ = [
 APPLICATIONS = {app.name: app.code for app in APPS.values()}
 APPLICATIONS["drng"] = "0'"
 
+
+def _number_range(app):
+    """Extract range from the param with role='number', if any."""
+    for p in app.params:
+        if p.role == "number" and p.range is not None:
+            return p.range
+    return None
+
+
 RANGES = {
-    name: app.number_range for name, app in APPS.items() if app.number_range is not None
+    name: rng for name, app in APPS.items() if (rng := _number_range(app))
 }
 
 CODE_TO_APP = {app.code: app for app in APPS.values()}

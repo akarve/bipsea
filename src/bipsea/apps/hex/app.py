@@ -10,10 +10,6 @@ class HexApp:
     code = "128169'"
 
     @property
-    def number_range(self) -> tuple[int, int]:
-        return (16, 64)
-
-    @property
     def params(self) -> list[Param]:
         return [
             Param(

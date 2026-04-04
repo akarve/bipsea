@@ -9,10 +9,6 @@ class XprvApp:
     code = "32'"
 
     @property
-    def number_range(self) -> None:
-        return None
-
-    @property
     def params(self) -> list[Param]:
         return []
 

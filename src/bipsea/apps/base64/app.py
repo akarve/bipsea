@@ -10,10 +10,6 @@ class Base64App:
     code = "707764'"
 
     @property
-    def number_range(self) -> tuple[int, int]:
-        return (20, 86)
-
-    @property
     def params(self) -> list[Param]:
         return [
             Param(

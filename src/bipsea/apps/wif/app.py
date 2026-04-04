@@ -10,10 +10,6 @@ class WifApp:
     code = "2'"
 
     @property
-    def number_range(self) -> None:
-        return None
-
-    @property
     def params(self) -> list[Param]:
         return []
 

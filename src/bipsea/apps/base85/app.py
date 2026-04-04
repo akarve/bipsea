@@ -10,10 +10,6 @@ class Base85App:
     code = "707785'"
 
     @property
-    def number_range(self) -> tuple[int, int]:
-        return (10, 80)
-
-    @property
     def params(self) -> list[Param]:
         return [
             Param(

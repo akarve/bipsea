@@ -7,10 +7,12 @@ from io import StringIO
 from pathlib import Path
 
 import pytest
+from click import Choice, IntRange
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
 from data.bip85_vectors import COMMON_XPRV
 
+from bipsea.app_protocol import Param
 from bipsea.apps.base64.app import app as base64_app
 from bipsea.apps.base85.app import app as base85_app
 from bipsea.apps.dice.app import app as dice_app
@@ -20,6 +22,7 @@ from bipsea.apps.wif.app import app as wif_app
 from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
+from bipsea.cli_adapter import param_to_click_option
 from bipsea.util import ASCII_INPUTS, LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -444,3 +447,37 @@ class TestIntegration:
             )
         finally:
             Path(script.name).unlink()
+
+
+class TestCliAdapter:
+    def test_required_param(self):
+        param = Param("length", ("-n", "--length"), int, required=True, help="Length")
+        flags, kwargs = param_to_click_option(param)
+        assert flags == ("-n", "--length")
+        assert kwargs == {"help": "Length", "required": True, "type": int}
+
+    def test_param_with_default(self):
+        param = Param("sides", ("-s", "--sides"), int, default=6, help="Die sides")
+        flags, kwargs = param_to_click_option(param)
+        assert kwargs["default"] == 6
+        assert "required" not in kwargs
+
+    def test_param_with_range(self):
+        param = Param("bytes", ("-b",), int, range=(16, 64), help="Bytes")
+        _, kwargs = param_to_click_option(param)
+        assert isinstance(kwargs["type"], IntRange)
+        assert kwargs["type"].min == 16
+        assert kwargs["type"].max == 64
+
+    def test_param_with_choices(self):
+        param = Param("fmt", ("-f",), str, choices=["json", "csv"], help="Format")
+        _, kwargs = param_to_click_option(param)
+        assert isinstance(kwargs["type"], Choice)
+        assert list(kwargs["type"].choices) == ["json", "csv"]
+
+    def test_real_app_params(self):
+        for app in (base64_app, dice_app, mnemonic_app):
+            for param in app.params:
+                flags, kwargs = param_to_click_option(param)
+                assert flags == param.flags
+                assert "type" in kwargs

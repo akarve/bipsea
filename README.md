@@ -343,6 +343,8 @@ make test
 ```
 
 See [Makefile](./Makefile) for more commands.
+To add a new BIP-85 application, see the
+[app developer guide](./src/bipsea/apps/README.md).
 
 
 ## Is the bipsea implementation correct?

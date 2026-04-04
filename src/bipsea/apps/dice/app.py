@@ -11,10 +11,6 @@ class DiceApp:
     code = "89101'"
 
     @property
-    def number_range(self) -> tuple[int, int]:
-        return (1, 10_000)
-
-    @property
     def params(self) -> list[Param]:
         return [
             Param(
