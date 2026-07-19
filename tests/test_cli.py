@@ -11,6 +11,7 @@ from click import Choice, IntRange
 from click.testing import CliRunner
 from data.bip39_vectors import VECTORS
 from data.bip85_vectors import COMMON_XPRV
+from ecdsa import SECP256k1
 
 from bipsea.app_protocol import Param
 from bipsea.apps.base64.app import app as base64_app
@@ -18,7 +19,9 @@ from bipsea.apps.base85.app import app as base85_app
 from bipsea.apps.dice.app import app as dice_app
 from bipsea.apps.hex.app import app as hex_app
 from bipsea.apps.mnemonic.app import app as mnemonic_app
+from bipsea.apps.shared import validate_secp256k1_key
 from bipsea.apps.wif.app import app as wif_app
+from bipsea.apps.xprv.app import app as xprv_app
 from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
 from bipsea.bipsea import ISO_TO_LANGUAGE, N_WORDS_ALLOWED, cli, try_for_pipe_input
@@ -481,3 +484,29 @@ class TestCliAdapter:
                 flags, kwargs = param_to_click_option(param)
                 assert flags == param.flags
                 assert "type" in kwargs
+
+
+class TestSecp256k1Validation:
+    N = SECP256k1.order
+
+    def test_accepts_boundary_keys(self):
+        for secret in (1, self.N - 1):
+            key = secret.to_bytes(32, "big")
+            assert validate_secp256k1_key(key) == key
+
+    @pytest.mark.parametrize("secret", [0, N, N + 1, 2**256 - 1])
+    def test_rejects_out_of_range(self, secret):
+        with pytest.raises(ValueError, match="Rare invalid secret key"):
+            validate_secp256k1_key(secret.to_bytes(32, "big"))
+
+    def test_wif_rejects_out_of_range(self):
+        # entropy[:32] is the WIF secret exponent
+        entropy = b"\xff" * 32 + b"\x00" * 32
+        with pytest.raises(ValueError, match="Rare invalid secret key"):
+            wif_app.apply(entropy)
+
+    def test_xprv_rejects_out_of_range(self):
+        # entropy[32:] is the XPRV private key
+        entropy = b"\x00" * 32 + b"\xff" * 32
+        with pytest.raises(ValueError, match="Rare invalid secret key"):
+            xprv_app.apply(entropy)

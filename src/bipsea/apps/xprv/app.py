@@ -1,6 +1,7 @@
 from typing import Any
 
 from bipsea.app_protocol import Param, TestVector
+from bipsea.apps.shared import validate_secp256k1_key
 from bipsea.bip32 import VERSIONS, ExtendedKey
 
 
@@ -19,16 +20,17 @@ class XprvApp:
         return {}
 
     def apply(self, entropy: bytes, **_) -> dict[str, Any]:
+        key = validate_secp256k1_key(entropy[32:])
         derived_key = ExtendedKey(
             version=VERSIONS["mainnet"]["private"],
             depth=bytes(1),
             finger=bytes(4),
             child_number=bytes(4),
             chain_code=entropy[:32],
-            data=bytes(1) + entropy[32:],
+            data=bytes(1) + key,
         )
         return {
-            "entropy": entropy[32:],
+            "entropy": key,
             "application": str(derived_key),
         }
 
