@@ -3,6 +3,7 @@ from typing import Any
 import base58
 
 from bipsea.app_protocol import Param, TestVector
+from bipsea.apps.shared import validate_secp256k1_key
 
 
 class WifApp:
@@ -20,7 +21,7 @@ class WifApp:
         return {}
 
     def apply(self, entropy: bytes, network: str = "mainnet", **_) -> dict[str, Any]:
-        trimmed = entropy[:32]
+        trimmed = validate_secp256k1_key(entropy[:32])
         prefix = b"\x80" if network == "mainnet" else b"\xef"
         suffix = b"\x01"  # use with compressed public keys because BIP-32
         extended = prefix + trimmed + suffix
