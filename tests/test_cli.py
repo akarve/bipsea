@@ -18,6 +18,7 @@ from bipsea.apps.base85.app import app as base85_app
 from bipsea.apps.dice.app import app as dice_app
 from bipsea.apps.hex.app import app as hex_app
 from bipsea.apps.mnemonic.app import app as mnemonic_app
+from bipsea.apps.nostr.app import app as nostr_app
 from bipsea.apps.wif.app import app as wif_app
 from bipsea.bip32types import validate_prv_str
 from bipsea.bip39 import LANGUAGES, validate_mnemonic_words
@@ -447,6 +448,74 @@ class TestIntegration:
             )
         finally:
             Path(script.name).unlink()
+
+
+class TestNostr:
+    def test_path_segments(self):
+        assert nostr_app.path_segments(index=2, identity=1) == ["1'", "2'"]
+
+    @pytest.mark.parametrize("vector", nostr_app.vectors)
+    def test_vectors(self, runner, vector):
+        segments = vector.path.split("/")
+        identity = int(segments[3].rstrip("'"))
+        index = int(segments[4].rstrip("'"))
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "nostr",
+                "-x",
+                vector.master,
+                "--identity",
+                identity,
+                "--index",
+                index,
+            ],
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == vector.output
+
+    def test_missing_identity(self, runner):
+        result = runner.invoke(
+            cli, ["derive", "-a", "nostr", "-x", nostr_app.vectors[0].master]
+        )
+        assert result.exit_code != 0
+        assert "identity" in result.output
+
+    def test_identity_zero_warning(self, runner):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "nostr",
+                "-x",
+                nostr_app.vectors[0].master,
+                "--identity",
+                0,
+                "--index",
+                1,
+            ],
+        )
+        assert "Warning" in result.output
+
+    def test_index_zero_warning(self, runner):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "nostr",
+                "-x",
+                nostr_app.vectors[0].master,
+                "--identity",
+                1,
+                "--index",
+                0,
+            ],
+        )
+        assert "Warning" in result.output
 
 
 class TestCliAdapter:
