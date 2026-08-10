@@ -25,6 +25,7 @@ from .bip85 import (
     RANGES,
     apply_85,
     derive,
+    split_and_validate,
     to_entropy,
 )
 from .util import (
@@ -263,6 +264,82 @@ def derive_cli(application, number, index, special, xprv, to):
     click.echo(output)
 
 
+@click.command(
+    name="entropy",
+    help=(
+        "Derive raw BIP-85 entropy at any fully hardened path."
+        " A developer tool for testing new applications."
+    ),
+)
+@click.option(
+    "-p",
+    "--path",
+    required=True,
+    help="Fully hardened derivation path, e.g. m/83696968'/128169'/32'/0'.",
+)
+@click.option(
+    "-n",
+    "--number",
+    type=click.IntRange(1, 64),
+    help="Truncate entropy to the first n bytes (default 64).",
+)
+@click.option(
+    "-d",
+    "--drng",
+    "drng_bytes",
+    type=click.IntRange(min=1),
+    help="Read n bytes from the BIP85-DRNG seeded with the derived entropy.",
+)
+@click.option(
+    "-x",
+    "--xprv",
+    help="Extended private master key from which all secrets are derived.",
+)
+def entropy_cli(path, number, drng_bytes, xprv):
+    if xprv:
+        xprv = xprv.strip()
+    else:
+        xprv = try_for_pipe_input()
+    no_empty_param("--xprv", xprv)
+
+    if not validate_prv_str(xprv, private=True):
+        raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
+
+    if number is not None and drng_bytes is not None:
+        raise click.BadOptionUsage(
+            option_name="--number",
+            message="`--number` and `--drng` are mutually exclusive.",
+        )
+
+    try:
+        segments = split_and_validate(path)
+    except ValueError as err:
+        raise click.BadParameter(str(err), param_hint="--path")
+    if len(segments) < 2:
+        raise click.BadParameter("Expected at least one child.", param_hint="--path")
+    if not all(s[-1] in "'hH" for s in segments[1:]):
+        raise click.BadParameter(
+            "BIP-85 requires fully hardened paths, e.g. 0'.", param_hint="--path"
+        )
+    purpose = PURPOSE_CODES["BIP-85"]
+    if segments[1].rstrip("'hH") != purpose.rstrip("'"):
+        click.secho(
+            f"Warning: Path does not start with m/{purpose} (BIP-85).",
+            fg="yellow",
+            err=True,
+        )
+
+    master = parse_ext_key(xprv)
+    derived = derive(master, path)
+    entropy = to_entropy(derived.data[1:])
+    if drng_bytes:
+        output = DRNG(entropy).read(drng_bytes)
+    else:
+        output = entropy[: number or 64]
+
+    click.echo(to_hex_string(output))
+
+
 @click.group()
 @click.version_option(version=__version__, prog_name=__app_name__)
 def cli():
@@ -273,6 +350,7 @@ cli.add_command(mnemonic)
 cli.add_command(validate)
 cli.add_command(xprv)
 cli.add_command(derive_cli)
+cli.add_command(entropy_cli)
 
 
 def check_range(number: int, application: str):

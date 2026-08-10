@@ -43,7 +43,9 @@ def runner():
 
 
 class TestBase:
-    @pytest.mark.parametrize("cmd", ["", "mnemonic", "validate", "xprv", "derive"])
+    @pytest.mark.parametrize(
+        "cmd", ["", "mnemonic", "validate", "xprv", "derive", "entropy"]
+    )
     def test_help(self, runner, cmd):
         result = runner.invoke(cli, [cmd, "--help"])
         result.exit_code == 0
@@ -213,7 +215,7 @@ class TestDerive:
         xprv = COMMON_XPRV
         if n == 1025 and app == "drng":
             return
-        result = runner.invoke(cli, ["entropy", "-a", app, "-n", n, "--input", xprv])
+        result = runner.invoke(cli, ["derive", "-a", app, "-n", n, "-x", xprv])
         assert result.exit_code != 0
         assert "Error" in result.output
 
@@ -343,6 +345,96 @@ class TestDerive:
         assert "--to" in result.output
 
 
+class TestEntropy:
+    """BIP-85 spec vectors from Test case 1, Test case 2, BIP85-DRNG, and HEX."""
+
+    VECTORS = [
+        (
+            "m/83696968'/0'/0'",
+            None,
+            "efecfbccffea313214232d29e71563d941229afb4338c21f9517c41aaa0d16f0"
+            "0b83d2a09ef747e7a64e8e2bd5a14869e693da66ce94ac2da570ab7ee48618f7",
+        ),
+        (
+            "m/83696968'/0'/1'",
+            None,
+            "70c6e3e8ebee8dc4c0dbba66076819bb8c09672527c4277ca8729532ad711872"
+            "218f826919f6b67218adde99018a6df9095ab2b58d803b5b93ec9802085a690e",
+        ),
+        (
+            "m/83696968'/128169'/64'/0'",
+            64,
+            "492db4698cf3b73a5a24998aa3e9d7fa96275d85724a91e71aa2d645442f8785"
+            "55d078fd1f1f67e368976f04137b1f7a0d19232136ca50c44614af72b5582a5c",
+        ),
+    ]
+
+    @pytest.mark.parametrize("path, number, expected", VECTORS, ids=lambda v: str(v))
+    def test_spec_vectors(self, runner, path, number, expected):
+        cmd = ["entropy", "-p", path, "-x", COMMON_XPRV]
+        if number:
+            cmd += ["-n", number]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
+        assert result.output.strip() == expected
+
+    def test_drng_spec_vector(self, runner):
+        cmd = ["entropy", "-p", "m/83696968'/0'/0'", "-x", COMMON_XPRV, "-d", 80]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
+        assert result.output.strip() == (
+            "b78b1ee6b345eae6836c2d53d33c64cdaf9a696487be81b03e822dc84b3f1cd8"
+            "83d7559e53d175f243e4c349e822a957bbff9224bc5dde9492ef54e8a439f6bc"
+            "8c7355b87a925a37ee405a7502991111"
+        )
+
+    @pytest.mark.parametrize("n_bytes", (16, 32, 64))
+    def test_matches_derive_hex(self, runner, n_bytes):
+        """`entropy` at a HEX path must agree with `derive -a hex`."""
+        path = f"m/83696968'/128169'/{n_bytes}'/0'"
+        raw = runner.invoke(
+            cli, ["entropy", "-p", path, "-n", n_bytes, "-x", COMMON_XPRV]
+        )
+        hex_ = runner.invoke(
+            cli, ["derive", "-a", "hex", "-n", n_bytes, "-x", COMMON_XPRV]
+        )
+        assert raw.exit_code == hex_.exit_code == 0
+        assert raw.output == hex_.output
+
+    def test_warns_off_purpose(self, runner):
+        result = runner.invoke(cli, ["entropy", "-p", "m/44'/0'/0'", "-x", COMMON_XPRV])
+        assert result.exit_code == 0
+        assert "Warning" in result.output
+
+    @pytest.mark.parametrize("path", ("m/83696968'/0/0'", "m", "44'/0'", "m/x'"))
+    def test_bad_path(self, runner, path):
+        result = runner.invoke(cli, ["entropy", "-p", path, "-x", COMMON_XPRV])
+        assert result.exit_code != 0
+        assert "Error" in result.output
+
+    def test_number_drng_exclusive(self, runner):
+        cmd = [
+            "entropy",
+            "-p",
+            "m/83696968'/0'/0'",
+            "-x",
+            COMMON_XPRV,
+            "-n",
+            8,
+            "-d",
+            8,
+        ]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "mutually exclusive" in result.output
+
+    def test_bad_xprv(self, runner):
+        cmd = ["entropy", "-p", "m/83696968'/0'/0'", "-x", COMMON_XPRV[1:]]
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code != 0
+        assert "--xprv" in result.output
+
+
 class TestIntegration:
     def test_chain_no_pipe(self, runner):
         """this also tests that the default options are compatible"""
@@ -416,6 +508,7 @@ class TestIntegration:
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a drng -n 1000',
             'bipsea validate -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea xprv | bipsea derive -a dice -n 100 -s 6',
             'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea derive -a mnemonic -n 12',
+            'bipsea xprv -m "elder major green sting survey canoe inmate funny bright jewel anchor volcano" | bipsea entropy -p "m/83696968\'/0\'/0\'"',
         ],
     }
 
