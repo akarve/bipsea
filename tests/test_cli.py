@@ -15,6 +15,7 @@ from data.bip85_vectors import COMMON_XPRV
 from bipsea.app_protocol import Param
 from bipsea.apps.base64.app import app as base64_app
 from bipsea.apps.base85.app import app as base85_app
+from bipsea.apps.codex32.app import app as codex32_app
 from bipsea.apps.dice.app import app as dice_app
 from bipsea.apps.hex.app import app as hex_app
 from bipsea.apps.mnemonic.app import app as mnemonic_app
@@ -263,6 +264,76 @@ class TestDerive:
         result = runner.invoke(cli, ["derive", "-a", "hex", "-x", xprv, "-n", n_bytes])
         assert result.exit_code == 0
         assert result.output.strip() == vector.output
+
+    @pytest.mark.parametrize("vector", codex32_app.vectors)
+    def test_codex32(self, runner, vector):
+        xprv = vector.master
+        segments = vector.path.split("/")
+        payload_len = segments[4].rstrip("'")
+        header_index = segments[5].rstrip("'")
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "codex32",
+                "-x",
+                xprv,
+                "-n",
+                payload_len,
+                "-i",
+                header_index,
+            ],
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == vector.output
+
+    def test_codex32_defaults_to_26_payload_characters(self, runner):
+        vector = codex32_app.vectors[0]
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "codex32",
+                "-x",
+                vector.master,
+                "-i",
+                "520937584",
+            ],
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == vector.output
+
+    def test_codex32_requires_index(self, runner):
+        result = runner.invoke(
+            cli,
+            ["derive", "-a", "codex32", "-x", codex32_app.vectors[0].master],
+        )
+        assert result.exit_code != 0
+        assert "--index is required" in result.output
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            ["-i", str(2**30)],
+            ["-i", "520937584", "-n", "27"],
+        ],
+    )
+    def test_codex32_rejects_invalid_parameters(self, runner, args):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "codex32",
+                "-x",
+                codex32_app.vectors[0].master,
+                *args,
+            ],
+        )
+        assert result.exit_code != 0
+        assert "Error" in result.output
 
     @pytest.mark.parametrize("vector", wif_app.vectors)
     def test_wif(self, runner, vector):
