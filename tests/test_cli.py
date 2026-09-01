@@ -13,6 +13,7 @@ from data.bip39_vectors import VECTORS
 from data.bip85_vectors import COMMON_XPRV
 
 from bipsea.app_protocol import Param
+from bipsea.apps.age.app import app as age_app
 from bipsea.apps.base64.app import app as base64_app
 from bipsea.apps.base85.app import app as base85_app
 from bipsea.apps.dice.app import app as dice_app
@@ -264,6 +265,31 @@ class TestDerive:
         assert result.exit_code == 0
         assert result.output.strip() == vector.output
 
+    @pytest.mark.parametrize("vector", age_app.vectors)
+    def test_age(self, runner, vector):
+        result = runner.invoke(cli, ["derive", "-a", "age", "-x", vector.master])
+        assert result.exit_code == 0
+        assert result.output.strip() == vector.output
+
+    @pytest.mark.parametrize("vector", age_app.vectors)
+    def test_age_pq(self, runner, vector):
+        result = runner.invoke(
+            cli, ["derive", "-a", "age", "-x", vector.master, "-f", "pq"]
+        )
+        assert result.exit_code == 0
+        assert result.output.strip() == (
+            "AGE-SECRET-KEY-PQ-"
+            "1AG7WKZCZA689SAMECCL5K7E6Y854PGSN78K98J4KPRGNAPUKUMWQ5AN2M5"
+        )
+
+    def test_flavor_requires_age(self, runner):
+        result = runner.invoke(
+            cli,
+            ["derive", "-a", "hex", "-x", MNEMONIC_12["xprv"], "-n", 32, "-f", "pq"],
+        )
+        assert result.exit_code != 0
+        assert "--flavor" in result.output
+
     @pytest.mark.parametrize("vector", wif_app.vectors)
     def test_wif(self, runner, vector):
         xprv = vector.master
@@ -293,7 +319,7 @@ class TestDerive:
         assert result.exit_code == 0
         assert result.output.strip() == vector.output
 
-    @pytest.mark.parametrize("app", ("wif", "xprv"))
+    @pytest.mark.parametrize("app", ("age", "wif", "xprv"))
     def test_num_not_allowed(self, runner, app):
         result = runner.invoke(
             cli, ["derive", "-x", MNEMONIC_12["xprv"], "--application", app, "-n", 2]

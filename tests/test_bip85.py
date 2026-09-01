@@ -73,9 +73,38 @@ def _all_app_vectors():
 def test_app_vectors(app, vector):
     master = parse_ext_key(vector.master)
     path = vector.path
-    output = apply_85(derive(master, path), path)
+    output = apply_85(derive(master, path), path, app_name=app.name)
     assert to_hex_string(output["entropy"]) == vector.entropy
     assert output["application"] == vector.output
+
+
+AGE_PQ_IDENTITY = (
+    "AGE-SECRET-KEY-PQ-1AG7WKZCZA689SAMECCL5K7E6Y854PGSN78K98J4KPRGNAPUKUMWQ5AN2M5"
+)
+
+
+def test_age_pq():
+    age_app = APPS["age"]
+    vector = age_app.vectors[0]
+    master = parse_ext_key(vector.master)
+    output = apply_85(derive(master, vector.path), vector.path, "age", flavor="pq")
+    assert output["application"] == AGE_PQ_IDENTITY
+
+
+def test_age_shares_hex_code():
+    """A bare path resolves to hex; age requires an explicit app_name."""
+    age_app = APPS["age"]
+    vector = age_app.vectors[0]
+    master = parse_ext_key(vector.master)
+    output = apply_85(derive(master, vector.path), vector.path)
+    assert output["application"] == vector.entropy[:64]
+
+
+def test_apply_85_app_name_mismatch():
+    master = parse_ext_key(COMMON_XPRV)
+    path = "m/83696968'/707764'/20'/0'"
+    with pytest.raises(ValueError):
+        apply_85(derive(master, path), path, app_name="age")
 
 
 @pytest.mark.filterwarnings("ignore:.*184 bits")

@@ -43,11 +43,21 @@ def _number_range(app):
 
 RANGES = {name: rng for name, app in APPS.items() if (rng := _number_range(app))}
 
-CODE_TO_APP = {app.code: app for app in APPS.values()}
+# first registration wins so hex stays canonical for 128169', which the age
+# app shares per the BIP-85 example use (no dedicated application number)
+CODE_TO_APP = {}
+for _app in APPS.values():
+    CODE_TO_APP.setdefault(_app.code, _app)
 
 
-def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]]:
-    """returns a dict with 'entropy': bytes and 'application': str"""
+def apply_85(
+    derived_key: ExtendedKey, path: str, app_name: str = None, **extra_kwargs
+) -> Dict[str, Union[bytes, str]]:
+    """returns a dict with 'entropy': bytes and 'application': str
+
+    app_name selects the app explicitly for codes shared by more than one app
+    (e.g. hex and age both use 128169'); extra_kwargs pass options that are
+    not encoded in the path (e.g. flavor for age)."""
     segments = split_and_validate(path)
     purpose = segments[1]
     if purpose != PURPOSE_CODES["BIP-85"]:
@@ -59,12 +69,22 @@ def apply_85(derived_key: ExtendedKey, path: str) -> Dict[str, Union[bytes, str]
     app_code = segments[2]
     app_segments = segments[3:]
 
-    if app_code not in CODE_TO_APP:
+    if app_name is not None:
+        if app_name not in APPS:
+            raise ValueError(f"Unknown app: {app_name}")
+        app = APPS[app_name]
+        if app.code != app_code:
+            raise ValueError(
+                f"Path code {app_code} does not match app {app_name} ({app.code})"
+            )
+    elif app_code in CODE_TO_APP:
+        app = CODE_TO_APP[app_code]
+    else:
         raise NotImplementedError(f"Unsupported BIP-85 application {app_code}")
 
-    app = CODE_TO_APP[app_code]
     entropy = to_entropy(derived_key.data[1:])
     kwargs = app.parse_path(app_segments)
+    kwargs.update(extra_kwargs)
 
     if app.name == "wif":
         kwargs["network"] = derived_key.get_network()

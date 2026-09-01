@@ -6,6 +6,7 @@ import sys
 
 import click
 
+from .apps.age.app import HRPS as AGE_HRPS
 from .bip32 import to_master_key
 from .bip32types import parse_ext_key, validate_prv_str
 from .bip39 import (
@@ -205,7 +206,13 @@ def xprv(mnemonic, passphrase, mainnet):
     type=click.Choice(ENTROPY_TO_VALUES),
     help="Output language for `--application mnemonic`.",
 )
-def derive_cli(application, number, index, special, xprv, to):
+@click.option(
+    "-f",
+    "--flavor",
+    type=click.Choice(list(AGE_HRPS)),
+    help="Identity flavor for `--application age`. Use a given index with only one flavor.",
+)
+def derive_cli(application, number, index, special, xprv, to, flavor):
     if xprv:
         xprv = xprv.strip()
     else:
@@ -216,10 +223,10 @@ def derive_cli(application, number, index, special, xprv, to):
         raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
 
     if number is not None:
-        if application in ("wif", "xprv"):
+        if application in ("age", "wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="`--number` has no effect when `--application wif|xprv`",
+                message="`--number` has no effect when `--application age|wif|xprv`",
             )
     else:
         number = 24
@@ -239,12 +246,23 @@ def derive_cli(application, number, index, special, xprv, to):
     else:
         to = "eng"
 
+    if flavor:
+        if application != "age":
+            raise click.BadOptionUsage(
+                option_name="--flavor",
+                message="--flavor requires `--application age`",
+            )
+    else:
+        flavor = "classic"
+
     if application == "mnemonic":
         language = ISO_TO_LANGUAGE[to]
         code_85 = next(i for i, l in INDEX_TO_LANGUAGE.items() if l == language)
         path += f"/{code_85}/{number}'/{index}'"
     elif application in ("wif", "xprv"):
         path += f"/{index}'"
+    elif application == "age":
+        path += f"/32'/{index}'"
     elif application in ("base64", "base85", "hex"):
         check_range(number, application)
         path += f"/{number}'/{index}'"
@@ -259,7 +277,8 @@ def derive_cli(application, number, index, special, xprv, to):
         drng = DRNG(to_entropy(derived.data[1:]))
         output = to_hex_string(drng.read(number))
     else:
-        output = apply_85(derived, path)["application"]
+        extra = {"flavor": flavor} if application == "age" else {}
+        output = apply_85(derived, path, app_name=application, **extra)["application"]
     click.echo(output)
 
 
@@ -276,7 +295,7 @@ cli.add_command(derive_cli)
 
 
 def check_range(number: int, application: str):
-    (min, max) = RANGES[application]
+    min, max = RANGES[application]
     if not (min <= number <= max):
         raise click.BadOptionUsage(
             option_name="--number",
