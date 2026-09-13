@@ -40,7 +40,7 @@ install-ci::
 install-go::
 	# you must have go installed https://go.dev/doc/install	
 	go install github.com/rhysd/actionlint/cmd/actionlint@latest
-	go install github.com/mrtazz/checkmake/cmd/checkmake@latest
+	go install github.com/checkmake/checkmake/cmd/checkmake@latest
 
 install-dist::
 	poetry install --without dev
