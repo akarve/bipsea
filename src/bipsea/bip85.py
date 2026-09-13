@@ -1,7 +1,7 @@
 import logging
 import math
 import re
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from .apps import APPS
 from .apps.mnemonic.app import INDEX_TO_LANGUAGE
@@ -51,7 +51,7 @@ for _app in APPS.values():
 
 
 def apply_85(
-    derived_key: ExtendedKey, path: str, app_name: str = None, **extra_kwargs
+    derived_key: ExtendedKey, path: str, app_name: Optional[str] = None, **extra_kwargs
 ) -> Dict[str, Union[bytes, str]]:
     """returns a dict with 'entropy': bytes and 'application': str
 

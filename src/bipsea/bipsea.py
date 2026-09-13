@@ -295,7 +295,7 @@ cli.add_command(derive_cli)
 
 
 def check_range(number: int, application: str):
-    min, max = RANGES[application]
+    (min, max) = RANGES[application]
     if not (min <= number <= max):
         raise click.BadOptionUsage(
             option_name="--number",
