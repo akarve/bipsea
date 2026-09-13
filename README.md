@@ -45,12 +45,13 @@ bipsea --help
 
 ## Commands
 
-bipsea offers four commands that work together:
+bipsea offers five commands that work together:
 
 1. `mnemonic` creates BIP-39 seed mnemonics in 9 languages
 1. `validate` validates BIP-39 in 9 languages
 1. `xprv` derives a BIP-32 extended private key
 1. `derive` applies BIP-85 to an xprv to derive child secrets
+1. `entropy` derives raw BIP-85 entropy at any path (developer tool)
 
 
 # Tutorial
@@ -220,6 +221,35 @@ bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea derive -a dice -n 100 -s 6
 For a 6-digit PIN roll a 10-sided virtual die.
 
     4,9,9,3,7,6
+
+
+## `bipsea entropy`
+
+`entropy` is a developer tool that derives raw BIP-85 entropy at any fully
+hardened path so that you can prototype and test new applications before
+they have a named `--application`.
+
+```sh
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea entropy -p "m/83696968'/0'/0'"
+```
+    <64 bytes (128 hex characters) of BIP-85 derived entropy>
+
+`-n` truncates output to the first n bytes. To reproduce the HEX application
+by hand:
+
+```sh
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea entropy -p "m/83696968'/128169'/32'/0'" -n 32
+```
+
+`-d` instead reads n bytes from the BIP85-DRNG, for applications that consume
+more than 64 bytes:
+
+```sh
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea entropy -p "m/83696968'/0'/0'" -d 80
+```
+
+`entropy` requires fully hardened paths and warns if the path does not begin
+with the BIP-85 purpose code `m/83696968'`.
 
 
 # Technical discussion
