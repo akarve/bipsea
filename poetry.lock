@@ -15,6 +15,17 @@ files = [
 tests = ["PyHamcrest (>=2.0.2)", "mypy", "pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-flake8"]
 
 [[package]]
+name = "bech32"
+version = "1.2.0"
+description = "Reference implementation for Bech32 and segwit addresses."
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "bech32-1.2.0-py3-none-any.whl", hash = "sha256:990dc8e5a5e4feabbdf55207b5315fdd9b73db40be294a19b3752cde9e79d981"},
+    {file = "bech32-1.2.0.tar.gz", hash = "sha256:7d6db8214603bd7871fcfa6c0826ef68b85b0abd90fa21c285a9c5e21d2bd899"},
+]
+
+[[package]]
 name = "black"
 version = "24.4.2"
 description = "The uncompromising code formatter."
@@ -590,4 +601,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <4.0"
-content-hash = "b66d659eca692165648808c2c19fcb238b8eb034f2b24d1c682cc4820bea3672"
+content-hash = "eb99dbdca9d75e3392fa4448969845ed9e2f84b8954be02b78d07efde79a1798"
