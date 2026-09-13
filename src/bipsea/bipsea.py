@@ -212,7 +212,13 @@ def xprv(mnemonic, passphrase, mainnet):
     type=click.Choice(list(AGE_HRPS)),
     help="Identity flavor for `--application age`. Use a given index with only one flavor.",
 )
-def derive_cli(application, number, index, special, xprv, to, flavor):
+@click.option(
+    "--identity",
+    type=click.IntRange(0, 2**31 - 1),
+    default=None,
+    help="Nostr identity index (0=proof/revocation key, >=1 usable). Required for --application nostr.",
+)
+def derive_cli(application, number, index, special, xprv, to, flavor, identity):
     if xprv:
         xprv = xprv.strip()
     else:
@@ -271,6 +277,22 @@ def derive_cli(application, number, index, special, xprv, to, flavor):
     elif application == "dice":
         check_range(number, application)
         path += f"/{special}'/{number}'/{index}'"
+    elif application == "nostr":
+        if identity is None:
+            raise click.UsageError("--identity is required for --application nostr.")
+        if identity == 0:
+            click.secho(
+                "Warning: identity=0 is reserved as a proof key to link identities together.",
+                fg="yellow",
+                err=True,
+            )
+        if index == 0:
+            click.secho(
+                f"Warning: index=0 is reserved as the proof key to link accounts for identity {identity}.",
+                fg="yellow",
+                err=True,
+            )
+        path += f"/{identity}'/{index}'"
 
     derived = derive(master, path)
     if application == "drng":
@@ -295,7 +317,7 @@ cli.add_command(derive_cli)
 
 
 def check_range(number: int, application: str):
-    (min, max) = RANGES[application]
+    min, max = RANGES[application]
     if not (min <= number <= max):
         raise click.BadOptionUsage(
             option_name="--number",
