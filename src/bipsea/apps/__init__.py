@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict
 
 from bipsea.app_protocol import BIP85App
+from bipsea.apps.age.app import app as age_app
 from bipsea.apps.base64.app import app as base64_app
 from bipsea.apps.base85.app import app as base85_app
 from bipsea.apps.dice.app import app as dice_app
@@ -21,4 +22,7 @@ APPS: Dict[str, BIP85App] = {
     nostr_app.name: nostr_app,
     wif_app.name: wif_app,
     xprv_app.name: xprv_app,
+    # after hex: age shares hex's code 128169' (BIP-85 example use) and
+    # hex must stay canonical for path-based lookup (first registration wins)
+    age_app.name: age_app,
 }

@@ -183,6 +183,23 @@ bipsea validate -m $MNEMONIC | bipsea xprv | bipsea derive -a base85
 we get `-n 20` characters of a base85 password.
 
 
+### age file encryption keys
+
+```
+bipsea validate -m "$MNEMONIC" | bipsea xprv | bipsea derive -a age
+```
+    AGE-SECRET-KEY-1ANNVLSZ00TLP4ZQUQ0UEJLWDTGUKGRGJLEFFMGZQFR7JAXTRZ45Q2MXMHQ
+
+Encodes the 32-byte hex application secret at `m/83696968'/128169'/32'/{index}'`
+as an [age](https://age-encryption.org) identity, per the BIP-85 example use.
+`-f pq` derives the post-quantum (X-Wing) flavor supported by age v1.3.0+.
+Print the matching recipient with `age-keygen -y`.
+
+Use a given index with only one flavor: a future quantum computer could recover
+the seed from a published classic recipient and thereby also compromise the pq
+identity derived from the same seed.
+
+
 ### mnemonic phrases
 
 ```
