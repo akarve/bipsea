@@ -509,7 +509,7 @@ class TestNostr:
         assert result.exit_code != 0
         assert "identity" in result.output
 
-    def test_identity_zero_warning(self, runner):
+    def test_identity_zero_error(self, runner):
         result = runner.invoke(
             cli,
             [
@@ -524,9 +524,13 @@ class TestNostr:
                 1,
             ],
         )
-        assert "Warning" in result.output
+        assert result.exit_code != 0
+        assert "--identity" in result.output
 
-    def test_index_zero_warning(self, runner):
+    @pytest.mark.parametrize(
+        "index_args", ([], ["--index", 0]), ids=["default", "explicit"]
+    )
+    def test_index_zero_error(self, runner, index_args):
         result = runner.invoke(
             cli,
             [
@@ -537,11 +541,49 @@ class TestNostr:
                 nostr_app.vectors[0].master,
                 "--identity",
                 1,
-                "--index",
-                0,
+            ]
+            + index_args,
+        )
+        assert result.exit_code != 0
+        assert "reserved" in result.output
+
+    def test_identity_requires_nostr(self, runner):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "hex",
+                "-n",
+                32,
+                "-x",
+                nostr_app.vectors[0].master,
+                "--identity",
+                1,
             ],
         )
-        assert "Warning" in result.output
+        assert result.exit_code != 0
+        assert "--identity" in result.output
+
+    def test_number_has_no_effect_on_nostr(self, runner):
+        result = runner.invoke(
+            cli,
+            [
+                "derive",
+                "-a",
+                "nostr",
+                "-n",
+                12,
+                "-x",
+                nostr_app.vectors[0].master,
+                "--identity",
+                1,
+                "--index",
+                1,
+            ],
+        )
+        assert result.exit_code != 0
+        assert "--number" in result.output
 
 
 class TestCliAdapter:

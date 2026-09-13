@@ -214,9 +214,9 @@ def xprv(mnemonic, passphrase, mainnet):
 )
 @click.option(
     "--identity",
-    type=click.IntRange(0, 2**31 - 1),
+    type=click.IntRange(1, 2**31 - 1),
     default=None,
-    help="Nostr identity index (0=proof/revocation key, >=1 usable). Required for --application nostr.",
+    help="Nostr identity index (>=1; 0' is reserved). Required for --application nostr.",
 )
 def derive_cli(application, number, index, special, xprv, to, flavor, identity):
     if xprv:
@@ -229,13 +229,19 @@ def derive_cli(application, number, index, special, xprv, to, flavor, identity):
         raise click.BadParameter("Bad xprv or tprv.", param_hint="--xprv (or pipe)")
 
     if number is not None:
-        if application in ("age", "wif", "xprv"):
+        if application in ("age", "nostr", "wif", "xprv"):
             raise click.BadOptionUsage(
                 option_name="--number",
-                message="`--number` has no effect when `--application age|wif|xprv`",
+                message="`--number` has no effect when `--application age|nostr|wif|xprv`",
             )
     else:
         number = 24
+
+    if identity is not None and application != "nostr":
+        raise click.BadOptionUsage(
+            option_name="--identity",
+            message="--identity requires `--application nostr`",
+        )
 
     master = parse_ext_key(xprv)
 
@@ -280,17 +286,13 @@ def derive_cli(application, number, index, special, xprv, to, flavor, identity):
     elif application == "nostr":
         if identity is None:
             raise click.UsageError("--identity is required for --application nostr.")
-        if identity == 0:
-            click.secho(
-                "Warning: identity=0 is reserved as a proof key to link identities together.",
-                fg="yellow",
-                err=True,
-            )
         if index == 0:
-            click.secho(
-                f"Warning: index=0 is reserved as the proof key to link accounts for identity {identity}.",
-                fg="yellow",
-                err=True,
+            raise click.BadOptionUsage(
+                option_name="--index",
+                message=(
+                    "index 0' is reserved for future key management"
+                    " (BIP-85 nostr). Pass `--index 1` or higher."
+                ),
             )
         path += f"/{identity}'/{index}'"
 
